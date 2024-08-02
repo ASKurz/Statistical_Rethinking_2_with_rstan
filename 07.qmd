@@ -1,0 +1,1942 @@
+# Ulysses' Compass
+
+Load the packages.
+
+```{r}
+#| message: false
+#| warning: false
+
+# Load
+library(tidyverse)
+library(tidybayes)
+library(rstan)
+library(patchwork)
+library(posterior)
+library(loo)
+
+# Drop grid lines
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank())
+)
+```
+
+#### Rethinking stargazing.
+
+#### Rethinking: Is AIC Bayesian? 
+
+## The problem with parameters
+
+### More parameters (almost) always improve fit.
+
+We'll start off by making the data with brain size and body size for seven `species`.
+
+```{r}
+d <- tibble(
+  species = c("afarensis", "africanus", "habilis", "boisei", "rudolfensis", "ergaster", "sapiens"), 
+  brain   = c(438, 452, 612, 521, 752, 871, 1350), 
+  mass    = c(37.0, 35.5, 34.5, 41.5, 55.5, 61.0, 53.5))
+
+# What?
+print(d)
+```
+
+Here's Figure 7.2.
+
+```{r}
+#| fig-width: 3.75
+#| fig-height: 3.25
+
+d |>
+  ggplot(aes(x =  mass, y = brain, label = species)) +
+  geom_point() +
+  geom_text(hjust = -0.2, size = 2.2, vjust = 0) +
+  labs(x = "body mass (kg)",
+       y = "brain volume (cc)",
+       subtitle = "Average brain volume by body mass for\nsix hominin species") +
+  xlim(30, 65)
+```
+
+Before fitting our models, rescale a couple of the variables.
+
+```{r}
+d <- d |> 
+  mutate(mass_std  = (mass - mean(mass)) / sd(mass),
+         brain_std = brain / max(brain))
+```
+
+Our first statistical model will follow the form
+
+```{r}
+#| eval: false
+#| echo: false
+
+brain_std
+brain-std
+
+mass_std
+mass-std
+```
+
+$$
+\begin{align*}
+\text{brain-std}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i              & = \alpha + \beta \text{mass-std}_i \\
+\alpha             & \sim \operatorname{Normal}(0.5, 1) \\
+\beta              & \sim \operatorname{Normal}(0, 10) \\
+\sigma             & \sim \operatorname{Log-Normal}(0, 1).
+\end{align*}
+$$
+
+A careful study of McElreath's **R** code 7.3 will show he is modeling `log_sigma`, rather than $\sigma$. We'll consider the implications for that in the code shortly.
+
+Part of the challenge for this section is we'll be fitting several closely-related models. We could do that one model at a time, but that would require a lot of redundant and inefficient code. Instead, we'll take the opportunity to show an approach that streamlines the process. But since this requires we adopt several steps we haven't often used, we'll spend a lot of time up front describing them one at a time. Then after the exposition, we'll show the code for the fully developed streamlined approach.
+
+To start, define the `stan_data` with the `compose_data()` function.
+
+```{r}
+stan_data <- d |>
+  select(brain_std, mass_std) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Define the initial `model_code_7.1`.
+
+```{r}
+model_code_7.1 <- '
+data {
+  int<lower=1> n;
+  vector[n] brain_std;
+  vector[n] mass_std;
+}
+parameters {
+  real b0;
+  real b1;
+  real log_sigma;
+}
+model {
+  brain_std ~ normal(b0 + b1 * mass_std, exp(log_sigma));
+  
+  b0 ~ normal(0.5, 1);
+  b1 ~ normal(0, 10);
+  log_sigma ~ normal(0, 1);
+}
+'
+```
+
+Note that whereas we usually define our $\sigma$ parameters as `real<lower=0>`, we have defined `log_sigma` as simply `real`. Also note that we have `exp(log_sigma)` in the likelihood line, which is how you put the posterior of `log_sigma` back on the natural zero-bounded $\sigma$ metric.
+
+Compile and fit this initial model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m7.1, file = "fits/m7.1.rda")
+load(file = "fits/m7.1.rda")
+```
+
+```{r}
+#| eval: false
+
+m7.1 <- stan(
+  data = stan_data,
+  model_code = model_code_7.1,
+  cores = 4, seed = 7)
+```
+
+Check the summary.
+
+```{r}
+print(m7.1, probs = c(0.055, 0.945))
+```
+
+Here we use `as_draws_df()` to plot the posterior of the `log_sigma`, after exponentiation. For comparison, we'll add the sample standard deviation as the red diamond.
+
+```{r}
+#| fig-width: 4.25
+#| fig-height: 2.75
+
+as_draws_df(m7.1) |> 
+  ggplot(aes(x = exp(log_sigma))) +
+  stat_halfeye(point_interval = median_qi, .width = 0.89, adjust = 1/4) +
+  annotate(geom = "point",
+           x = sd(d$brain_std), y = -0.05,
+           color = "red", shape = 18, size = 4) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  coord_cartesian(xlim = c(0, 2))
+```
+
+Now granted, `exp(log_sigma)` is the *residual* standard deviation, not the unconditional sample standard deviation. But the two are nevertheless somewhat comparable, and hopefully this helps clarify the `log_sigma` parameter.
+
+Here's the point estimate for the $R^2$.
+
+```{r}
+as_draws_df(m7.1) |> 
+  expand_grid(d |>
+                select(species, brain_std, mass_std)) |> 
+  mutate(mu = b0 + b1 * mass_std) |> 
+  mutate(residual = brain_std - mu) |> 
+  group_by(species) |> 
+  summarise(residual = mean(residual),
+            brain_std = mean(brain_std)) |> 
+  summarise(residual_var = var(residual),
+            outcome_var = var(brain_std)) |> 
+  mutate(r2 = 1 - residual_var / outcome_var)
+```
+
+This matches up closely with the book's value of 0.477 (p. 197).
+
+Since **rstan** models do not work for functions like `fitted()` or `predict()`, I'm not sure about making a general-purpose `R2_is_bad()` function for our models. However, we do want a method that will scale to computing $\widehat{R^2}$ from a variety of models, and the current approach won't work well for that since it will require different equations for `mu` for each model.
+
+One way to solve this is to include a `generated quantities` block in the `model_code`, like we did for `m5.4` in @sec-Predictor-residual-plots.
+
+```{r}
+model_code_7.1gq <- '
+data {
+  int<lower=1> n;
+  vector[n] brain_std;
+  vector[n] mass_std;
+}
+parameters {
+  real b0;
+  real b1;
+  real log_sigma;
+}
+model {
+  brain_std ~ normal(b0 + b1 * mass_std, exp(log_sigma));
+  
+  b0 ~ normal(0.5, 1);
+  b1 ~ normal(0, 10);
+  log_sigma ~ normal(0, 1);
+}
+generated quantities {
+  vector[n] mu;
+  mu = b0 + b1 * mass_std;  // Expected values for each case
+}
+'
+```
+
+Compile and fit the second version of the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m7.1gq, file = "fits/m7.1gq.rda")
+load(file = "fits/m7.1gq.rda")
+```
+
+```{r}
+#| eval: false
+
+m7.1gq <- stan(
+  data = stan_data,
+  model_code = model_code_7.1gq,
+  cores = 4, seed = 7)
+```
+
+Check the summary.
+
+```{r}
+print(m7.1gq, probs = c(0.055, 0.945))
+```
+
+Now we have a series of `mu[i]` posteriors in addition to the usual model parameters. These are our expected or fitted values, one for each of the 7 cases in the data set. Just to check, we can confirm these are the same as the fitted values we might compute by working pushing the observed predictor values for `mass_std` through the posterior distributions for `b0` and `b1`.
+
+```{r}
+#| warning: false
+
+# Extract the posterior draws, and make the `mu[i]` columns long
+as_draws_df(m7.1gq) |> 
+  pivot_longer(starts_with("mu"), values_to = "mu", names_to = "i") |> 
+  mutate(i = str_extract(i, "\\d") |> 
+           as.integer()) |> 
+  # Add in the observed values
+  left_join(d |> 
+              mutate(i = 1:n()),
+            by = join_by(i)) |> 
+  # Compute the expected values by hand
+  mutate(fitted = b0 + b1 * mass_std) |> 
+  # Compare the `mu[i]` values with their hand-made `fitted` counterparts
+  summarise(all_equal = all.equal(mu, fitted))
+```
+
+Recall we can also extract the draws for the `mu[i]` expectations in a handy long format with `spread_draws()`.
+
+```{r}
+m7.1gq |> 
+  spread_draws(mu[i]) |> 
+  glimpse()
+```
+
+Thus we can use a slightly more compact `spread_draws(mu[i])`-based workflow to compute the point estimate for the $R^2$ from the `m7.1` model.
+
+```{r}
+m7.1gq |> 
+  spread_draws(mu[i]) |> 
+  left_join(d |> 
+              mutate(i = 1:n()),
+            by = join_by(i)) |> 
+  mutate(residual = brain_std - mu) |> 
+  group_by(species) |> 
+  summarise(residual = mean(residual),
+            brain_std = mean(brain_std)) |> 
+  summarise(residual_var = var(residual),
+            outcome_var = var(brain_std)) |> 
+  mutate(r2 = 1 - residual_var / outcome_var)
+```
+
+To make the fitted line-ribbons displayed in Figure 7.3, we'll also want a streamlined way to compute those values for several model types. As a first step toward that aim, we will adopt the `model.matrix()` approach we introduced in @sec-A-second-method. Here we make a `model.matrix()` object for the first model called `mm_7.1`
+
+```{r}
+# Define a model matrix
+mm_7.1 <- model.matrix(data = d, object = ~mass_std)
+
+# What?
+str(mm_7.1)
+head(mm_7.1)
+```
+
+We can use this `mm_7.1` object to define two new elements within `compose_data()`. The first will be `X`, the entire model matrix `mm_7.1`. The second will be `k`, the number of columns (i.e., "predictors") in the design matrix.
+
+```{r}
+stan_data <- d |>
+  select(brain_std, mass_std) |> 
+  # Define `X` and `k` right in the `compose_data()` function
+  compose_data(X = mm_7.1,
+               k = ncol(mm_7.1))
+
+# What?
+str(stan_data)
+```
+
+Now update the `model_code` to use the `model.matrix()` approach to for the blocks.
+
+```{r}
+model_code_7.1mm <- '
+data {
+  int<lower=1> n;
+  int<lower=1> k;       // Number of coefficients (including intercept)
+  vector[n] brain_std;  
+  matrix[n, k] X;       // Regressors from the model matrix (including intercept)
+}
+parameters {
+  vector[k] b;     // The beta coefficients are now defined by a vector
+  real log_sigma;  
+}
+model {
+  brain_std ~ normal(X * b, exp(log_sigma));  // Linear model defined in matrix algebra notation Xb
+  b[1] ~ normal(0.5, 1);                      // Priors for the `b` coefficients now use `[]` indices
+  b[2] ~ normal(0, 10);
+  log_sigma ~ normal(0, 1);
+}
+generated quantities {
+  vector[n] mu;
+  mu = X * b;  // Expected values computed with matrix algebra notation Xb
+}
+'
+```
+
+Compile and fit the third version of the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m7.1mm, file = "fits/m7.1mm.rda")
+load(file = "fits/m7.1mm.rda")
+```
+
+```{r}
+#| eval: false
+
+m7.1mm <- stan(
+  data = stan_data,
+  model_code = model_code_7.1mm,
+  cores = 4, seed = 7)
+```
+
+Check the summary.
+
+```{r}
+#| echo: false
+#| eval: false
+
+print(m7.1gq, probs = c(0.055, 0.945))
+```
+
+```{r}
+print(m7.1mm, probs = c(0.055, 0.945))
+```
+
+The results are within HMC simulation variance to the ones from the previous version of the model, `m7.1gq`. But now the input elements in the various blocks of the `model_code` are general enough they will scale to models with different predictors.
+
+As a last step, we'll add another `model.matrix()` element to the `stan_data` to support the fitted lines for the six models displayed in Figure 7.3. To make a smooth line and 89%-CI ribbon for each model, we'll need a way to feed in a tight sequence of body-mass values into each of the models. We here define those values in a data frame called `d_pred`.
+
+```{r}
+#| echo: false
+#| eval: false
+
+range(d$mass_std)  # -1.008722  1.421380
+```
+
+```{r}
+d_pred <- data.frame(mass_std = seq(from = -2, to = 2, length.out = 100))
+
+# What?
+glimpse(d_pred)
+```
+
+Now we have our sequence of predictor values in `d_pred`, we can add them to the `stan_data` via the `model.matrix()` function. Within the `stan_data`, we'll call this new matrix `Xpred`. Here's what that looks like.
+
+```{r}
+stan_data <- d |>
+  select(brain_std, mass_std) |> 
+  compose_data(X = mm_7.1,
+               # This line is new
+               Xpred = model.matrix(data = d_pred, object = ~mass_std),
+               k = ncol(mm_7.1))
+
+# What?
+str(stan_data)
+```
+
+Now update the `model_code` to include 2 sections in the `generated quantities` block.
+
+```{r}
+model_code_7.1gq2 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> k;
+  vector[n] brain_std;  
+  matrix[n, k] X;
+  matrix[100, k] Xpred;  // New data for fitted lines
+}
+parameters {
+  vector[k] b;
+  real log_sigma;  
+}
+model {
+  brain_std ~ normal(X * b, exp(log_sigma));
+  b[1] ~ normal(0.5, 1);
+  b[2] ~ normal(0, 10);
+  log_sigma ~ normal(0, 1);
+}
+generated quantities {
+  vector[n] mu;
+  mu = X * b;
+  
+  vector[100] fitted;  // A second section for the fitted lines
+  fitted = Xpred * b;
+}
+'
+```
+
+Compile and fit the final version of the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m7.1gq2, file = "fits/m7.1gq2.rda")
+load(file = "fits/m7.1gq2.rda")
+```
+
+```{r}
+#| eval: false
+
+m7.1gq2 <- stan(
+  data = stan_data,
+  model_code = model_code_7.1gq2,
+  cores = 4, seed = 7)
+```
+
+Check the summary.
+
+```{r}
+#| eval: false
+
+print(m7.1gq2, probs = c(0.055, 0.945))
+```
+
+I'm suppressing the `print()` output for the sake of space. Now it contains an additional 100 rows for the new `fitted[b]` values. But if you're following along with code on your computer, do give that output a look.
+
+Here's how to showcase those `fitted[b]` values in a plot.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 2.75
+
+# Compute R2 and save as a data frame
+d_r2 <- m7.1gq2 |> 
+  spread_draws(mu[i]) |> 
+  left_join(d |> 
+              mutate(i = 1:n()),
+            by = join_by(i)) |> 
+  mutate(residual = brain_std - mu) |> 
+  group_by(species) |> 
+  summarise(residual = mean(residual),
+            brain_std = mean(brain_std)) |> 
+  summarise(residual_var = var(residual),
+            outcome_var = var(brain_std)) |> 
+  transmute(r2 = str_c("widehat(italic(R)^2)==", round(1 - residual_var / outcome_var, digits = 2)),
+            mass = min(d$mass),
+            brain = max(d$brain))
+
+# Start wrangling the `fitted[]` draws for the plot
+m7.1gq2 |> 
+  spread_draws(fitted[row]) |> 
+  # Convert the fitted values back to the `brain` metric
+  mutate(brain = fitted * max(d$brain)) |> 
+  # Join the `d_pred` data
+  left_join(d_pred |> 
+              mutate(row = 1:n()),
+            by = join_by(row)) |> 
+  # Convert the `mass_std` values back to the `mass` metric
+  mutate(mass = mass_std * sd(d$mass) + mean(d$mass)) |> 
+  
+  # Plot!
+  ggplot(aes(x = mass, y = brain)) +
+  stat_lineribbon(point_interval = mean_qi, .width = c(0.67, 0.89), 
+                  color = "lightblue4", linewidth = 2/3) +
+  geom_point(data = d) +
+  # Add in the R2 estimate
+  geom_text(data = d_r2,
+            aes(label = r2),
+            hjust = 0, parse = TRUE) +
+  scale_x_continuous("body mass (kg)", breaks = c(35, 47, 60)) +
+  scale_y_continuous("brain volume (cc)", breaks = c(450, 900, 1300)) +
+  scale_fill_manual(values = c("lightblue1", "lightblue2")) +
+  coord_cartesian(xlim = c(32, 63),
+                  ylim = c(400, 1400))
+```
+
+Consistent with my **brms** translation, the models fit with `stan()` consistently show wider 89% intervals than the ones McElreath showed fit with `quap()` in this part of the text. However, the `stan()`-based 67% intervals are pretty close to the intervals displayed in Figure 7.3 in the text, so we'll show both for the plots to come.
+
+Now we have a workflow that supports fitting, summarizing, and plotting the first linear model and it's curvier variants, we're ready to work in bulk.
+
+First, we update both the `d` and `d_pred` data frames to include `mass_std1` through `mass_std6`.
+
+```{r}
+d <- d |> 
+  mutate(mass_std1 = mass_std,
+         mass_std2 = mass_std^2,
+         mass_std3 = mass_std^3,
+         mass_std4 = mass_std^4,
+         mass_std5 = mass_std^5,
+         mass_std6 = mass_std^6)
+
+d_pred <- data.frame(mass_std1 = seq(from = -2, to = 2, length.out = 100)) |> 
+  mutate(mass_std2 = mass_std1^2,
+         mass_std3 = mass_std1^3,
+         mass_std4 = mass_std1^4,
+         mass_std5 = mass_std1^5,
+         mass_std6 = mass_std1^6)
+
+# What?
+glimpse(d)
+glimpse(d_pred)
+```
+
+We are going to fit and store the models and their output within a nested data frame. As a first step, we'll define the six models by their names in the `name` column, the number of predictors (excluding the intercept) in the `predictors` column, and the formulas for their model matrices in a `formula` column.
+
+```{r}
+d_fits <- tibble(model = str_c("m7.", 1:6)) |> 
+  mutate(predictors = str_remove(model, "m7.") |> 
+           as.integer(),
+         formula = c(
+           ~ mass_std1,
+           ~ mass_std1 + mass_std2,
+           ~ mass_std1 + mass_std2 + mass_std3,
+           ~ mass_std1 + mass_std2 + mass_std3 + mass_std4,
+           ~ mass_std1 + mass_std2 + mass_std3 + mass_std4 + mass_std5,
+           ~ mass_std1 + mass_std2 + mass_std3 + mass_std4 + mass_std5 + mass_std6)) 
+
+# What?
+print(d_fits)
+```
+
+Now compute the `model.matrix()` output for each using the `formula` column as input to the `object` argument, via the `map()` function, and save the contents as a nested column named `mm`. Then compute the `d_pred` data frames for each model using the numbers in the `predictors` column as input for subsetting the necessary columns from the external object `d_pred`, via `map()`. We save the results of that operation as a nested column named `d_pred`.
+
+```{r}
+d_fits <- d_fits |> 
+  mutate(mm = map(.x = formula, .f =~ model.matrix(data = d, object = .x)),
+         d_pred = map(.x = predictors, .f =~ d_pred |> 
+                         select(mass_std1:str_c("mass_std", .x))))
+
+# What?
+print(d_fits)
+```
+
+Next we compute the `stan_data` using the `mm`, `d_pred`, and `formula` columns as input for the `compose_data()` and `model.matrix()` functions, all via the `pmap()` function. We save the results in a nested column named `stan_data`.
+
+```{r}
+d_fits <- d_fits |> 
+  mutate(stan_data = pmap(.l = list(mm, d_pred, formula), 
+                          .f =~ d |> 
+                            select(brain_std:mass_std6) |> 
+                            compose_data(X = ..1,
+                                         Xpred = model.matrix(data = ..2, object = ..3),
+                                         k = ncol(..1))))
+
+# What?
+print(d_fits)
+```
+
+Define a generic `model_code` for all 6 models. This is the same as the previous one with one last addition: Now we have used the syntax of `b[2:k]` to refer to all non-intercept $\beta$ parameters within the `model` block.
+
+```{r}
+model_code_7.1to6 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> k;
+  vector[n] brain_std;  
+  matrix[n, k] X;
+  matrix[100, k] Xpred;
+}
+parameters {
+  vector[k] b;
+  real log_sigma; 
+}
+model {
+  brain_std ~ normal(X * b, exp(log_sigma));
+  b[1] ~ normal(0.5, 1);
+  b[2:k] ~ normal(0, 10);  // New general-purpose notation for the non-intercept `beta[k]` priors
+  log_sigma ~ normal(0, 1);
+}
+generated quantities {
+  vector[n] mu;
+  vector[100] fitted;
+  mu = X * b;
+  fitted = Xpred * b;
+}
+'
+```
+
+Compile with `stan_model()` and save the DSO as `stan_dso`.
+
+```{r}
+#| eval: false
+
+stan_dso <- stan_model(model_code = model_code_7.1to6)
+```
+
+Now draw from the posterior distributions of all 6 models by using the `sampling()` function within `map()`, saving the results in a nested column called `sampling` within the `d_fits` data frame.
+
+```{r m7.1_through_m7.6}
+#| echo: false
+
+# save(d_fits, file = "fits/m7.1_through_m7.6.rda")
+load(file = "fits/m7.1_through_m7.6.rda")
+```
+
+```{r}
+#| eval: false
+
+d_fits <- d_fits |> 
+  mutate(sampling = map(.x = stan_data, 
+                        .f =~ sampling(
+                          object = stan_dso, 
+                          data = .x,
+                          seed = 7)))
+```
+
+Extract the `as_draws_df()` output from each model with `map()`, saving the results in a column named `as_draws_df`.
+
+```{r}
+d_fits <- d_fits |> 
+  mutate(as_draws_df = map(.x = sampling, .f = as_draws_df))
+
+# What?
+d_fits |> 
+  select(model, sampling, as_draws_df)
+```
+
+Update the `d_r2` for all models.
+
+```{r}
+#| message: false
+
+d_r2 <- d_fits |> 
+  unnest(as_draws_df) |> 
+  select(model, .draw, starts_with("mu")) |> 
+  pivot_longer(starts_with("mu"), names_to = "i", values_to = "mu") |> 
+  mutate(i = str_extract(i, "\\d") |> 
+           as.integer()) |> 
+  left_join(d |> 
+              mutate(i = 1:n()),
+            by = join_by(i)) |> 
+  mutate(residual = brain_std - mu) |> 
+  group_by(model, species) |> 
+  summarise(residual = mean(residual),
+            brain_std = mean(brain_std)) |> 
+  summarise(residual_var = var(residual),
+            outcome_var = var(brain_std)) |> 
+  transmute(model = model, 
+            r2 = str_c("widehat(italic(R)^2)==", round(1 - residual_var / outcome_var, digits = 2)),
+            mass = min(d$mass),
+            brain = max(d$brain))
+
+# What?
+print(d_r2)
+```
+
+Make the full version of Figure 7.3.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 5
+#| warning: false
+
+d_fits |> 
+  select(model, as_draws_df) |> 
+  unnest(as_draws_df) |> 
+  select(model, .draw, starts_with("fitted")) |> 
+  pivot_longer(starts_with("fitted"), names_to = "row") |> 
+  mutate(row = str_extract(row, "\\d+") |> as.integer()) |> 
+  mutate(brain = value * max(d$brain)) |> 
+  left_join(d_pred |> 
+              mutate(row = 1:n()),
+            by = join_by(row)) |> 
+  mutate(mass = mass_std1 * sd(d$mass) + mean(d$mass)) |> 
+  
+  ggplot(aes(x = mass, y = brain)) +
+  stat_lineribbon(point_interval = mean_qi, .width = c(0.67, 0.89), 
+                  color = "lightblue4", linewidth = 2/3) +
+  geom_point(data = d) +
+  geom_text(data = d_r2,
+            aes(label = r2),
+            hjust = 0, parse = TRUE) +
+  scale_x_continuous("body mass (kg)", breaks = c(35, 47, 60)) +
+  scale_y_continuous("brain volume (cc)", breaks = c(450, 900, 1300)) +
+  scale_fill_manual(values = c("lightblue1", "lightblue2")) +
+  coord_cartesian(xlim = c(32, 63),
+                  ylim = c(400, 1400)) +
+  facet_wrap(~ model)
+```
+
+Though the fitted lines for all our models are much less certain than the `quap()`-based ones McElreath displayed in the text, they're most notably so for the last model `m7.6`. This phenomena is connected at least in part to the increasing uncertainty in the `exp(log_sigma)` posterior for the models. Here they are in a plot.
+
+```{r}
+#| fig-width: 5
+#| fig-height: 2.75
+
+d_fits |> 
+  select(model, as_draws_df) |> 
+  unnest(as_draws_df) |> 
+  
+  ggplot(aes(x = exp(log_sigma), y = model)) +
+  stat_halfeye(.width = 0.89) +
+  scale_y_discrete(NULL, expand = expansion(mult = 0.05)) +
+  coord_cartesian(xlim = c(0, 3))
+```
+
+But McElreath wrote:
+
+> That last model, `m7.6`, has one trick in it. The standard deviation is replaced with a constant value 0.001. (p. 198)
+
+We can do that with `stan()`, too. But here we'll abandon our bulk data frame work flow and fit this version of the model separate. First, define `model_code_7.6b` with $\sigma$ fixed to a constant 0.001.
+
+```{r}
+model_code_7.6b <- '
+data {
+  int<lower=1> n;
+  int<lower=1> k;
+  vector[n] brain_std;  
+  matrix[n, k] X;
+  matrix[100, k] Xpred;
+}
+parameters {
+  vector[k] b;
+}
+model {
+  brain_std ~ normal(X * b, 0.001);  // Set sigma to a constant
+  b[1] ~ normal(0.5, 1);
+  b[2:k] ~ normal(0, 10);
+  // Note how `sigma`, or `log_sigma` for that matter, no longer has a prior
+}
+generated quantities {
+  vector[n] mu;
+  mu = X * b;
+  vector[100] fitted;
+  fitted = Xpred * b;
+}
+'
+```
+
+Compile and fit the special version of the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m7.6b, file = "fits/m7.6b.rda")
+load(file = "fits/m7.6b.rda")
+```
+
+```{r}
+#| eval: false
+
+m7.6b <- stan(
+  # Note how we're reusing the `stan_data` from `d_fits`
+  data = d_fits |> 
+    slice(6) |> 
+    unnest(stan_data) |> 
+    pull(stan_data),
+  model_code = model_code_7.6b,
+  cores = 4, seed = 7)
+```
+
+Here we'll restrict the model summary by using the `pars` argument within `print()`.
+
+```{r}
+print(m7.6b, pars = "b", probs = c(0.05, 0.945))
+```
+
+Because we used the `0.001` constant in the likelihood, we nave no `sigma` or `log_sigma` parameter. It's a constant. Anyway, here's the plot.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 2.75
+
+# Compute R2 and save as a data frame
+d_r2 <- m7.6b |> 
+  spread_draws(mu[i]) |> 
+  left_join(d |> 
+              mutate(i = 1:n()),
+            by = join_by(i)) |> 
+  mutate(residual = brain_std - mu) |> 
+  group_by(species) |> 
+  summarise(residual = mean(residual),
+            brain_std = mean(brain_std)) |> 
+  summarise(residual_var = var(residual),
+            outcome_var = var(brain_std)) |> 
+  transmute(r2 = str_c("widehat(italic(R)^2)==", round(1 - residual_var / outcome_var, digits = 2)),
+            mass = min(d$mass),
+            brain = 1900)
+
+# Start wrangling the `fitted[]` draws for the plot
+m7.6b |> 
+  spread_draws(fitted[row]) |> 
+  # Convert the fitted values back to the `brain` metric
+  mutate(brain = fitted * max(d$brain)) |> 
+  # Join the `d_pred` data
+  left_join(d_pred |> 
+              mutate(row = 1:n()),
+            by = join_by(row)) |> 
+  # Convert the `mass_std` values back to the `mass` metric
+  mutate(mass = mass_std1 * sd(d$mass) + mean(d$mass)) |> 
+  
+  # Plot!
+  ggplot(aes(x = mass, y = brain)) +
+  geom_hline(yintercept = 0, color = "white") +
+  stat_lineribbon(point_interval = mean_qi, .width = c(0.67, 0.89), 
+                  color = "lightblue4", linewidth = 2/3) +
+  geom_point(data = d) +
+  # Add in the R2 estimate
+  geom_text(data = d_r2,
+            aes(label = r2),
+            hjust = 0, parse = TRUE) +
+  scale_x_continuous("body mass (kg)", breaks = c(35, 47, 60)) +
+  scale_y_continuous("brain volume (cc)", breaks = c(0, 450, 1300)) +
+  scale_fill_manual(values = c("lightblue1", "lightblue2")) +
+  coord_cartesian(xlim = c(32, 63),
+                  ylim = c(-400, 2000)) +
+  facet_wrap(~ "m7.6b")
+```
+
+Now the results are very close to those McElreath displayed in the text.
+
+#### Rethinking: Model fitting as compression.
+
+### Too few parameters hurts, too.
+
+To explore the distinctions between overfitting and underfitting, we'll need to refit `b7.1` and `b7.4` several times after serially dropping one of the rows in the data. You can `filter()` by `row_number()` to drop rows. For example, we can drop the second row of `d` like this.
+
+```{r}
+d |>
+  mutate(row = 1:n()) |> 
+  filter(row_number() != 2)
+```
+
+In his **Overthinking: Dropping rows** box (p. 202), McElreath encouraged us to take a look at the `brain_loo_plot()` function to get a sense of how he made his Figure 7.4. You can do so by executing `rethinking::brain_loo_plot` in your console. Our approach will be different. We'll begin by defining a `d_fits_subset` data frame starting with `model`, `predictors`, and `formula` columns like before. This time we add a new column called `row`, which we'll use to reference which row we'd like to drop for a given iteration.
+
+```{r}
+d_fits_subset <- tibble(model = str_c("m7.", c(1, 4))) |> 
+  mutate(predictors = str_remove(model, "m7.") |> 
+           as.integer(),
+         formula = c(
+           ~ mass_std1,
+           ~ mass_std1 + mass_std2 + mass_std3 + mass_std4)) |> 
+  expand_grid(row = 1:7)
+
+# What?
+glimpse(d_fits_subset)
+```
+
+Add a `mm` column based on `model.matrix()` output.
+
+```{r}
+d_fits_subset <- d_fits_subset |> 
+  mutate(mm = map2(.x = row,
+                   .y = formula,
+                   .f =~ model.matrix(data = d |> 
+                                        filter(row_number() != .x),
+                                      object = .y)))
+
+# What?
+print(d_fits_subset)
+```
+
+Next we add the `d_pred` column like before. When we define the `stan_data` this time, we also include the `row` column as one of the inputs in `pmap()`, which will allow us to subset the `d` data we input to `compose_data()`.
+
+```{r}
+d_fits_subset <- d_fits_subset |> 
+  mutate(d_pred = map(.x = predictors, .f =~ d_pred |> 
+                         select(mass_std1:str_c("mass_std", .x)))) |> 
+  mutate(stan_data = pmap(.l = list(row, mm, d_pred, formula), 
+                          .f =~ d |> 
+                            filter(row_number() != ..1) |> 
+                            select(brain_std:mass_std6) |> 
+                            compose_data(X = ..2,
+                                         Xpred = model.matrix(data = ..3, object = ..4),
+                                         k = ncol(..2))))
+
+# What?
+print(d_fits_subset)
+```
+
+Now fit the models with `sampling()` within `map()`.
+
+```{r m7.1s_through_m7.6s}
+#| echo: false
+
+# save(d_fits_subset, file = "fits/m7.1s_through_m7.6s.rda")
+load(file = "fits/m7.1s_through_m7.6s.rda")
+```
+
+```{r}
+#| eval: false
+
+d_fits_subset <- d_fits_subset |> 
+  mutate(sampling = map(.x = stan_data, 
+                        .f =~ sampling(
+                          object = stan_dso, 
+                          data = .x,
+                          seed = 7)))
+```
+
+Extract the `as_draws_df()` output from each model.
+
+```{r}
+d_fits_subset <- d_fits_subset |> 
+  mutate(as_draws_df = map(.x = sampling, .f = as_draws_df))
+
+# What?
+d_fits_subset |> 
+  select(model, sampling, as_draws_df)
+```
+
+Here's our version of Figure 7.4.
+
+```{r}
+#| fig-width: 5.25
+#| fig-height: 2.75
+#| warning: false
+
+d_fits_subset |> 
+  select(model, row, as_draws_df) |> 
+  unnest(as_draws_df) |> 
+  pivot_longer(starts_with("fitted"), names_to = "m") |> 
+  mutate(m = str_extract(m, "\\d+") |> as.integer()) |> 
+  mutate(brain = value * max(d$brain)) |> 
+  left_join(d_pred |> 
+              mutate(m = 1:n()),
+            by = join_by(m)) |> 
+  mutate(mass = mass_std1 * sd(d$mass) + mean(d$mass)) |> 
+  
+  ggplot(aes(x = mass, y = brain)) +
+  stat_lineribbon(aes(group = row),
+                  point_interval = mean_qi, .width = 0, 
+                  alpha = 3/4, color = "lightblue4", linewidth = 1/3) +
+  geom_point(data = d) +
+  scale_x_continuous("body mass (kg)", breaks = c(35, 47, 60)) +
+  scale_y_continuous("brain volume (cc)", breaks = c(0, 450, 900, 1300, 2000)) +
+  scale_fill_brewer(breaks = NULL) +
+  coord_cartesian(xlim = c(34, 61),
+                  ylim = c(0, 2000)) +
+  facet_wrap(~ model)
+```
+
+#### Rethinking: Bias and variance.
+
+## Entropy and accuracy
+
+### Firing the weatherperson.
+
+#### Costs and benefits.
+
+#### Measuring accuracy.
+
+#### Rethinking: Calibration is overrated.
+
+### Information and uncertainty.
+
+The formula for information entropy is:
+
+$$H(p) = - \text E \log (p_i) = - \sum_{i = 1}^n p_i \log (p_i).$$
+
+McElreath put it in words as: "The uncertainty contained in a probability distribution is the average log-probability of an event." (p. 206). We'll compute the information entropy for weather at the first unnamed location, which we'll call `McElreath's house`, and `Abu Dhabi` at once.
+
+```{r}
+tibble(place  = c("McElreath's house", "Abu Dhabi"),
+       p_rain = c(0.3, 0.01)) |> 
+  mutate(p_shine = 1 - p_rain) |> 
+  group_by(place) |> 
+  mutate(h_p = (p_rain * log(p_rain) + p_shine * log(p_shine)) |> mean() * -1)
+```
+
+If you have sun, rain and snow, the entropy for weather is:
+
+```{r}
+p <- c(0.7, 0.15, 0.15)
+-sum(p * log(p))
+```
+
+#### Overthinking: More on entropy.
+
+#### Rethinking: The benefits of maximizing uncertainty.
+
+### From entropy to accuracy.
+
+#### Overthinking: Cross entropy and divergence.
+
+#### Rethinking: Divergence depends upon direction.
+
+Here we see $H(p, q) \neq H(q, p)$. That is, direction matters.
+
+```{r}
+tibble(direction = c("Earth to Mars", "Mars to Earth"),
+       p_1       = c(0.01, 0.7),
+       q_1       = c(0.7, 0.01)) |> 
+  mutate(p_2 = 1 - p_1,
+         q_2 = 1 - q_1) |>
+  mutate(d_kl = (p_1 * log(p_1 / q_1)) + (p_2 * log(p_2 / q_2)))
+```
+
+### Estimating divergence. {#sec-Estimating-divergence}
+
+We define deviance as
+
+$$D(q) = -2 \sum_i \log (q_i),$$
+
+where $i$ indexes each case and $q_i$ is the likelihood for each case. Here's the deviance from the OLS version of model `m7.1`.
+
+```{r}
+lm(data = d, brain_std ~ mass_std) |> 
+  logLik() * -2
+```
+
+In our $D(q)$ formula, did you notice how we ended up multiplying $\sum_i \log (p_i)$ by $-2$? Frequentists and Bayesians alike make use of information theory, KL divergence, and deviance. It turns out that the differences between two $D(q)$ values follows a $\chi^2$ distribution [@wilksLargesampleDistributionLikelihood1938], which frequentists like to reference for the purpose of null-hypothesis significance testing. Some Bayesians, however, are not into all that significance-testing stuff and they aren't as inclined to multiply $\sum_i \log (p_i)$ by $-2$ for the simple purpose of scaling the associated difference distribution to follow the $\chi^2$. If we leave that part out of the equation, we end up with
+
+$$S(q) = \sum_i \log (q_i),$$
+
+which we can think of as a log-probability score which is "the gold standard way to compare the predictive accuracy of different models. It is an estimate of $\text E \log (q_i)$, just without the final step of dividing by the number of observations" (p. 210).
+
+When Bayesians compute $S(q)$, they do so over the entire posterior distribution. The **rstan** package does not have a convenience function for computing the log likelihood, and the log likelihood is not computed automatically for `stan()` models. From the `loo.stanfit` section of the current version (2.32.6) of the [**rstan** reference manual](https://CRAN.R-project.org/package=rstan/rstan.pdf) [@rstan2024RM], we read:
+
+> Stan does not automatically compute and store the log-likelihood. It is up to the user to incorporate
+it into the Stan program if it is to be extracted after fitting the model. In a Stan program, the
+pointwise log likelihood can be coded as a vector in the transformed parameters block (and then
+summed up in the model block) or it can be coded entirely in the generated quantities block. We
+recommend using the generated quantities block so that the computations are carried out only once
+per iteration rather than once per HMC leapfrog step.
+>
+> For example, the following is the `generated quantities` block for computing and saving the loglikelihood for a linear regression model with `N` data points, outcome `y`, predictor matrix `X` (including
+column of 1s for intercept), coefficients `beta`, and standard deviation `sigma`:
+>
+> `vector[N] log_lik;`
+> `for (n in 1:N) log_lik[n] = normal_lpdf(y[n] | X[n, ] * beta, sigma);`
+
+Here's how to update the `model_code` for model `m7.1` to include `log_lik` within the `generated quantities` block.
+
+```{r}
+model_code_7.1ll <- '
+data {
+  int<lower=1> n;
+  int<lower=1> k;
+  vector[n] brain_std;  
+  matrix[n, k] X;
+  matrix[100, k] Xpred;  // New data for fitted lines
+}
+parameters {
+  vector[k] b;
+  real log_sigma;  
+}
+model {
+  brain_std ~ normal(X * b, exp(log_sigma));
+  b[1] ~ normal(0.5, 1);
+  b[2] ~ normal(0, 10);
+  log_sigma ~ normal(0, 1);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = normal_lpdf(brain_std[i] | X[i, ] * b, exp(log_sigma));
+}
+'
+```
+
+Compile and fit this version the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m7.1ll, file = "fits/m7.1ll.rda")
+load(file = "fits/m7.1ll.rda")
+```
+
+```{r}
+#| eval: false
+
+m7.1ll <- stan(
+  data = stan_data,
+  model_code = model_code_7.1ll,
+  cores = 4, seed = 7)
+```
+
+Notice the seven `log_lik[i]` rows in the `print()` output, one for each case in the sample data.
+
+```{r}
+print(m7.1ll, probs = c(0.055, 0.945))
+```
+
+Because we have computed the `log_lik` values in the `generated quantities` block of the model program, we can also use the `rstan::loo()` function, which searchers for a `log_lik` parameter vector in the model fit, by the default setting `pars = "log_lik"`.
+
+```{r}
+l7.1 <- loo(m7.1ll, pars = "log_lik")
+```
+
+We can convert these `log_lik[i]` values into log probability scores like so.
+
+```{r}
+m7.1ll |> 
+  spread_draws(log_lik[i]) |> 
+  mutate(prob = exp(log_lik)) |> 
+  group_by(i) |> 
+  summarise(log_probability_score = mean(prob) |> log())
+```
+
+"If you sum these values, you'll have the total log-probability score for the model and data" (p. 210). Here we sum those $\log (q_i)$ values up to compute $S(q)$.
+
+```{r}
+m7.1ll |> 
+  spread_draws(log_lik[i]) |> 
+  mutate(prob = exp(log_lik)) |> 
+  group_by(i) |> 
+  summarise(log_probability_score = mean(prob) |> log()) |> 
+  # This is the only new step from the last code block
+  summarise(total_log_probability_score = sum(log_probability_score))
+```
+
+#### Overthinking: Computing the lppd.
+
+The Bayesian version of the log-probability score, what we've been calling the lppd, has to account for the data and the posterior distribution. It follows the form
+
+$$\text{lppd}(y, \Theta) = \sum_i \log \frac{1}{S} \sum_s p (y_i | \Theta_s),$$
+
+> where $S$ is the number of samples and $\Theta_s$ is the $s$-th set of sampled parameter values in the posterior distribution. While in principle this is easy--you just need to compute the probability (density) of each observation $i$ for each sample $s$, take the average, and then the logarithm--in practice it is not so easy. The reason is that doing arithmetic in a computer often requires some tricks to retain precision. (p. 210)
+
+Though we computed these values above with the `log_lik[i]` values defined in the `generated quantities` block of the `model_code`, we can also do it by hand with the posterior distribution and the sample data. When we pull the posterior draws with `as_draws_df()`, the HMC draws, what McElreath called $s$, are indexed in the `.draw` column. We'll rename that column `s`. The term $p (y_i | \Theta_s)$ is the probability of the `brain_std` values for each of the rows of the data, which we've indexed by the `i` column, given the samples form the posterior distribution $\Theta_s$. Those $\Theta_s$ values are our `b[1]`, `b[2]` and `log_sigma` columns, seen through the lens of the Gaussian likelihood. Thus we compute $p (y_i | \Theta_s)$ within the `dnorm()` function, which we save as `density[i][s]`.
+
+```{r}
+log_prob_df <- as_draws_df(m7.1ll) |> 
+  # Index the samples using McElreath's notation
+  mutate(s = .draw) |> 
+  # Add the sample data
+  expand_grid(d |> 
+                mutate(i = 1:n()) |> 
+                select(i, species:brain_std)) |> 
+  # Not needed, but simplifies the output
+  select(s, i, species, brain_std, mass_std, `b[1]`, `b[2]`, log_sigma) |> 
+  # Define p(y[i] | Theta[s])
+  mutate(`density[i][s]` = dnorm(x = brain_std, 
+                                 mean = `b[1]` + `b[2]` * mass_std,
+                                 sd = exp(log_sigma)))
+
+# What?
+glimpse(log_prob_df)
+```
+
+By $\frac{1}{S} \sum_s p (y_i | \Theta_s)$, we are computing the average density value separately for each row in the sample data, `i`.
+
+```{r}
+log_prob_df |> 
+  group_by(i) |> 
+  summarise(`mean_density[i]` = mean(`density[i][s]`))
+```
+
+Then by the rightmost terms in the equation, $\sum_i \log \cdot$, we take the log of those values and sum them up.
+
+```{r}
+log_prob_df |> 
+  group_by(i) |> 
+  summarise(`mean_density[i]` = mean(`density[i][s]`)) |> 
+  summarise(total_log_probability_score = log(`mean_density[i]`) |> sum())
+```
+
+That is the log-pointwise-predictive-density, $\text{lppd}(y, \Theta)$, computed by hand.
+
+### Scoring the right data.
+
+Since our `stan()` models from above do not have log-likelihood values saved from each, we have to options to make an alternative to McElreath's R code 7.15:
+
+* we can compute each by hand, like in the last section, but with a custom-defined linear function within `dnorm()`, or
+* we can refit the models after adding `log_lik[i]` definitions in the `generated quantities` block of the model program.
+
+I'm opting for the latter. To that end, define the `model_code_7.1to6ll` object with a `generated quantities` block.
+
+```{r}
+model_code_7.1to6ll <- '
+data {
+  int<lower=1> n;
+  int<lower=1> k;
+  vector[n] brain_std;  
+  matrix[n, k] X;
+  matrix[100, k] Xpred;
+}
+parameters {
+  vector[k] b;
+  real log_sigma;
+}
+model {
+  brain_std ~ normal(X * b, exp(log_sigma));
+  
+  b[1] ~ normal(0.5, 1);
+  b[2:k] ~ normal(0, 10);
+  log_sigma ~ normal(0, 1);
+}
+generated quantities {
+  // Define and compute the log likelihood
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = normal_lpdf(brain_std[i] | X[i, ] * b, exp(log_sigma));
+}
+'
+```
+
+Compile and save the `stan_dso_ll`.
+
+```{r}
+#| eval: false
+
+stan_dso_ll <- stan_model(model_code = model_code_7.1to6ll)
+```
+
+Now draw from the posterior distributions of all 6 models by using the `sampling()` function within `map()`, and then extract the `log_lik` estimates from each model with `spread_draws()` within `map()`.
+
+```{r m7.1ll_through_m7.6ll}
+#| echo: false
+
+# save(d_fits_ll, file = "fits/m7.1ll_through_m7.6ll.rda")
+load(file = "fits/m7.1ll_through_m7.6ll.rda")
+```
+
+```{r}
+#| eval: false
+
+d_fits_ll <- d_fits |> 
+  # Subset the data frame
+  select(model, stan_data) |> 
+  # Sample from each model
+  mutate(sampling = map(.x = stan_data, 
+                        .f =~ sampling(
+                          object = stan_dso_ll, 
+                          data = .x,
+                          seed = 7))) |> 
+  # Extract the posterior draws for the `log_lik` estimates 
+  mutate(spread_draws = map(.x = sampling, 
+                            .f =~ spread_draws(
+                              model = .x,
+                              log_lik[i])))
+```
+
+Compute the `total_log_probability_score` for each model.
+
+```{r}
+d_fits_ll |> 
+  select(model, spread_draws) |> 
+  unnest(spread_draws) |> 
+  rename(s = .draw) |> 
+  mutate(`density[i][s]` = exp(log_lik)) |> 
+  group_by(model, i) |> 
+  summarise(`mean_density[i]` = mean(`density[i][s]`)) |> 
+  group_by(model) |> 
+  summarise(total_log_probability_score = log(`mean_density[i]`) |> sum())
+```
+
+#### Overthinking: Simulated training and testing.
+
+I'm leaving this out, for now. If you want a sense of how to do this, check out this section in my **brms** translation ([here](https://bookdown.org/content/4857/ulysses-compass.html#overthinking-simulated-training-and-testing.)).
+
+## Golem taming: regularization
+
+I'll leave the simulation for Figure 7.8 for another day. If you want a sense of how to do this, check out this section in my **brms** translation ([here](https://bookdown.org/content/4857/ulysses-compass.html#golem-taming-regularization)).
+
+#### Rethinking: Ridge regression.
+
+## Predicting predictive accuracy
+
+### Cross-validation.
+
+#### Overthinking: Pareto-smoothed cross-validation.
+
+### Information criteria.
+
+We define the widely applicable information criterion (WAIC) as
+
+$$\text{WAIC}(y, \Theta) = -2 \big ( \text{lppd} - {\color{blue}{\sum_i \operatorname{var}_\theta \log p (y_i \mid \theta)}} \big),$$
+
+where $y$ is the criterion, $\Theta$ is the posterior distribution, and the terms in the blue font make up the complexity penalty.
+
+#### Overthinking: The Akaike inspiration criterion.
+
+#### Rethinking: Information criteria and consistency.
+
+#### Rethinking: What about BIC and Bayes factors?
+
+#### Overthinking: WAIC calculations.
+
+Here is how to fit the pre-WAIC model with **brms**.
+
+Define the `stan_data` version of the `cars` data set.
+
+```{r}
+stan_data <- cars |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Define `model_code_7.7`.
+
+```{r}
+model_code_7.7 <- '
+data {
+  int<lower=1> n;
+  vector[n] speed;
+  vector[n] dist;
+}
+parameters {
+  real b0;
+  real b1;
+  real<lower=0> sigma;  
+}
+model {
+  dist ~ normal(b0 + b1 * speed, sigma);
+  b0 ~ normal(0, 100);
+  b1 ~ normal(0, 10);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  // Define and compute the log likelihood
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = normal_lpdf(dist[i] | b0 + b1 * speed[i], sigma);
+}
+'
+```
+
+Fit `m7.7` with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m7.7, file = "fits/m7.7.rda")
+load(file = "fits/m7.7.rda")
+```
+
+```{r}
+#| eval: false
+
+m7.7 <- stan(
+  data = stan_data,
+  model_code = model_code_7.7,
+  cores = 4, seed = 7)
+```
+
+Check the model summary.
+
+```{r}
+print(m7.7, pars = c("b0", "b1", "sigma"), probs = c(0.055, 0.945))
+```
+
+For the sake of practice, here's the fitted line plotted against the data.
+
+```{r}
+#| fig-width: 4.5
+#| fig-height: 3
+
+# range(cars$speed)  # 4 25
+
+as_draws_df(m7.7) |> 
+  expand_grid(speed = 4:25) |> 
+  mutate(dist = b0 + b1 * speed) |> 
+  
+  ggplot(aes(x = speed, y = dist)) +
+  stat_lineribbon(.width = 0.89, fill = "gray67", linewidth = 1/2) +
+  geom_point(data = cars,
+             alpha = 3/4, color = "blue")
+```
+
+As the the log likelihood and the WAIC, because of our `generated quantities` block, our `m7.7` object has a vector of `log_lik` values for each case in the data. We'll make explicit use of those in a moment. But since this is such a simple model, we'll first practice by hand. Here we extract the posterior draws just for the model parameters `b0`, `b1` and `sigma` from `m7.7`, use `expand_grid()` to add in the `cars` data, compute the `log_lik` values with `dnorm(log = TRUE)`, exponentiate those values back to the `likelihood` metric with `exp()`, and save the results as a data frame called `d_log_lik`.
+
+```{r}
+d_log_lik <- m7.7 |> 
+  spread_draws(b0, b1, sigma) |> 
+  expand_grid(cars |> 
+                mutate(i = 1:n()) |> 
+                select(i, everything())) |> 
+  # In R code 7.20, McElreath called this `logprob`
+  mutate(log_lik = dnorm(x = dist, 
+                         mean =  b0 + b1 * speed, 
+                         sd = sigma, 
+                         log = TRUE)) |> 
+  mutate(lik = exp(log_lik))
+
+# What?
+glimpse(d_log_lik)
+```
+
+Recall the formula for the $\text{lppd}$ was
+
+$$\text{lppd}(y, \Theta) = \sum_i \log \frac{1}{S} \sum_s p (y_i | \Theta_s),$$
+
+where $p (y_i | \Theta_s)$ is the likelihood of case $i$ on posterior draw $s$. For each case $i$ (i.e., $\sum_i$), we then take the average likelihood value [i.e., $\frac{1}{S} \sum_s p (y_i | \Theta_s)$] and transform the result by taking its log [i.e., $\log \left (\frac{1}{S} \sum_s p (y_i | \Theta_s) \right )$]. When we sum those values up, we have the $\text{lppd}$, which we'll save as a scalar named `lppd`.
+
+```{r}
+lppd <- d_log_lik |> 
+  group_by(i) |> 
+  summarise(log_mean_likelihood = mean(lik) |> log()) |>  
+  summarise(lppd = sum(log_mean_likelihood)) |> 
+  pull(lppd)
+
+# What?
+print(lppd)
+```
+
+It's a little easier to compute the effective number of parameters, $p_\text{WAIC}$. First, let's use a shorthand notation and define $V(y_i)$ as the variance in log-likelihood for the $i^\text{th}$ case across all $S$ samples. We define $p_\text{WAIC}$ as their sum
+
+$$p_\text{WAIC} = \sum_{i=1}^N V (y_i).$$
+
+We'll name the pointwise results [i.e., $V (y_i)$] as `var_log_lik`, and we'll save their sum [i.e., $\sum_{i=1}^N V (y_i)$] as a scalar named `pwaic`.
+
+```{r}
+pwaic <- d_log_lik |> 
+  group_by(i) |> 
+  summarise(var_log_lik = var(log_lik)) |> 
+  summarise(pwaic = sum(var_log_lik)) |> 
+  pull(pwaic)
+
+# What?
+print(pwaic)
+```
+
+Now we can finally plug our hand-made `lppd` and `pwaic` values into the formula $-2 (\text{lppd} - p_\text{WAIC})$ to compute the WAIC.
+
+```{r}
+# WAIC
+-2 * (lppd - pwaic)
+```
+
+Now we're finally ready to use those `log_lik` vectors from our `generated quantities` block. The **loo** package has a `extract_log_lik()` function that expects a vector named `log_lik`. This will convert them to a matrix with as many rows as posterior draws, and as many columns as cases in the sample data. In our case, That will make for a $4{,}000 \times 50$ matrix.
+
+```{r}
+extract_log_lik(m7.7) |> 
+  str()
+```
+
+We can then pump this log-likelihood matrix directly into the `loo::waic()` function, the results of which we'll save as `w7.7`.
+
+```{r}
+#| warning: false
+
+w7.7 <- extract_log_lik(m7.7) |> 
+  waic()
+```
+
+We can get a nice summary with `print()`.
+
+```{r}
+print(w7.7)
+```
+
+Lo and behold, the value in the `Estimate` column of the `waic` row matches the `waic` scalar we hand-computed just a few code blocks above.
+
+Before we move on, did you notice the `elpd_waic` row? That value is the `lppd` minus the `pwaic`, but without multiplying the result by -2. Here's how that matches up with our hand-computed scalars.
+
+```{r}
+(lppd - pwaic)
+```
+
+Recalling some of the intermediary steps from above, here's how we might compute the WAIC standard error by hand.
+
+```{r}
+n_cases <- nrow(cars)  # 50
+
+d_log_lik |> 
+  group_by(i) |> 
+  summarise(log_mean_likelihood = mean(lik) |> log(),
+            var_log_lik = var(log_lik)) |> 
+  # Compute the pointwise waic values
+  mutate(pointwise_waic = -2 * (log_mean_likelihood - var_log_lik)) |> 
+  summarise(waic_se = sqrt(n_cases * var(pointwise_waic)))
+```
+
+If you'd like the pointwise WAIC values from `waic()` output, just index.
+
+```{r}
+#| message: false
+#| warning: false
+
+w7.7$pointwise |> 
+  head()
+```
+
+### Comparing CV, PSIS, and WAIC.
+
+I'll leave the simulation for Figure 7.9 for another day.
+
+However, when it comes to the LOO-CV for `stan()` models, we can use the convenience function `loo::loo()` in much the same we used the `waic()`. Here's what that looks like for `m7.7`.
+
+```{r}
+extract_log_lik(m7.7) |> 
+  loo()
+```
+
+As long as you compute the `log_lik` values in the `generated quantities` block for input to `stan()`, the workflow is smooth. However, if you're ever in a situation where you haven't done that, you can do this all by hand. For example, this is how you can get the `loo()` summary for hand-computed `log_lik` values.
+
+```{r}
+m7.7 |> 
+  spread_draws(b0, b1, sigma) |> 
+  expand_grid(cars |> 
+                mutate(i = 1:n()) |> 
+                select(i, everything())) |> 
+  mutate(log_lik = dnorm(x = dist, 
+                         mean =  b0 + b1 * speed, 
+                         sd = sigma, 
+                         log = TRUE)) |> 
+  # Everything up to this point is a repeat from earlier
+  select(.draw, i, log_lik) |> 
+  pivot_wider(names_from = i, values_from = log_lik) |> 
+  select(-.draw) |> 
+  as.matrix() |> 
+  loo()
+```
+
+Hopefully you'll never have to do that, though.
+
+#### Rethinking: Diverse prediction frameworks.
+
+## Model comparison
+
+### Model mis-selection. {#sec-Model-mis-selection}
+
+Once again we return to the plant growth models from back in @sec-Post-treatment-bias, models `m6.6`, `m6.7`, and `m6.8`. If you were following along closely, you may have notices we defined the `log_lik` values in the `generated quantities` block for each, but put off their discussion until now. Here we'll use out `extract_log_lik |> waic()` workflow to compute the WAIC summaries for each, and save them as objects named `w6.6` through `w6.8`.
+
+```{r}
+#| echo: false
+
+load(file = "fits/m6.6.rda")
+load(file = "fits/m6.7.rda")
+load(file = "fits/m6.8.rda")
+```
+
+```{r}
+w6.6 <- m6.6 |> 
+  extract_log_lik() |> 
+  waic()
+
+w6.7 <- m6.7 |> 
+  extract_log_lik() |> 
+  waic()
+
+w6.8 <- m6.8 |> 
+  extract_log_lik() |> 
+  waic()
+```
+
+Like in the text (p. 226), here's the `waic()` output for `m6.7`.
+
+```{r}
+print(w6.7)
+```
+
+For our **rstan** + **loo** based workflow, we can compare multiple models by their WAIC with the `loo_compare()` function. The name of the function implies you should be using the LOO-CV, rather than the WAIC. Given the preferences of the package's authors, that's no surprise (e.g., see the opening paragraph [here](https://mc-stan.org/loo/reference/waic.html)). But yes, you can also use `loo_compare()` function to compare models by their WAIC estimates. Here we save the output as an object called `w_difference`, and then display a summary of the results.
+
+```{r}
+w_difference <- loo_compare(w6.6, w6.7, w6.8)
+
+w_difference |> 
+  print(simplify = FALSE)
+```
+
+Though the format is a little different, out output largely matches what McElreath displayed on page 227 of the text. With respect to our `loo_compare()` output, notice the `elpd_diff` column and the adjacent `se_diff` column. Those are our WAIC differences in the elpd metric. The models have been rank ordered from the highest (i.e., `m6.7`, called `model2`) to the lowest (i.e., `m6.6`, called `model1`). The scores listed are the differences of `m6.7` minus the comparison model. Since `m6.7` is the comparison model in the top row, the values are naturally 0 (i.e., $x - x = 0$). But now here's another critical thing to understand: WAIC and LOO differences are no longer reported in the $-2 \times x$ metric. Remember how multiplying `(lppd - pwaic)` by -2 is a historic artifact associated with the frequentist $\chi^2$ test? We'll, the makers of the **loo** package aren't fans, and they no longer support the conversion.
+
+So here's the deal: The substantive interpretations of the differences presented in an `elpd_diff` metric will be the same as if presented in a WAIC metric. But if we want to compare our `elpd_diff` results to those in the text, we will have to multiply them by -2. And also, if we want the associated standard error in the same metric, we'll need to multiply the `se_diff` column by 2. You wouldn't multiply by -2 because that would return a negative standard error, which would be silly. Here's a quick way to do those conversions.
+
+```{r}
+cbind(waic_diff = w_difference[, 1] * -2,
+      se        = w_difference[, 2] * 2)
+```
+
+Now those match up reasonably well with the values in McElreath's `dWAIC` and `dSE` columns.
+
+Anyway, here's how to compute the standard error for the WAIC difference for `m6.7` and `m6.8`, by hand, like McElreath did in the top of page 228.
+
+```{r}
+tibble(m6.7 = w6.7$pointwise[, "waic"],
+       m6.8 = w6.8$pointwise[, "waic"]) |> 
+  mutate(diff_m6.7_m6.8 = m6.7 - m6.8) |> 
+  summarise(se = sqrt(n() * var(diff_m6.7_m6.8)))
+```
+
+For us, the 99% interval for the difference distribution would be about so.
+
+```{r}
+41.2 + c(-1, 1) * 9.8 * 2.6
+```
+
+Here's our version of a WAIC coefficient plot.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 1.5
+
+bind_rows(w6.6$estimates["waic", ],
+          w6.7$estimates["waic", ],
+          w6.8$estimates["waic", ]) |> 
+  mutate(model = str_c("m6.", 6:8) |> 
+           fct_reorder(Estimate, .desc = TRUE),
+         lower = Estimate - SE,
+         upper = Estimate + SE) |> 
+  
+  ggplot(aes(x = Estimate, xmin = lower, xmax = upper, y = model)) +
+  geom_pointrange(shape = 1) +
+  labs(x = "WAIC",
+       y = NULL)
+```
+
+We don't get the deviance points with this method, but that's okay. Our primary focus is on the WAIC and its standard errors. IMO, the deviance points are mainly of pedagogical interest.
+
+As far as WAIC weights go, I'm not aware there is a quick and convenient way to compute WAIC weights for an **rstan** model. But if we look to the vignette [here](https://mc-stan.org/loo/articles/loo2-weights.html), we can compute them by hand.
+
+```{r}
+w_difference |> 
+  data.frame() |> 
+  mutate(weight = exp(elpd_waic) / sum(exp(elpd_waic))) |> 
+  select(waic, weight) |> 
+  # Just to make the output nicer
+  mutate_all(round, digits = 2)
+```
+
+Before we move on, I should point out you can do all of this for the `loo()`, as well. For example, here's a quick way to get the `loo_compare()` summary for the LOO estimates from our three models.
+
+```{r}
+loo_compare(
+  extract_log_lik(m6.6) |> loo(),
+  extract_log_lik(m6.7) |> loo(),
+  extract_log_lik(m6.8) |> loo()
+) |> 
+  print(simplify = FALSE)
+```
+
+Speaking of the LOO, the **loo** package, does support other kinds of model weights. With the `loo_model_weights()` function, we can compute stacking weights, or pseudo-Bayesian model averaging (BMA) weights. The `loo_model_weights()` function takes input in the form of a list of `psis_loo` objects (i.e., `loo()` output). Here's what that can look like for both stackind and pseudo-BMA weights.
+
+```{r}
+# stacking
+loo_model_weights(
+  list(extract_log_lik(m6.6) |> loo(),
+       extract_log_lik(m6.7) |> loo(),
+       extract_log_lik(m6.8) |> loo()),
+  method = "stacking"
+)
+
+# pseudobma
+loo_model_weights(
+  list(extract_log_lik(m6.6) |> loo(),
+       extract_log_lik(m6.7) |> loo(),
+       extract_log_lik(m6.8) |> loo()),
+  method = "pseudobma"
+)
+```
+
+For more on these types of weighting methods, see @yaoUsingStackingAverage2018.
+
+#### Rethinking: WAIC metaphors.
+
+### Outliers and other illusions. {#sec-Outliers-and-other-illusions}
+
+Time to bring back the `WaffleDivorce` data, and reconsider the models from back in @sec-Spurious-associations.
+
+```{r}
+#| echo: false
+
+load(file = "fits/m5.1.rda")
+load(file = "fits/m5.2.rda")
+load(file = "fits/m5.3.rda")
+```
+
+```{r}
+data(WaffleDivorce, package = "rethinking")
+
+d <- WaffleDivorce |> 
+  mutate(d = rethinking::standardize(Divorce),
+         m = rethinking::standardize(Marriage),
+         a = rethinking::standardize(MedianAgeMarriage))
+
+rm(WaffleDivorce)
+```
+
+For each of the models `m5.1` through `m5.3`, we computed the `log_lik` using the `generated quantities` block method. Here we compute and save their `loo()` output as objects named `l5.1` through `l5.3`.
+
+```{r}
+l5.1 <- m5.1 |> 
+  extract_log_lik() |> 
+  loo()
+
+l5.2 <- m5.2 |> 
+  extract_log_lik() |> 
+  loo()
+
+l5.3 <- m5.3 |> 
+  extract_log_lik() |> 
+  loo()
+```
+
+Now compare the models by the PSIS-LOO-CV.
+
+```{r}
+loo_compare(l5.1, l5.2, l5.3) |> 
+  print(simplify = FALSE)
+```
+
+Like in the text, our `m5.1` has the best LOO estimate, but only by a little bit when compared to `m5.3`. Unlike McElreath reported in the text, we did not get a warning message from `loo_compare()`. Let's investigate more carefully with the `loo()` function.
+
+```{r}
+loo(m5.3)
+```
+
+The critical line in that output was `All Pareto k estimates are good (k < 0.7)`. The **loo** package bins the Pareto-$k$ values into ranges labeled `ok`, `good`, `bad`, and `very bad`, and you will get warnings if anything starts to look `bad` or worse.  
+To dig deeper, we can use the `pareto_k_ids()` function to identify which observation[s] might have crossed out of the `(good)` range into the `(ok)` range.
+
+```{r}
+loo(m5.3) |> 
+  pareto_k_ids(threshold = 0.5)
+```
+
+The number `13` refers to the corresponding row in the data used to fit the model. We can access that row directly with the `dplyr::slice()` function.
+
+```{r}
+d |> 
+  slice(13) |> 
+  select(Location:Loc)
+```
+
+Here we subset the 13^th^ cell in the `loo::pareto_k_values()` output to see what that $k$ value was.
+
+```{r}
+pareto_k_values(l5.3)[13]
+```
+
+Alternatively, we could have extracted that value from our `l5.3` object with indexing like so.
+
+```{r}
+l5.3$diagnostics$pareto_k[13]
+```
+
+`r round(pareto_k_values(l5.3)[13], 2)` is a little high, but not high enough to cause `loo()` to return a warning message. Once a Pareto $k$ value crosses the 0.7 threshold, though, the **loo** package will bark. Before we make our version of Figure 7.10, we'll want to compute the WAIC for `m5.3`, which will give us access to the $p_\text{WAIC}$.
+
+```{r}
+#| warning: false
+
+w5.3 <- m5.3 |> 
+  extract_log_lik() |> 
+  waic()
+```
+
+We're ready to make our version of Figure 7.10.
+
+```{r}
+#| fig-width: 3.25
+#| fig-height: 3
+
+d_k <- tibble(
+  pareto_k = l5.3$diagnostics$pareto_k,
+  p_waic   = w5.3$pointwise[, "p_waic"],
+  Loc      = pull(d, Loc)) 
+
+d_k |> 
+  ggplot(aes(x = pareto_k, y = p_waic, color = Loc == "ID")) +
+  geom_vline(xintercept = c(0.5, 0.7), 
+             alpha = 1/2, color = "black", linetype = 2) +
+  geom_point(aes(shape = Loc == "ID")) +
+  geom_text(data = d_k |> 
+              filter(p_waic > 0.5),
+            aes(label = Loc),
+            hjust = 1, nudge_x = -0.03) +
+  scale_x_continuous(expression(PSIS~Pareto~italic(k)), breaks = c(0, 0.5, 0.7)) +
+  scale_color_manual(values = c("black", "red")) +
+  scale_shape_manual(values = c(1, 19)) +
+  labs(y = expression(italic(p)[WAIC]),
+       subtitle = "Gaussian model (m5.3)") +
+  theme(legend.position = "none")
+```
+
+For both the Pareto $k$ and the $p_\text{WAIC}$, our values are not as extreme as those McElreath reported in the text. I'm not sure if this is a consequence of us using HMC or due to recent algorithmic changes for the Stan/**loo** teams. But at least the overall pattern is the same. Idaho is the most extreme/influential case.
+
+In the text (p. 232), McElreath reported the effective number of parameters for `b5.3` was nearly 6. We can look at this with the `waic()` output.
+
+```{r}
+print(w5.3)
+```
+
+Our $p_\text{WAIC}$ was about `r round(w5.3$estimates[2, 1], 1)`, which is still a little high due to Idaho but not quite as high as in the text. There is some concern that Idaho is putting us at risk of overfitting due to the large influence it has on the posterior.
+
+We can fit a Student-$t$ model in `ratan()` by using the `student_t()` likelihood in the `model` block, and we can then use the `student_t_lpdf()` function in the `generated quantities` to compute the `log_lik` values.
+
+```{r}
+# Define the `stan_data`
+stan_data <- d |>
+  select(d, a, m) |> 
+  compose_data()
+
+# Define `model_code_5.3t`
+model_code_5.3t <- '
+data {
+  int<lower=1> n;
+  vector[n] d;
+  vector[n] m;
+  vector[n] a;
+}
+parameters {
+  real b0;
+  real b1;
+  real b2;
+  real<lower=0> sigma;
+}
+model {
+  vector[n] mu;
+  mu = b0 + b1 * m + b2 * a;
+  d ~ student_t(2, mu, sigma);
+  
+  b0 ~ normal(0, 0.2);
+  b1 ~ normal(0, 0.5);
+  b2 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = student_t_lpdf(d[i] | 2, b0 + b1 * m[i] + b2 * a[i], sigma);
+}
+'
+```
+
+Fit the $t$ model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m5.3t, file = "fits/m5.3t.rda")
+load(file = "fits/m5.3t.rda")
+```
+
+```{r m5.3}
+#| eval: false
+
+m5.3t <- stan(
+  data = stan_data,
+  model_code = model_code_5.3t,
+  cores = 4, seed = 5)
+```
+
+Check the model summary.
+
+```{r}
+print(m5.3t, pars = c("b0", "b1", "b2", "sigma"), probs = c(0.05, 0.945))
+```
+
+Here's a coefficient plot for $\beta_2$, by the two likelihoods.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 1.25
+
+bind_rows(
+  as_draws_df(m5.3),
+  as_draws_df(m5.3t)
+) |> 
+  mutate(likelihood = rep(c("Gaussian", "Student[nu==2]"), each = n() / 2)) |> 
+  
+  ggplot(aes(x = b2, y = likelihood)) +
+  stat_pointinterval(.width = 0.89, linewidth = 1/2, shape = 1) + 
+  scale_y_discrete(NULL, expand = expansion(mult = 0.05), labels = ggplot2:::parse_safe)
+```
+
+Compute and save the `loo()` and `waic()` output for the new $t$ model.
+
+```{r}
+#| warning: false
+
+l5.3t <- m5.3t |> 
+  extract_log_lik() |> 
+  loo()
+
+w5.3t <- m5.3t |> 
+  extract_log_lik() |> 
+  waic()
+```
+
+Now we might remake the plot from Figure 7.10, this time based on the $t$ model.
+
+```{r}
+#| fig-width: 3.25
+#| fig-height: 3
+
+d_k <- tibble(
+  pareto_k = l5.3t$diagnostics$pareto_k,
+  p_waic   = w5.3t$pointwise[, "p_waic"],
+  Loc      = pull(d, Loc)) 
+
+d_k |> 
+  ggplot(aes(x = pareto_k, y = p_waic, color = Loc == "ID")) +
+  geom_vline(xintercept = c(0.5, 0.7), 
+             alpha = 1/2, color = "black", linetype = 2) +
+  geom_point(aes(shape = Loc == "ID")) +
+  geom_text(data = d_k |> 
+              filter(Loc %in% c("ID", "ME")),
+            aes(label = Loc),
+            hjust = 1, nudge_x = -0.03) +
+  scale_x_continuous(expression(PSIS~Pareto~italic(k)), breaks = c(0, 0.5, 0.7)) +
+  scale_color_manual(values = c("black", "red")) +
+  scale_shape_manual(values = c(1, 19)) +
+  labs(y = expression(italic(p)[WAIC]),
+       subtitle = "Student-t model (m5.3t)") +
+  theme(legend.position = "none")
+```
+
+The high points in both the Pareto $k$ and $p_\text{WAIC}$ are much smaller, and both ID and ME are now closer to the center of the bivariate distribution. We can formally compare the two versions of the model by the LOO with the `loo_compare()` function.
+
+```{r}
+loo_compare(l5.3, l5.3t) |> print(simplify = F)
+```
+
+The standard error for the LOO difference was about the same size as the difference itself. This suggests the models were close and hard to distinguish with respect to their fit to the data. This will not always be the case.
+
+#### Rethinking: The Curse of Tippecanoe.
+
+## Summary
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
