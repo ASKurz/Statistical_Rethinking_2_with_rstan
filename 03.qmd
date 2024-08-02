@@ -1,0 +1,620 @@
+# Sampling the Imaginary
+
+Load the packages and remove the plot grid lines, by default.
+
+```{r}
+#| message: false
+#| warning: false
+
+# Load
+library(tidyverse)
+library(patchwork)
+library(tidybayes)
+library(rstan)
+library(posterior)
+library(tidybayes)
+
+# Remove grid lines
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank())
+)
+```
+
+#### Rethinking: The natural frequency phenomenon is not unique.
+
+#### Rethinking: Why statistics can’t save bad science.
+
+## Sampling from a grid-approximate posterior
+
+## Sampling to summarize
+
+I'm not going to cover the grid approach McElreath highlighted in this section. But we might take the time to explore some of these analyses with a `stan()` based posterior.
+
+Here we fit a model like `m2.1` from the last chapter, but this time based on the simple globe-tossing data of $w = 6$ and $n = 9$. Note how this time we are adjusting some of the default settings in the `stan()` arguments. Notably, our changes to the `warmup` and `iter` arguments will give us 100,000 posterior draws, which will help our MCMC results more closely mimic the analytic results in the chapter.
+
+```{r}
+#| echo: false
+
+# save(m3.1, file = "fits/m3.1.rda")
+load(file = "fits/m3.1.rda")
+```
+
+```{r m3.1}
+#| eval: false
+#| message: false
+#| results: "hide"
+
+data_list <- list(w = as.integer(6), 
+                  n = as.integer(9))
+
+model_code <- '
+data {
+  int<lower=1> n;                       
+  int<lower=0> w;
+}
+parameters {
+  real<lower=0, upper=1> p;
+}
+model {
+  w ~ binomial(n, p);  // Likelihood
+  p ~ beta(1, 1);      // Prior
+}
+'
+
+m3.1 <- stan(
+  data = data_list,
+  model_code = model_code, 
+  warmup = 500, iter = 25500, seed = 3)
+```
+
+Check the model summary. Note how we can use the `probs` argument to select 89% intervals.
+
+```{r}
+print(m3.1, probs = c(0.05, 0.945))
+```
+
+### Intervals of defined boundaries.
+
+One of the ways to extract the posterior draws from a `stan()` model is with the `as_draws_df()` function from the **posterior** package. Here we save the results as a data frame called `draws`.
+
+```{r}
+draws <- as_draws_df(m3.1)
+
+# What?
+head(draws)
+```
+
+We can compute the proportion of the posterior distribution below 0.5 like so.
+
+```{r}
+draws |> 
+  summarise(p_below_0.5 = mean(p < 0.5))
+```
+
+Much like in the text (p. 53), the value is about 17%. Here's how much of posterior probability lies between 0.5 and 0.75.
+
+```{r}
+draws |> 
+  summarise(p_between_0.5_and_0.75 = mean(p > 0.5 & p < 0.75))
+```
+
+About 60%.
+
+#### Overthinking: Counting with `sum`.
+
+### Intervals of defined mass.
+
+We can make the full version of Figure 3.2 with our `draws` object, buy including the proportion summaries form above, along with similar ones for the lower and middle 80 percentiles as new columns within `draws`. Then we just wrangle and make a faceted histogram with conditional a `fill`.
+
+```{r}
+#| fig-width: 5
+#| fig-height: 4
+#| warning: false
+
+partion_vector <- c("italic(p)<0.5", "{0.5<italic(p)}<0.75", "lower~80*'%'", "middle~80*'%'")
+
+draws |> 
+  mutate(`italic(p)<0.5` = p < 0.5,
+         `{0.5<italic(p)}<0.75` = p > 0.5 & p < 0.75,
+         `lower~80*'%'` = p < quantile(p, probs = 0.8),
+         `middle~80*'%'` = p > quantile(p, probs = 0.1) & p < quantile(p, probs = 0.9)) |> 
+  pivot_longer(cols = `italic(p)<0.5`:`middle~80*'%'`) |> 
+  mutate(name = factor(name, levels = partion_vector)) |> 
+  
+  ggplot(aes(x = p, fill = value)) +
+  geom_histogram(boundary = 0, binwidth = 0.01) +
+  scale_x_continuous(expression(proportion~water~(italic(p))), limits = 0:1) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  scale_fill_viridis_d(end = 0.6, breaks = NULL) +
+  facet_wrap(~ name, labeller = label_parsed)
+```
+
+We can also compute basic percentile, or quantile, based intervals with the `quantile()` function. Here are the exact values for our `quantile()`-based inner 80% interval bounds.
+
+```{r}
+draws |> 
+  summarise(lower = quantile(p, probs = 0.1),
+            upper = quantile(p, probs = 0.9))
+```
+
+Now fit a model for the smaller data $w = 3$, $n = 3$.
+
+```{r}
+#| echo: false
+
+# save(m3.2, file = "fits/m3.2.rda")
+load(file = "fits/m3.2.rda")
+```
+
+```{r m3.2}
+#| eval: false
+#| message: false
+#| results: "hide"
+
+model_code <- '
+data {
+  int<lower=1> n;                       
+  int<lower=0> w;
+}
+parameters {
+  real<lower=0, upper=1> p;
+}
+model {
+  w ~ binomial(n, p);  // Likelihood
+  p ~ beta(1, 1);      // Prior
+}
+'
+
+m3.2 <- stan(
+  data = list(w = 3, n = 3),
+  model_code = model_code,
+  warmup = 500, iter = 25500, seed = 3)
+```
+
+Check the model summary.
+
+```{r}
+print(m3.2, probs = c(0.05, 0.945))
+```
+
+Extract the posterior draws, and save them as `draws`.
+
+```{r}
+draws <- as_draws_df(m3.2)
+
+# What?
+glimpse(draws)
+```
+
+```{r}
+#| echo: false
+#| eval: false
+
+# These both work.
+# Though where this returns `p`, `.lower`, and `.upper`,
+draws |> 
+  mean_qi(p)
+
+# this returns `y`, `ymin`, and `ymax`.
+mean_qi(draws$p)
+
+# This does not work
+draws |> 
+  qi(p)
+
+# This works, and it returns a 1x2 matrix
+qi(draws$p)
+```
+
+```{r}
+#| echo: false
+#| eval: false
+
+# These both work.
+# Though where this returns `p`, `.lower`, and `.upper`,
+draws |> 
+  mode_hdi(p)
+
+# this returns `y`, `ymin`, and `ymax`.
+mode_hdi(draws$p)
+
+# This does not work
+draws |> 
+  hdi(p)
+
+# This works, and it returns a 1x2 matrix
+hdi(draws$p)
+```
+
+Though it's easy to compute percentile-based intervals with base-**R** `quantile()`, it not so easy to compute HDIs that way. But we can with the various convenience functions from the **tidybayes** package. If all we want are the 50% HDI's for `p`, we can use the `hdi()` function. Unless the HDI is multimodal, `hdi()` will return a 1X2 numeric matrix. Here we'll save that matrix as `p_hdi`.
+
+```{r}
+p_hdi <- hdi(draws$p, .width = 0.5)
+
+# What?
+print(p_hdi)
+```
+
+Here's how we can use that `hdi()` information to make Figure 3.3.
+
+```{r}
+#| fig-width: 4.5
+#| fig-height: 2.5
+#| warning: false
+
+draws |> 
+  mutate(pi = p > quantile(p, probs = 0.25) & p < quantile(p, probs = 0.75),
+         hdi = p > p_hdi[1] & p < p_hdi[2]) |> 
+  pivot_longer(cols = pi:hdi) |> 
+  mutate(interval = factor(name, 
+                           levels = c("pi", "hdi"),
+                           labels = c("50% Percentile Interval", "50% HPDI"))) |> 
+  
+  ggplot(aes(x = p, fill = value)) +
+  geom_histogram(boundary = 0, binwidth = 0.01) +
+  scale_x_continuous(expression(proportion~water~(italic(p))), limits = 0:1) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  scale_fill_viridis_d(end = 0.6, breaks = NULL) +
+  facet_wrap(~ interval)
+```
+
+#### Rethinking: What do compatibility intervals mean?
+
+### Point estimates.
+
+We can compute the mean or medians for a `stan()`-based posterior with the typical `mean()` and `median()` functions. Though there is a base-**R** function called `mode()`, it returned the 'storage mode' of an object, not the kind of mode we often think of in statistics. We do, however, have the `tidybayes::Mode()` function for that purpose. Here are those three values for `p` from `m3.2`.
+
+```{r}
+point_estimates <- draws |> 
+  summarise(mean = mean(p),
+            median = median(p),
+            mode = Mode(p)) |> 
+  pivot_longer(everything(),
+               names_to = "point",
+               values_to = "estimate")
+
+point_estimates
+```
+
+Here they are in a plot like the left panel of Figure 3.4.
+
+```{r}
+#| fig-width: 3.5
+#| fig-height: 2.5
+
+draws |> 
+  ggplot(aes(x = p)) +
+  geom_histogram(boundary = 0, binwidth = 0.01) +
+  geom_vline(data = point_estimates,
+             aes(xintercept = estimate, color = point)) +
+  scale_x_continuous(expression(proportion~water~(italic(p))), limits = 0:1) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  scale_color_viridis_d(NULL)
+```
+
+## Sampling to simulate prediction
+
+### Dummy data.
+
+#### Rethinking: Sampling distributions.
+
+### Model checking.
+
+#### Did the software work?
+
+#### Is the model adequate?
+
+We can make a version of Figure 3.6 using the `stan()` model `m3.1`. But it's going to take a few steps, some of which will include nerdy little side quests.
+
+To start of with how we might plot an HMC-derived posterior density like McElreath showed at the top of the figure, compare these two histograms for the posterior of `p` from `m3.1`.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 3
+
+p1 <- as_draws_df(m3.1) |> 
+  ggplot(aes(x = p)) +
+  geom_histogram(boundary = 0, binwidth = 0.01)
+
+# Save the breaks as a vector
+p_breaks <- seq(from = 0, to = 1, by = 0.01)
+
+p2 <- as_draws_df(m3.1) |> 
+  mutate(bin = cut(p, breaks = p_breaks)) |> 
+  
+  ggplot(aes(x = bin)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, size = 5))
+
+p1 | p2
+```
+
+The left histogram is made with the usual `geom_histogram()` code, with adjustments to the `boundary` and `binwidth` arguments. The histogram on the right was made with `geom_bar()` which we might usually use to make bar charts. In our data-wrangling code, we used the base-**R** `cut()` function to discretize the HMC draws for `p` into bins. We defined those bins using the `breaks` argument, into which we inserted our `p_breaks` sequence. That sequence of breaks via `cut()` produced the exact same bins as `geom_histogram()` with our custom `boundary` and `binwidth` settings.
+
+The reason we'd go through all this extra labor with `cut()` is because we can use those bins to compute the counts for the ones containing the nine example parameter values McElreath showcased with his vertical lines. Here are those counts.
+
+```{r}
+#| warning: false
+
+# To simplify the next line
+line_seq <- 1:9 / 10
+
+# Define the labels for the bins containing our `p` values of interest
+line_label <- str_c("(", line_seq, ",", line_seq + 0.01, "]")
+
+d_bin_count <- as_draws_df(m3.1) |> 
+  mutate(bin = cut(p, breaks = p_breaks)) |> 
+  count(bin, .drop = FALSE) |> 
+  filter(bin %in% line_label) |> 
+  # Extract the values defining the left-limit of the `bin`s
+  mutate(p = str_sub(bin, start = 2, end = 4) |> 
+           as.double())
+
+# What?
+print(d_bin_count)
+```
+
+We will come back and use this `d_bin_count` data frame in a bit. For now, here we use the `line_label` vector to help mark off the bins of interest in the histogram for our version of the top panel of Figure 3.6.
+
+```{r}
+#| fig-width: 6
+#| fig.height: 1.75
+
+p1 <- as_draws_df(m3.1) |> 
+  mutate(bin = cut(p, breaks = p_breaks)) |> 
+  mutate(line = bin %in% line_label) |> 
+  
+  ggplot(aes(x = p)) +
+  geom_histogram(aes(fill = line),
+                 boundary = 0, binwidth = 0.01) +
+  scale_x_continuous("probability of water", breaks = 0:2 / 2, limits = 0:1) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  scale_fill_manual(values = c("gray65", "gray35"), breaks = NULL) +
+  labs(subtitle = "Posterior probability")
+
+p1
+```
+
+We can make the middle panels of Figure 3.6 with a faceted bar chart via `geom_col()`.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 1
+
+p2 <- crossing(x = 0:9,
+               p = 1:9 / 10) |> 
+  mutate(density = dbinom(x = x, size = 9, prob = p)) |> 
+  mutate(p = str_c("italic(p)==", p)) |> 
+  
+  ggplot(aes(x = x, y = density)) +
+  geom_col(width = 0.2) +
+  scale_x_continuous(NULL, breaks = NULL) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(subtitle = "Sampling distributions") +
+  facet_wrap(~ p, labeller = label_parsed, nrow = 1) +
+  theme(strip.text.x = element_text(margin = margin(0, 0, 0, 0, "in")))
+
+p2
+```
+
+To make the basic posterior predictive distribution plot with our `m3.1` model, we just pump the `p` draws into the `prob` argument of the `rbinom()` function to compute a column of water counts, which we'll save as `w`.
+
+```{r}
+#| fig-width: 3
+#| fig.height: 1.75
+
+as_draws_df(m3.1) |> 
+  mutate(w = rbinom(n = n(), size = 9, prob = p)) |> 
+  
+  ggplot(aes(x = w)) +
+  geom_bar(width = 0.2) +
+  labs(subtitle = "Posterior predictive distribution")
+```
+
+The trick, though, is how one might put the `subtitle` way to the left of the plot. To my mind, the easiest thing is to make two plots. The first will be blank, with just the `subtitle`. The second will be a cleaned-up version of the bar chart above, but without a `subtitle`.
+
+```{r}
+#| fig-width: 4.5
+#| fig.height: 1.75
+
+p3a <- as_draws_df(m3.1) |> 
+  ggplot(aes(x = p)) +
+  labs(subtitle = "Posterior predictive distribution") +
+  theme(axis.text = element_text(color = "transparent"),
+        axis.ticks = element_line(color = "transparent"),
+        axis.title = element_text(color = "transparent"),
+        panel.background = element_blank())
+
+p3b <- as_draws_df(m3.1) |> 
+  mutate(w = rbinom(n = n(), size = 9, prob = p)) |> 
+  
+  ggplot(aes(x = w)) +
+  geom_bar(width = 0.2) +
+  scale_x_continuous("number of water samples", breaks = 0:3 * 3) +
+  scale_y_continuous(NULL, breaks = NULL, expand = expansion(mult = c(0.05, 0.8)))
+
+p3a | p3b
+```
+
+Now we get to another one of the fun parts. Remember those `d_bin_count` data from above? Here we can use those values to make the angled lines that connect the top and middle panels. One of the tricks, here, is we need to set `theme_void()` to make the all the elements of the plot, other than the lines, transparent. The lines themselves will be weighted by the `n` counts from the `cut()`-made bins. We'll add arrowheads for a little style.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 1
+
+p4 <- d_bin_count|> 
+  mutate(x = p,
+         xend = (1:9 / 10) + (-4:4 / 50),
+         y = 0.84, 
+         yend = 0.28) |> 
+  
+  ggplot(aes(x = x, xend = xend, y = y, yend = yend,
+             linewidth = n)) +
+  geom_segment(arrow = arrow(length = unit(0.05, "in")),
+               color = "gray35") +
+  scale_linewidth(range = c(1/10, 0.75), breaks = NULL) +
+  coord_cartesian(xlim = 0:1,
+                  ylim = 0:1) +
+  theme_void()
+
+p4
+```
+
+Now we follow a similar strategy for the lines connecting the middle and bottom panels.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 1
+
+p5 <- d_bin_count |> 
+  mutate(x = p + (-4:4 / 50),
+         xend = 0.5 + (-4:4 / 150),
+         y = 0.8, 
+         yend = 0.22) |> 
+  
+  ggplot(aes(x = x, xend = xend, y = y, yend = yend,
+             linewidth = n)) +
+  geom_segment(arrow = arrow(length = unit(0.05, "in")),
+               color = "gray35") +
+  scale_linewidth(range = c(1/10, 0.75), breaks = NULL) +
+  coord_cartesian(xlim = 0:1,
+                  ylim = 0:1) +
+  theme_void()
+
+p5
+```
+
+Here's the full version of Figure 3.6.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+
+# Define the `layout` for the panels
+layout <- c(
+  area(t = 1, b = 4, l = 1, r = 9),   # Posterior probability
+  area(t = 5, b = 6, l = 1, r = 9),   # Sampling distributions
+  area(t = 8, b = 10, l = 1, r = 3),  # `subtitle`
+  area(t = 8, b = 10, l = 4, r = 6),  # Posterior predictive distribution
+  area(t = 4, b = 5, l = 1, r = 9),   # Upper lines
+  area(t = 6, b = 8, l = 1, r = 9)    # Lower lines
+)
+
+# Combine and display
+(p1 + p2 + p3a + p3b + p4 + p5) + 
+  plot_layout(design = layout)
+```
+
+
+In Figure 3.7, McElreath considered the longest sequence of the sample values. We've been using `rbinom()` with the size parameter set to 9 for our simulations. E.g.,
+
+```{r}
+rbinom(10, size = 9, prob = .6)
+```
+
+Notice this collapsed (i.e., aggregated) over the sequences within the individual sets of 9. What we need is to simulate nine individual trials many times over. For example, this
+
+```{r}
+rbinom(9, size = 1, prob = .6)
+```
+
+would be the disaggregated version of just one of the numerals returned by `rbinom()` when `size = 9`. So let's try simulating again with un-aggregated samples.
+
+We can use our `m3.1` posterior draws of `p` to simulate disaggregated counts. For each of the draws, well do the `n = 9` simulations from `rbinom()` from within the `purrr::map()` function, saving the results in a nested column called `w_draws`. Then we'll un-nest that column with the `unnest()` function. Since this is a substantial change to the original `as_draws_df()` output, we'll save the results as `d_w_draws`.
+
+```{r d_w_draws}
+#| warning: false
+
+set.seed(3)
+
+d_w_draws <- as_draws_df(m3.1) |> 
+  select(.draw, p) |> 
+  mutate(w_draws = purrr::map(.x = p, .f = rbinom, n = 9, size = 1)) |> 
+  unnest(w_draws)
+
+# What?
+head(d_w_draws, n = 10)
+```
+
+Now each of the original levels of `.draw` has nine rows, on for each of the nine `w_draws` values.
+
+Next we count the longest sequences. The base **R** [`rle()` function](https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/rle) will help with that. Consider McElreath's sequence of tosses.
+
+```{r}
+tosses <- c("w", "l", "w", "w", "w", "l", "w", "l", "w")
+```
+
+You can plug that into `rle()`.
+
+```{r}
+rle(tosses)
+```
+
+For our purposes, we're interested in `lengths`. That tells us the length of each sequences of the same value. The `3` corresponds to our run of three `w`s. The `max()` function will help us confirm it's the largest value.
+
+```{r}
+rle(tosses)$lengths %>% max()
+```
+
+Now let's apply our method to the data and plot.
+
+```{r}
+#| fig-width: 3.5
+#| fig-height: 3
+
+p1 <- d_w_draws |> 
+  group_by(.draw) |> 
+  summarise(longest_run_length = rle(w_draws)$lengths %>% max()) |> 
+  
+  ggplot(aes(x = longest_run_length)) +
+  geom_bar(aes(fill = longest_run_length == 3)) +
+  scale_fill_viridis_d(option = "D", end = .9, breaks = NULL) +
+  scale_x_continuous("longest run length", breaks = 1:4 * 2) +
+  scale_y_continuous("frequency", breaks = 0:2 * 1e4, limits = c(0, 3e4))
+
+p1
+```
+
+Let's look at `rle()` again.
+
+```{r}
+rle(tosses)
+```
+
+We can use the length of the `lengths` vector (i.e., 7 in this example) as the numbers of switches from, in this case, "w" and "l".
+
+```{r}
+rle(tosses)$lengths %>% length()
+```
+
+With that new trick, we're ready to make the right panel of Figure 3.7.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3
+
+p2 <- d_w_draws |> 
+  group_by(.draw) |> 
+  summarise(longest_run_length = rle(w_draws)$lengths %>% length()) |> 
+  
+  ggplot(aes(x = longest_run_length)) +
+  geom_bar(aes(fill = longest_run_length == 3)) +
+  scale_x_continuous("number of switches", breaks = 0:4 * 2) +
+  scale_fill_viridis_d(option = "D", end = 0.9, breaks = NULL) +
+  scale_y_continuous(NULL, breaks = NULL, limits = c(0, 3e4))
+
+# Combine both panels to make the full figure
+p1 | p2
+```
+
+#### Rethinking: What does more extreme mean?
+
+## Summary
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
