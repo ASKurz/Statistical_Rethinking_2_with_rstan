@@ -1,0 +1,1745 @@
+# Geocentric Models {#sec-Geocentric-Models}
+
+Load the packages.
+
+```{r}
+#| message: false
+#| warning: false
+
+# Load
+library(tidyverse)
+library(patchwork)
+library(tidybayes)
+library(rstan)
+library(posterior)
+
+# Drop grid lines
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank())
+)
+```
+
+## Why normal distributions are normal
+
+### Normal by addition.
+
+### Normal by multiplication.
+
+### Normal by log-multiplication.
+
+### Using Gaussian distributions.
+
+#### Rethinking: Heavy tails.
+
+#### Overthinking: Gaussian distribution.
+
+## A language for describing models
+
+### Re-describing the globe tossing model.
+
+#### Overthinking: From model definition to Bayes' theorem.
+
+We can use grid approximation to work through our globe tossing model.
+
+```{r}
+# How many `p_grid` points would you like?
+n_points <- 100
+
+d <- tibble(
+  p_grid = seq(from = 0, to = 1, length.out = n_points),
+  w = 6, 
+  n = 9) |> 
+  mutate(prior = dunif(x = p_grid, min = 0, max = 1),
+         likelihood = dbinom(x = w, size = n, prob = p_grid)) |> 
+  mutate(posterior = likelihood * prior / sum(likelihood * prior))
+
+# What?
+head(d)
+```
+
+In case you were curious, here's what they look like.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 2.25
+
+d |> 
+  pivot_longer(prior:posterior) |> 
+  mutate(name = factor(name, levels = c("prior", "likelihood", "posterior"))) |> 
+  
+  ggplot(aes(x = p_grid, y = value, fill = name)) +
+  geom_area() +
+  scale_y_continuous(NULL, breaks = NULL) +
+  scale_fill_manual(values = c("blue", "red", "purple"), breaks = NULL) +
+  xlab("probability grid") +
+  facet_wrap(~ name, scales = "free")
+```
+
+## A Gaussian model of height
+
+### The data.
+
+Load the `Howell1` data.
+
+```{r}
+data(Howell1, package = "rethinking")
+d <- Howell1
+rm(Howell1)
+str(d)
+```
+
+I'm not aware of a `precis()` function for numeric and graphical summaries of variables outside of McElreath's **rethinking** package. We can get some of that information with `summary()`.
+
+```{r}
+summary(d)
+```
+
+We might make the histograms like this.
+
+```{r}
+#| fig-width: 3.5
+#| fig-height: 4.25
+
+d |> 
+  pivot_longer(everything()) |> 
+  mutate(name = factor(name, levels = c("height", "weight", "age", "male"))) |> 
+  
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(~ name, scales = "free", ncol = 1)
+```
+
+If you're curious, McElreath made those tiny histograms with help from Wickham's [`histospark()` function](https://github.com/hadley/precis/blob/master/R/histospark.R). Here's the code.
+
+```{r}
+sparks <- c("\u2581", "\u2582", "\u2583", "\u2585", "\u2587")
+
+histospark <- function(x, width = 10) {
+  bins <- graphics::hist(x, breaks = width, plot = FALSE)
+
+  factor <- cut(
+    bins$counts / max(bins$counts),
+    breaks = seq(0, 1, length = length(sparks) + 1),
+    labels = sparks,
+    include.lowest = TRUE
+  )
+
+  paste0(factor, collapse = "")
+}
+```
+
+Here's how it works.
+
+```{r}
+histospark(d$weight)
+```
+
+We can use the `dplyr::filter()` function to make an adults-only data frame.
+
+```{r}
+d2 <- d |> 
+  filter(age >= 18)
+```
+
+Our reduced `d2` does indeed have $n = 352$ cases.
+
+```{r}
+d2 |>  
+  count()
+```
+
+#### Overthinking: Data frames and indexes.
+
+### The model.
+
+The likelihood for our model is
+
+$$\text{heights}_i \sim \operatorname{Normal}(\mu, \sigma),$$
+
+where the $i$ subscript indexes the individual cases in the data. Our two parameters are $\mu$ and $\sigma$, which we will estimate using Bayes' formula. Our prior for $\mu$ will be
+
+$$\mu \sim \operatorname{Normal}(178, 20)$$
+
+and our prior for $\sigma$ will be
+
+$$\sigma \sim \operatorname{Uniform}(0, 50).$$
+
+Here's the shape of the prior for $\mu$, $\mathcal N(178, 20)$.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.5
+
+p1 <- tibble(x = seq(from = 100, to = 250, by = 0.1)) |> 
+  mutate(density = dnorm(x = x, mean = 178, sd = 20)) |> 
+  
+  ggplot(aes(x = x, y = density)) +
+  geom_line() +
+  scale_x_continuous(breaks = seq(from = 100, to = 250, by = 75)) +
+  ggtitle("mu ~ dnorm(178, 20)")
+
+p1
+```
+
+And here's the **ggplot2** code for our prior for $\sigma$, a uniform distribution with a minimum value of 0 and a maximum value of 50. We don't really need the $y$-axis when looking at the shapes of a density, so we'll just remove it with `scale_y_continuous()`.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.5
+
+p2 <- tibble(x = seq(from = -10, to = 60, by = 0.1)) |> 
+  mutate(density = dunif(x = x, min = 0, max = 50)) |> 
+  
+  ggplot(aes(x = x, y = density)) +
+  geom_line() +
+  scale_x_continuous(breaks = c(0, 50)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  ggtitle("sigma ~ dunif(0, 50)")
+
+p2
+```
+
+We can simulate from both priors at once to get a prior probability distribution of `heights`.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.5
+
+n <- 1e4
+
+set.seed(4)
+
+sim <- tibble(sample_mu    = rnorm(n = n, mean = 178, sd  = 20),
+              sample_sigma = runif(n = n, min = 0, max = 50)) |> 
+  mutate(height = rnorm(n = n, mean = sample_mu, sd = sample_sigma))
+  
+p3 <- sim|> 
+  ggplot(aes(x = height)) +
+  geom_density(fill = "grey33") +
+  scale_x_continuous(breaks = c(0, 73, 178, 283)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  ggtitle("height ~ dnorm(mu, sigma)")
+
+p3
+```
+
+If you look at the $x$-axis breaks on the plot in McElreath's lower left panel in Figure 4.3, you'll notice they're intentional. To compute the mean and 3 standard deviations above and below, you might do this.
+
+```{r}
+sim |> 
+  summarise(lower = mean(height) - sd(height) * 3,
+            mean  = mean(height),
+            upper = mean(height) + sd(height) * 3) |> 
+  mutate_all(round, digits = 1)
+```
+
+Our values are very close to his, but are off by just a bit due to simulation variation.
+
+Here's the work to make the lower right panel of Figure 4.3.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.5
+
+# Simulate
+set.seed(4)
+
+sim <- tibble(sample_mu    = rnorm(n = n, mean = 178, sd = 100),
+              sample_sigma = runif(n = n, min = 0, max = 50)) |> 
+  mutate(height = rnorm(n = n, mean = sample_mu, sd = sample_sigma))
+
+# Compute the values we'll use to break on our x axis
+breaks <- c(mean(sim$height) + c(-3, 0, 3) * sd(sim$height), 0) |> round(digits = 0)
+
+# This is just for aesthetics
+text <- tibble(
+  height = 272 - 25,
+  y      = 0.0013,
+  label  = "tallest man",
+  angle  = 90)
+  
+# Plot
+p4 <- sim |> 
+  ggplot(aes(x = height)) +
+  geom_density(fill = "black", linewidth = 0) +
+  geom_vline(xintercept = 0, color = "grey92") +
+  geom_vline(xintercept = 272, color = "grey92", linetype = 3) +
+  geom_text(data = text,
+            aes(y = y, label = label, angle = angle),
+            color = "grey92") +
+  scale_x_continuous(breaks = breaks) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  ggtitle("height ~ dnorm(mu, sigma)\nmu ~ dnorm(178, 100)")
+
+p4
+```
+
+You may have noticed how we were saving each of the four last plots as `p1` through `p4`. Let's combine the four to make our version of McElreath's Figure 4.3.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 5
+
+(p1 + xlab("mu") | p2 + xlab("sigma")) / (p3 | p4)
+```
+
+On page 84, McElreath said his prior simulation indicated 4% of the heights would be below zero. Here's how we might determine that percentage for our simulation.
+
+```{r}
+sim |> 
+  count(height < 0) |> 
+  mutate(percent = 100 * n / sum(n))
+```
+
+Here's the break down compared to the tallest man on record, [Robert Pershing Wadlow](https://en.wikipedia.org/wiki/Robert_Wadlow) (1918--1940).
+
+```{r}
+sim |> 
+  count(height < 272) |> 
+  mutate(percent = 100 * n / sum(n))
+```
+
+#### Rethinking: A farewell to epsilon.
+
+#### Overthinking: Model definition to Bayes' theorem again.
+
+### Grid approximation of the posterior distribution.
+
+This can be a handy preparatory step before we fit the model with `stan()`.
+
+```{r}
+n <- 200
+
+d_grid <- crossing(
+  mu    = seq(from = 140, to = 160, length.out = n),
+  sigma = seq(from = 4, to = 9, length.out = n))
+
+# What?
+glimpse(d_grid)
+```
+
+`d_grid` contains every combination of `mu` and `sigma` across their specified values. Instead of base **R** `sapply()`, we'll do the computations by making a custom function which we'll then plug into `purrr::map2()`.
+
+```{r}
+grid_function <- function(mu, sigma) {
+  
+  dnorm(x = d2$height, mean = mu, sd = sigma, log = TRUE) |> 
+    sum()
+  
+}
+```
+
+Now we're ready to complete the tibble.
+
+```{r}
+d_grid <- d_grid |> 
+  mutate(log_likelihood = map2(.x = mu, .y = sigma, .f = grid_function)) |>
+  unnest(log_likelihood) |> 
+  mutate(prior_mu    = dnorm(x = mu, mean = 178, sd = 20, log = TRUE),
+         prior_sigma = dunif(x = sigma, min = 0, max = 50, log = TRUE)) |> 
+  mutate(product = log_likelihood + prior_mu + prior_sigma) |> 
+  mutate(probability = exp(product - max(product)))
+
+# What?
+head(d_grid)
+```
+
+In the final `d_grid`, the `probability` vector contains the posterior probabilities across values of `mu` and `sigma`. We can make a contour plot with `geom_contour()`.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 3.5
+
+d_grid |> 
+  ggplot(aes(x = mu, y = sigma, z = probability)) + 
+  geom_contour() +
+  labs(x = expression(mu),
+       y = expression(sigma)) +
+  coord_cartesian(xlim = range(d_grid$mu),
+                  ylim = range(d_grid$sigma))
+```
+
+We'll make our heat map with `geom_raster()`.
+
+```{r}
+#| fig-width: 5
+#| fig-height: 3.5
+
+d_grid |> 
+  ggplot(aes(x = mu, y = sigma, fill = probability)) + 
+  geom_raster(interpolate = T) +
+  scale_fill_viridis_c(option = "B") +
+  labs(x = expression(mu),
+       y = expression(sigma))
+```
+
+### Sampling from the posterior.
+
+We can use `dplyr::sample_n()` to sample rows, with replacement, from `d_grid`.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 3.5
+
+set.seed(4)
+
+d_grid_samples <- d_grid |> 
+  sample_n(size = 1e4, replace = TRUE, weight = probability)
+
+d_grid_samples |> 
+  ggplot(aes(x = mu, y = sigma)) + 
+  geom_point(size = 0.9, alpha = 1/15) +
+  scale_fill_viridis_c() +
+  labs(x = expression(mu[samples]),
+       y = expression(sigma[samples]))
+```
+
+We can use `pivot_longer()` and then `facet_wrap()` to plot the densities for both `mu` and `sigma` at once.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2.5
+
+d_grid_samples |> 
+  pivot_longer(mu:sigma) |> 
+
+  ggplot(aes(x = value)) + 
+  geom_density(fill = "grey33") +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(NULL) +
+  facet_wrap(~ name, labeller = label_parsed, scales = "free")
+```
+
+We'll use the **tidybayes** package to compute their posterior modes and 95% HDIs.
+
+```{r}
+d_grid_samples |> 
+  pivot_longer(mu:sigma) |> 
+  group_by(name) |> 
+  mode_hdi(value)
+```
+
+#### Overthinking: Sample size and the normality of $\sigma$'s posterior.
+
+Here's `d3`.
+
+```{r}
+set.seed(4)
+(d3 <- sample(d2$height, size = 20))
+```
+
+For our first step using `d3`, we'll redefine `d_grid`.
+
+```{r}
+n <- 200
+
+# Note we've redefined the ranges of `mu` and `sigma`
+d_grid <- crossing(
+  mu    = seq(from = 150, to = 170, length.out = n),
+  sigma = seq(from = 4, to = 20, length.out = n))
+```
+
+Second, we'll redefine our custom `grid_function()` function to operate over the `height` values of `d3`.
+
+```{r}
+grid_function <- function(mu, sigma) {
+  
+  dnorm(d3, mean = mu, sd = sigma, log = TRUE) |> 
+    sum()
+  
+}
+```
+
+Now we'll use the amended `grid_function()` to make the posterior.
+
+```{r}
+d_grid <- d_grid |> 
+  mutate(log_likelihood = map2_dbl(.x = mu, .y = sigma, .f = grid_function)) |> 
+  mutate(prior_mu    = dnorm(x = mu, mean = 178, sd = 20, log = TRUE),
+         prior_sigma = dunif(x = sigma, min = 0, max = 50, log = TRUE)) |> 
+  mutate(product = log_likelihood + prior_mu + prior_sigma) |> 
+  mutate(probability = exp(product - max(product)))
+```
+
+Next we'll `sample_n()` and plot.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 3.5
+
+set.seed(4)
+
+d_grid_samples <- d_grid |>  
+  sample_n(size = 1e4, replace = TRUE, weight = probability)
+
+d_grid_samples |> 
+  ggplot(aes(x = mu, y = sigma)) + 
+  geom_point(size = 0.9, alpha = 1/15) +
+  labs(x = expression(mu[samples]),
+       y = expression(sigma[samples]))
+```
+
+Behold the updated densities.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2.5
+
+d_grid_samples |> 
+  pivot_longer(mu:sigma) |> 
+
+  ggplot(aes(x = value)) + 
+  geom_density(fill = "grey33", linewidth = 0) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(NULL) +
+  facet_wrap(~ name, labeller = label_parsed, scales = "free")
+```
+
+### Finding the posterior distribution with ~~`quap()`~~ `stan()`.
+
+Here we rewrite the statistical model, this time using font color to help differentiate the likelihood from the prior(s).
+
+$$
+\begin{align*}
+\color{red}{\text{heights}_i} & \color{red}\sim \color{red}{\operatorname{Normal}(\mu, \sigma)} && \color{red}{\text{likelihood}} \\
+\color{blue}\mu & \color{blue}\sim \color{blue}{\operatorname{Normal}(178, 20)} && \color{blue}{\text{prior}} \\
+\color{blue}\sigma & \color{blue}\sim \color{blue}{\operatorname{Uniform}(0, 50)}
+\end{align*}
+$$
+
+For **rstan**, first we define the model code, which is a character string specifying the model with a series of blocks. Perhaps the most fundamental of these are the `model`, `parameters`, and `model` blocks. Note that whereas we typically use the `#` mark to make comments in **R** code, we use `//` for comments in **rstan** model code.
+
+```{r}
+model_code <- '
+data {
+  int<lower=1> n;
+  vector[n] height;
+}
+parameters {
+  real mu;
+  real<lower=0,upper=50> sigma;
+}
+model {
+  height ~ normal(mu, sigma);  // Likelihood
+  mu ~ normal(178, 20);        // Priors
+  sigma ~ uniform(0, 50);
+}
+'
+```
+
+Next we use the `tidybayes::compose_data()` function to convert the data to a list in the format expected by **rstan**, which is a list.
+
+```{r}
+stan_data <- d2 |>
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Note how by default, `compose_data()` adds a variable called `n`, which tells the number of rows in the original data frame. If you look at the `model_code` above, you'll see how I used that value when defining the `height` data.
+
+Now we fit the model with the `stan()` function.
+
+```{r}
+#| echo: false
+
+# save(m4.1, file = "fits/m4.1.rda")
+load(file = "fits/m4.1.rda")
+```
+
+```{r m4.1}
+#| eval: false
+#| message: false
+#| results: "hide"
+
+m4.1 <- stan(
+  data = stan_data,
+  model_code = model_code,
+  # Default settings
+  chains = 4, iter = 2000, warmup = 1000,
+  # To make it reproducible
+  seed = 4)
+```
+
+Here's the model summary.
+
+```{r}
+print(m4.1, probs = c(0.05, 0.945))
+```
+
+Here's the second model with the stronger prior for $\mu$.
+
+```{r}
+#| echo: false
+
+# save(m4.2, file = "fits/m4.2.rda")
+load(file = "fits/m4.2.rda")
+```
+
+```{r m4.2}
+#| eval: false
+#| message: false
+#| results: "hide"
+
+model_code <- '
+data {
+  int<lower=1> n;
+  vector[n] height;
+}
+parameters {
+  real mu;
+  real<lower=0,upper=50> sigma;
+}
+model {
+  height ~ normal(mu, sigma);
+  mu ~ normal(178, 0.1);       // This prior has been updated
+  sigma ~ uniform(0, 50);
+}
+'
+
+m4.2 <- stan(
+  data = stan_data,
+  model_code = model_code,
+  chains = 4, iter = 2000, warmup = 1000,
+  seed = 4)
+```
+
+Here's the model summary.
+
+```{r}
+print(m4.2, probs = c(0.05, 0.945))
+```
+
+#### Overthinking: Start values for ~~quap~~ `rstan()`.
+
+The Stan folks generally use the language of *initial* values, rather than *start* values. But I believe these are basically the same thing. Within the `stan()` function, you can set these with the `init` argument, about which you can learn more by executing `?stan` in your console, or perhaps looking through [this thread](https://discourse.mc-stan.org/t/how-to-define-initial-values-in-stan-in-r/16855) on the Stan forums.
+
+### Sampling from a ~~`quap()`~~ `stan()`.
+
+The `vcov()` function does not work for models fit with `stan()`.
+
+```{r}
+#| eval: false
+
+vcov(m4.1)  # This returns an error message
+```
+
+However, if you really wanted this information, you could get it after putting the HMC chains in a data frame. We do that with the `as_draws_df()` function from the **posterior** package.
+
+```{r}
+draws <- as_draws_df(m4.1)
+
+head(draws)
+```
+
+When McElreath extracts his posterior draws in the text, he generally calls the object `post`. Since several of the related functions from the **posterior** and **tidybayes** packages tend to use the language of *draws*, we'll do the same and call our posterior draws objects `draws`.
+
+Now `select()` the columns containing the draws from the desired parameters and feed them into the `cov()` function, which will return a variance/covariance matrix.
+
+```{r}
+#| warning: false
+ 
+draws |> 
+  select(mu:sigma) |> 
+  cov()
+```
+
+Here are just the variances, and then the correlation matrix.
+
+```{r}
+#| warning: false
+
+# Variances
+draws |> 
+  select(mu:sigma) |> 
+  cov() |> 
+  diag()
+
+# Correlation
+draws |> 
+  select(mu:sigma) |> 
+  cor()
+```
+
+With our `draws <- as_draws_df(m4.1)` code from a few lines above, we've already produced the **rstan** version of what McElreath achieved with `extract.samples()` on page 90. However, what happened under the hood was different. Whereas **rethinking** used the `mvnorm()` function from the **MASS** package, with `posterior::as_draws_df()` we extracted the iterations of the HMC chains and put them in a data frame.
+
+The `summary()` function doesn't work for `as_draws_df()` objects quite the way `precis()` does for posterior data frames from the **rethinking** package. Behold the results.
+
+```{r}
+#| warning: false
+ 
+draws |> 
+  select(mu:sigma) |> 
+  summary()
+```
+
+However, the `summarise_draws()` function provides a nice summary for columns from `as_draws_df()`.
+
+```{r}
+#| warning: false
+ 
+draws |> 
+  select(mu:sigma) |> 
+  summarise_draws() |> 
+  mutate_if(is.double, round, digits = 2)
+```
+
+The function comes with three handy `default_*_meaures()` helper function, which can help give a more focused output.
+
+```{r}
+#| warning: false
+
+# default_summary_measures()
+draws |> 
+  select(mu:sigma) |> 
+  summarise_draws(default_summary_measures()) |> 
+  mutate_if(is.double, round, digits = 2)
+
+# default_convergence_measures()
+draws |> 
+  select(mu:sigma) |> 
+  summarise_draws(default_convergence_measures()) |> 
+  mutate_if(is.double, round, digits = 2)
+
+# default_mcse_measures()
+draws |> 
+  select(mu:sigma) |> 
+  summarise_draws(default_mcse_measures()) |> 
+  mutate_if(is.double, round, digits = 2)
+```
+
+You can also compute many of these statistics with explicit **tidyverse** code.
+
+```{r}
+#| warning: false
+
+draws |> 
+  pivot_longer(mu:sigma) |> 
+  group_by(name) |>
+  summarise(mean = mean(value),
+            sd   = sd(value),
+            `5.5%`  = quantile(value, probs = 0.055),
+            `94.5%` = quantile(value, probs = 0.945)) |>
+  mutate_if(is.numeric, round, digits = 2)
+```
+
+And if you're willing to drop the posterior $\textit{SD}$s, you can use `tidybayes::mean_hdi()`, too.
+
+```{r}
+#| warning: false
+ 
+draws |> 
+  pivot_longer(mu:sigma) |> 
+  group_by(name) |>
+  mean_qi(value)
+```
+
+#### Overthinking: Under the hood with multivariate sampling.
+
+## Linear prediction
+
+Here's our scatter plot of `weight` and `height`.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.8
+
+d2 |> 
+  ggplot(aes(x = weight, y = height)) +
+  geom_point(alpha = 1/2, size = 1/2)
+```
+
+#### Rethinking: What is "regression"? 
+
+### The linear model strategy.
+
+Like we did for our first model without a predictor, we'll use font color to help differentiate between the likelihood and prior(s) of our new univariable model,
+
+$$
+\begin{align*}
+\color{red}{\text{height}_i} & \color{red}\sim \color{red}{\operatorname{Normal}(\mu_i, \sigma)} && \color{red}{\text{likelihood}} \\
+\color{red}{\mu_i} & \color{red}= \color{red}{\alpha + \beta (\text{weight}_i - \overline{\text{weight}})}  && \color{red}{\text{\{the linear model is just a special part of the likelihood\}} } \\
+\color{blue}\alpha & \color{blue}\sim \color{blue}{\operatorname{Normal}(178, 20)} && \color{blue}{\text{prior(s)}} \\
+\color{blue}\beta  & \color{blue}\sim \color{blue}{\operatorname{Normal}(0, 10)} \\
+\color{blue}\sigma & \color{blue}\sim \color{blue}{\operatorname{Uniform}(0, 50)}.
+\end{align*}
+$$
+
+#### Probability of the data.
+
+#### Linear model.
+
+##### Rethinking: Nothing special or natural about linear models.
+
+##### Overthinking: Units and regression models.
+
+#### Priors.
+
+Instead of using a loop to make our data for Figure 4.5, we'll stay within the **tidyverse**.
+
+```{r}
+# How many lines would you like?
+n_lines <- 100
+
+set.seed(2971)
+
+lines <- tibble(
+  n = 1:n_lines,
+  a = rnorm(n = n_lines, mean = 178, sd = 20),
+  b = rnorm(n = n_lines, mean = 0, sd = 10)) |> 
+  expand_grid(weight = range(d2$weight)) |> 
+  mutate(height = a + b * (weight - mean(d2$weight)))
+
+# What?
+head(lines)
+```
+
+Now we'll plot the left panel from Figure 4.5.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.8
+
+p1 <- lines |> 
+  ggplot(aes(x = weight, y = height, group = n)) +
+  geom_hline(yintercept = c(0, 272), linetype = 2:1, linewidth = 1/3) +
+  geom_line(alpha = 1/10) +
+  coord_cartesian(ylim = c(-100, 400)) +
+  ggtitle("b ~ dnorm(0, 10)")
+
+p1
+```
+
+Here's what $\operatorname{Log-Normal}(0, 1)$ looks like.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.8
+
+set.seed(4)
+
+tibble(b = rlnorm(n = 1e4, mean = 0, sd = 1)) |> 
+  ggplot(aes(x = b)) +
+  geom_density(fill = "grey92") +
+  coord_cartesian(xlim = c(0, 5))
+```
+
+Here's what happens when we compare $\operatorname{Normal}(0, 1)$ with $\log \big ( \operatorname{Log-Normal}(0, 1) \big)$.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 3
+
+set.seed(4)
+
+tibble(rnorm           = rnorm(n = 1e5, mean = 0, sd = 1),
+       `log(rlognorm)` = rlnorm(n = 1e5, mean = 0, sd = 1) |> log()) |> 
+  pivot_longer(everything()) |> 
+
+  ggplot(aes(x = value)) +
+  geom_density(fill = "grey92") +
+  coord_cartesian(xlim = c(-3, 3)) +
+  facet_wrap(~ name, nrow = 2)
+```
+
+The formulas for the actual mean and standard deviation for the log-normal distribution itself are:
+
+$$
+\begin{align*}
+\text{mean}               & = \exp \left (\mu + \frac{\sigma^2}{2} \right) & \text{and} \\
+\text{standard deviation} & = \sqrt{[\exp(\sigma ^{2})-1] \; \exp(2\mu +\sigma ^{2})}.
+\end{align*}
+$$
+
+Let's try our hand at those formulas and compute the mean and standard deviation for $\operatorname{Log-Normal}(0, 1)$.
+
+```{r}
+mu    <- 0
+sigma <- 1
+
+# Mean
+exp(mu + (sigma^2) / 2)
+# SD
+sqrt((exp(sigma^2) - 1) * exp(2 * mu + sigma^2))
+```
+
+Let's confirm with simulated draws from `rlnorm()`.
+
+```{r rlnorm_sim}
+set.seed(4)
+
+tibble(x = rlnorm(n = 1e7, mean = 0, sd = 1)) |> 
+  summarise(mean = mean(x),
+            sd   = sd(x))
+```
+
+But okay, "so what [do all these complications] earn us? Do the prior predictive simulation again, now with the Log-Normal prior:" (p. 96).
+
+```{r}
+#| fig-width: 5.75
+#| fig-height: 2.8
+
+# Make a tibble to annotate the plot
+text <-
+  tibble(weight = c(34, 43),
+         height = c(0 - 25, 272 + 25),
+         label  = c("Embryo", "World's tallest person (272 cm)"))
+
+# Simulate
+set.seed(2971)
+
+p2 <- tibble(
+  n = 1:n_lines,
+  a = rnorm(n = n_lines, mean = 178, sd = 20),
+  b = rlnorm(n = n_lines, mean = 0, sd = 1)) |> 
+  expand_grid(weight = range(d2$weight)) |> 
+  mutate(height = a + b * (weight - mean(d2$weight))) |>
+  
+  # Plot
+  ggplot(aes(x = weight, y = height, group = n)) +
+  geom_hline(yintercept = c(0, 272), linetype = 2:1, linewidth = 1/3) +
+  geom_line(alpha = 1/10) +
+  geom_text(data = text,
+            aes(label = label),
+            size = 3) +
+  coord_cartesian(ylim = c(-100, 400)) +
+  ggtitle("log(b) ~ dnorm(0, 1)")
+
+# Combine both panels
+p1 | p2
+```
+
+Thus we now have the full Figure 4.5.
+
+##### Rethinking: What's the correct prior?
+
+##### Rethinking: Prior predictive simulation and $p$-hacking.
+
+### Finding the posterior distribution.
+
+Now we get ready to actually fit the model
+
+$$
+\begin{align*}
+\text{height}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i & = \alpha + \beta (\text{weight}_i - \overline{\text{weight}}) \\
+\alpha & \sim \operatorname{Normal}(178, 20) \\
+\beta  & \sim \operatorname{Log-Normal}(0, 1) \\
+\sigma & \sim \operatorname{Uniform}(0, 50).
+\end{align*}
+$$
+
+First, here's the updated `model_code`.
+
+```{r}
+model_code <- '
+data {
+  int<lower=1> n;
+  real xbar;         // New data point
+  vector[n] height;
+  vector[n] weight;
+}
+parameters {
+  real a;
+  real<lower=0> b;
+  real<lower=0,upper=50> sigma;
+}
+model {
+  vector[n] mu;
+  mu = a + b * (weight - xbar);  // New model syntax
+  height ~ normal(mu, sigma);
+  a ~ normal(178, 20);
+  b ~ lognormal(0, 1);
+  sigma ~ uniform(0, 50);
+}
+'
+```
+
+Next we need to add the mean of the `weight` column as a new value in the `stan_data` data list. We'll call it `xbar`. Note how this is just a single value, not a vector.
+
+```{r}
+stan_data$xbar <- mean(stan_data$weight)
+
+# What?
+str(stan_data)
+```
+
+Now we fit the model with `stan()`, as before.
+
+```{r}
+#| echo: false
+
+# save(m4.3, file = "fits/m4.3.rda")
+load(file = "fits/m4.3.rda")
+```
+
+```{r m4.3}
+#| eval: false
+#| message: false
+#| results: "hide"
+
+m4.3 <- stan(
+  data = stan_data,
+  model_code = model_code,
+  seed = 4)
+```
+
+Look at the `print()` summary.
+
+```{r}
+print(m4.3, probs = c(0.05, 0.945))
+```
+
+#### Rethinking: Everything that depends upon parameters has a posterior distribution.
+
+#### Overthinking: Logs and exps, oh my.
+
+With `stan()`, you can include `exp()` and other defined functions right in the `model` formula.
+
+```{r}
+#| echo: false
+
+# save(m4.3b, file = "fits/m4.3b.rda")
+load(file = "fits/m4.3b.rda")
+```
+
+```{r}
+#| eval: false
+#| message: false
+#| warning: false
+#| results: "hide"
+
+# Update the model
+model_code <- '
+data {
+  int<lower=1> n;
+  real xbar;
+  vector[n] height;
+  vector[n] weight;
+}
+parameters {
+  real a;
+  real<lower=0> log_b;
+  real<lower=0,upper=50> sigma;
+}
+model {
+  vector[n] mu;
+  mu = a + exp(log_b) * (weight - xbar);  // Include `exp()` right in the formula
+  height ~ normal(mu, sigma);
+  a ~ normal(178, 20);
+  log_b ~ normal(0, 1);
+  sigma ~ uniform(0, 50);
+}
+'
+
+# Fit the non-linear model
+m4.3b <- stan(
+  data = stan_data,
+  model_code = model_code,
+  seed = 4)
+```
+
+Check the summary.
+
+```{r}
+print(m4.3b, probs = c(0.05, 0.945))
+```
+
+We can exponentiate the `log_b` parameter to convert it back to the $\beta$ scale.
+
+```{r}
+#| warning: false
+
+as_draws_df(m4.3b) |> 
+  transmute(b = exp(log_b)) |> 
+  mean_qi(b)
+```
+
+### Interpreting the posterior distribution.
+
+##### Rethinking: What do parameters mean?
+
+#### Tables of marginal distributions.
+  
+We can get an exhaustive summary by simply inputting the `stan()` model fit object directly into `summarise_draws()`.
+
+```{r}
+m4.3 |> 
+  summarise_draws()
+```
+
+Though not needed in this application, you can also use `summarise_draws()` after first calling `as_draws_df()`.
+
+```{r}
+m4.3 |> 
+  as_draws_df() |> 
+  summarise_draws()
+```
+
+Compute the variance/covariance matrix with `as_draws_df()` and `cov()`.
+
+```{r}
+#| warning: false
+
+m4.3 |> 
+  as_draws_df() |> 
+  select(mu:sigma) |> 
+  cov() |> 
+  round(digits = 3)
+```
+
+Here's how the `pairs()` function works for a model fit with `stan()`.
+
+```{r}
+#| fig-width: 4.5
+#| fig-height: 4
+#| warning: false
+
+pairs(m4.3)
+```
+
+The `pairs()` function takes several arguments which can alter its output.
+
+```{r}
+#| fig-width: 4.5
+#| fig-height: 4
+#| warning: false
+
+pairs(m4.3, 
+      cex = 1/10,
+      gap = 0.25,
+      panel = "points",
+      pars = c("a", "b", "sigma"),
+      pch = 19)  
+```
+
+#### Plotting posterior inference against the data.
+
+Here is the code for Figure 4.6. Note how we extract the posterior means first, save the values, and input those into the arguments within `geom_abline()`.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.8
+
+# Compute, extract, and save the posterior means
+a_stan <- summarise_draws(m4.3) |> 
+  filter(variable == "a") |> 
+  pull(mean)
+
+b_stan <- summarise_draws(m4.3) |> 
+  filter(variable == "b") |> 
+  pull(mean)
+
+# Add the `weight_c` column
+d2 <- d2 |>
+  mutate(weight_c = weight - mean(weight)) 
+
+# Plot
+d2 |> 
+  ggplot(aes(x = weight_c, y = height)) +
+  geom_point(shape = 1, size = 2) +
+  geom_abline(intercept = a_stan, slope = b_stan,
+              color = "royalblue", linewidth = 1) +
+  scale_x_continuous("weight",
+                     breaks = 3:6 * 10 - mean(d2$weight),
+                     labels = 3:6 * 10)
+```
+
+
+#### Adding uncertainty around the mean.
+
+It's easy to extract all the posterior draws from a `stan()` model with `as_draws_df()`.
+
+```{r}
+as_draws_df(m4.3) |> 
+  glimpse()
+```
+
+As far as the workflow in McElreath's R code 4.48 and 4.49 goes, we'll do this in a series of steps. First, we make a tibble with a column showing the four levels of `n`, and then save the subset versions of the `d2` data in a nested column by way of `map()`. We save the results as `n_df`.
+
+```{r}
+n_df <- tibble(n = c(10, 50, 150, 352)) |> 
+  mutate(data = map(.x = n, .f =~ d2 |> 
+                      slice(1:.x)))
+
+# What?
+print(n_df)
+```
+
+Now make a `stan_data` column with the data in a list for **rstan**. Note how we included the `xbar` component in the list by defining it right within `compose_data()`.
+
+```{r}
+n_df <- n_df |> 
+  mutate(stan_data = map(.x = data, .f =~ .x |> 
+                           compose_data(xbar = mean(.x$weight))))
+
+# What?
+print(n_df)
+```
+
+Next, redefine the `model_code` object.
+
+```{r}
+model_code <- '
+data {
+  int<lower=1> n;
+  real xbar;         // new data point
+  vector[n] height;
+  vector[n] weight;
+}
+parameters {
+  real a;
+  real<lower=0> b;
+  real<lower=0,upper=50> sigma;
+}
+model {
+  vector[n] mu;
+  mu = a + b * (weight - xbar);
+  height ~ normal(mu, sigma);
+  a ~ normal(178, 20);
+  b ~ lognormal(0, 1);
+  sigma ~ uniform(0, 50);
+}
+'
+```
+
+Unlike with the models above where we compiled and samples from the models all in one `stan()` call, here we'll use a 2-step procedure. For the first step, we compile the `model_code` object with the `stan_model()` function. We'll save the results as an object called `stan_dso`.
+
+```{r}
+#| message: false
+#| results: "hide"
+
+stan_dso <- stan_model(model_code = model_code)
+```
+
+The `stan_model()` function returns an object of S4 class `stanmodel`, and the code is compiled into a so-called dynamic shared object (DSO), which is why we've save our results as `stan_dso`. To learn more, execute `?stan_model` for the documentation.
+
+For the second step, we sample from the `stan_dso` object with the `sampling()` function, saving the model fits in the `sampling` column.
+
+```{r}
+#| message: false
+#| results: "hide"
+
+n_df <- n_df |> 
+  mutate(sampling = map(.x = stan_data, 
+                        .f =~ sampling(
+                          data = .x,
+                          object = stan_dso, 
+                          seed = 4)))
+```
+
+Now extract 20 rows from the model fits with `as_draws_df()` and `slice_sample()`.
+
+```{r}
+set.seed(1)
+
+n_df <- n_df |> 
+  mutate(as_draws_df = map(.x = sampling,
+                           .f =~ as_draws_df(.x) |> 
+                             slice_sample(n = 20)))
+
+# What?
+print(n_df)
+```
+
+We'll need to extract the `xbar` values for easy **tidyverse** wrangling, and then we'll adjust the `n` column for nicer plot formatting.
+
+```{r}
+n_df <- n_df |> 
+  mutate(xbar = map_dbl(.x = stan_data,
+                        .f =~ .x[["xbar"]]),
+         n = str_c("italic(n)==", n) |> 
+           factor(levels = str_c("italic(n)==", c(10, 50, 150, 352))))
+
+# What?
+print(n_df)
+```
+
+```{r}
+#| echo: false
+#| eval: false
+
+n_df |> 
+  select(n, data) |> 
+  unnest(data)
+
+n_df |> 
+  select(n, as_draws_df) |> 
+  unnest(as_draws_df)
+```
+
+Now we plot.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 5.5
+
+n_df |> 
+  select(n, data, xbar) |> 
+  unnest(data) |> 
+  
+  ggplot(aes(x = weight - xbar, y = height)) +
+  geom_point() +
+  geom_abline(data = n_df |> 
+                select(n, xbar, as_draws_df) |> 
+                unnest(as_draws_df),
+              aes(intercept = a,
+                  slope = b,
+                  group = .draw),
+              color = "royalblue", linewidth = 1/4) +
+  scale_x_continuous("weight",
+                     breaks = 3:6 * 10 - mean(d2$weight),
+                     labels = 3:6 * 10) +
+  facet_wrap(~ n, labeller = label_parsed)
+```
+
+#### Plotting regression intervals and contours.
+
+Since we used `weight_c` to fit our model, we might first want to understand what exactly the mean value is for `weight`.
+
+```{r}
+mean(d2$weight)
+```
+
+This is the same as the `xbar` value saved in the `stan_data` object from above.
+
+```{r}
+stan_data$xbar
+```
+
+If we're interested in $\mu$ at `weight` = 50, that implies we're also interested in $\mu$ at `weight_c` + 5.01. Within the context of our model, we compute this with $\alpha + \beta \cdot 5.01$. Here we'll extract the HMC draws from `m4.3` with `as_draws_df()`, and then define the `mu_at_50` column using the same basic algebra McElreath used in his R code 4.50.
+
+```{r}
+draws <- as_draws_df(m4.3) |> 
+  mutate(mu_at_50 = a + b * (50 - stan_data$xbar))
+
+# What?
+head(draws)
+```
+
+Here is a version McElreath's Figure 4.8 density plot.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.5
+
+draws |>
+  ggplot(aes(x = mu_at_50)) +
+  geom_density(adjust = 1/2, fill = "gray65", linewidth = 0) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(mu["height | weight = 50"]))
+```
+
+We'll use `mean_hdi()` to get both 89% and 95% HDIs, along with the mean.
+
+```{r}
+#| warning: false
+
+draws |> 
+  mean_hdi(mu_at_50, .width = c(.89, .95))
+```
+
+The `fitted()` functions are not available for `stan()` models. However, we can adjust our `as_draws_df()` output (i.e., `draws`) with `expand_grid()` to compute the fitted values by hand. We save the results as `draws_fitted_df`.
+
+```{r}
+#| warning: false
+
+draws_fitted_df <- draws |> 
+  select(.draw, a, b, sigma) |> 
+  expand_grid(weight = 25:70) |> 
+  mutate(height = a + b * (weight - stan_data$xbar))
+
+# What?
+head(draws_fitted_df)
+```
+
+Here's how to use that output to make Figure 4.9.
+
+```{r}
+#| fig-width: 5
+#| fig-height: 2.75
+
+p1 <- draws_fitted_df |> 
+  filter(.draw <= 100) |> 
+  
+  ggplot(aes(x = weight, y = height)) +
+  geom_point(alpha = 0.05, color = "navyblue", size = 1/2)
+
+p2 <- d2 |>
+  ggplot(aes(x = weight, y = height)) +
+  geom_point(alpha = 1/2, size = 1/2) +
+  stat_lineribbon(data = draws_fitted_df,
+                  .width = 0.89,
+                  color = "royalblue", fill = alpha("royalblue", alpha = 1/2), 
+                  linewidth = 1/3) +
+  scale_y_continuous(NULL, breaks = NULL)
+
+# Combine, adjust, and display
+(p1 | p2) &
+  coord_cartesian(xlim = range(d2$weight),
+                  ylim = range(d2$height))
+```
+
+##### Rethinking: Overconfident intervals.
+
+##### Overthinking: How `link` works.
+
+With a **brms**-based workflow, we can use functions like base-**R** `fitted()` and **tidybayes** convenience functions like `add_epred_draws()` in places where McElreath used `link()` in the text. Sadly, those functions aren't available for models fit with **rstan**. Either we hand-compute the expected values with a workflow like above, or in later chapters we'll see how to build them into the Stan model via the `generated quantities` block.
+
+#### Prediction intervals.
+
+We can add posterior-predictions to `draws_fitted_df` by way of the `rnorm()` function.
+
+```{r}
+draws_fitted_df <- draws_fitted_df |> 
+  mutate(height_pred = rnorm(n = n(), mean = height, sd = sigma))
+
+# What?
+head(draws_fitted_df)
+```
+
+Here's Figure 4.10.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.8
+
+d2 |>
+  ggplot(aes(x = weight, y = height)) +
+  geom_point(alpha = 1/2, size = 1/2) +
+  # This is new
+  stat_lineribbon(data = draws_fitted_df,
+                  aes(y = height_pred),
+                  .width = 0.89,
+                  fill = alpha("royalblue", alpha = 1/3), 
+                  linewidth = 0) +
+  stat_lineribbon(data = draws_fitted_df,
+                  .width = 0.89,
+                  color = "royalblue", fill = alpha("royalblue", alpha = 1/3), 
+                  linewidth = 1/3) +
+  coord_cartesian(xlim = range(d2$weight),
+                  ylim = range(d2$height))
+```
+
+##### Rethinking: Two kinds of uncertainty.
+
+##### Overthinking: Rolling your own `sim`.
+
+With a **brms**-based workflow, we can use functions like base-**R** `predict()` and **tidybayes** convenience functions like `add_predicted_draws()` in places where McElreath used `sim()` in the text. Sadly, those functions aren't available for models fit with **rstan**. Either we hand-compute the expected values with a workflow like above, or in later chapters we'll see how to build them into the Stan model via the `generated quantities` block.
+
+## Curves from lines
+
+### Polynomial regression.
+
+Remember `d`?
+
+```{r}
+glimpse(d)
+```
+
+McElreath suggested we plot `height` against `weight` using the full sample.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.8
+
+d |> 
+  ggplot(aes(x = weight, y = height)) +
+  geom_point(alpha = 2/3, shape = 1, size = 1.5) +
+  annotate(geom = "text",
+           x = 42, y = 115,
+           label = "This relation is\nvisibly curved.")
+```
+
+We might standardize our `weight` variable like so.
+
+```{r}
+d <- d |>
+  mutate(weight_s = (weight - mean(weight)) / sd(weight)) |> 
+  mutate(weight_s2 = weight_s^2)
+```
+
+While we were at it, we just went ahead and computed the `weight_s2` variable. We can express our statistical model as
+
+$$
+\begin{align*}
+\text{height}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i   & = \alpha + \beta_1 \text{weight-s}_i + \beta_2 \text{weight-s}^2_i \\
+\alpha  & \sim \operatorname{Normal}(178, 20) \\
+\beta_1 & \sim \operatorname{Log-Normal}(0, 1) \\
+\beta_2 & \sim \operatorname{Normal}(0, 1) \\
+\sigma  & \sim \operatorname{Uniform}(0, 50).
+\end{align*}
+$$
+
+Define and save the `quadratic_model_code`.
+
+```{r}
+quadratic_model_code <- '
+data {
+  int<lower=1> n;
+  vector[n] height;
+  vector[n] weight_s;
+}
+parameters {
+  real a;
+  real<lower=0> b1;
+  real b2;
+  real<lower=0,upper=50> sigma;
+}
+model {
+  vector[n] mu;
+  mu = a + b1 * weight_s + b2 * weight_s^2;
+  height ~ normal(mu, sigma);
+  
+  a ~ normal(178, 20);
+  b1 ~ lognormal(0, 1);
+  b2 ~ normal(0, 1);
+  sigma ~ uniform(0, 50);
+}
+'
+```
+
+Update the `stan_data` to include `weight_s`.
+
+```{r}
+stan_data <- d |>
+  select(height, weight_s) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Fit the quadratic model, `m4.5`.
+
+```{r}
+#| echo: false
+
+# save(m4.5, file = "fits/m4.5.rda")
+load(file = "fits/m4.5.rda")
+```
+
+```{r m4.5}
+#| eval: false
+#| message: false
+#| results: "hide"
+
+m4.5 <- stan(
+  data = stan_data,
+  model_code = quadratic_model_code,
+  seed = 4)
+```
+
+Check the summary.
+
+```{r}
+print(m4.5, probs = c(0.05, 0.945))
+```
+
+Here's how to make the middle panel of Figure 4.11.
+
+```{r}
+#| fig-width: 2.25
+#| fig-height: 3
+#| warning: false
+
+# Extract the HMC draws and wrangle
+p2 <- as_draws_df(m4.5) |> 
+  expand_grid(weight_s = seq(from = min(d$weight_s), to = max(d$weight_s), length.out = 50)) |> 
+  mutate(fitted = a + b1 * weight_s + b2 * weight_s^2) |> 
+  mutate(predict = rnorm(n = n(), mean = fitted, sd = sigma)) |>
+  
+  # Plot
+  ggplot(aes(x = weight_s)) +
+  geom_point(data = d,
+             aes(y = height),
+             alpha = 1/2, size = 1/2) +
+  stat_lineribbon(aes(y = predict),
+                  .width = 0.89,
+                  fill = alpha("royalblue", alpha = 1/3), 
+                  linewidth = 0) +
+  stat_lineribbon(aes(y = fitted),
+                  .width = 0.89,
+                  color = "royalblue", fill = alpha("royalblue", alpha = 1/3), 
+                  linewidth = 1/3) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  facet_wrap(~ "quadratic")
+
+p2
+```
+
+Define and fit the cubic model.
+
+```{r}
+#| echo: false
+
+# save(m4.6, file = "fits/m4.6.rda")
+load(file = "fits/m4.6.rda")
+```
+
+```{r m4.6}
+#| eval: false
+#| message: false
+#| results: "hide"
+
+cubic_model_code <- '
+data {
+  int<lower=1> n;
+  vector[n] height;
+  vector[n] weight_s;
+}
+parameters {
+  real a;
+  real<lower=0> b1;
+  real b2;
+  real b3;
+  real<lower=0,upper=50> sigma;
+}
+model {
+  vector[n] mu;
+  mu = a + b1 * weight_s + b2 * weight_s^2 + b3 * weight_s^3;
+  height ~ normal(mu, sigma);
+  
+  a ~ normal(178, 20);
+  b1 ~ lognormal(0, 1);
+  b2 ~ normal(0, 10);
+  b3 ~ normal(0, 10);
+  sigma ~ uniform(0, 50);
+}
+'
+
+m4.6 <- stan(
+  data = stan_data,
+  model_code = cubic_model_code, 
+  cores = 4, seed = 4)
+```
+
+Check the summary.
+
+```{r}
+print(m4.6, probs = c(0.05, 0.945))
+```
+
+Here's how to make the right panel of Figure 4.11.
+
+```{r}
+#| fig-width: 2.25
+#| fig-height: 3
+#| warning: false
+
+p3 <- as_draws_df(m4.6) |> 
+  expand_grid(weight_s = seq(from = min(d$weight_s), to = max(d$weight_s), length.out = 50)) |> 
+  mutate(fitted = a + b1 * weight_s + b2 * weight_s^2 + b3 * weight_s^3) |> 
+  mutate(predict = rnorm(n = n(), mean = fitted, sd = sigma)) |>
+  
+  # Plot
+  ggplot(aes(x = weight_s)) +
+  geom_point(data = d,
+             aes(y = height),
+             alpha = 1/2, size = 1/2) +
+  stat_lineribbon(aes(y = predict),
+                  .width = 0.89,
+                  fill = alpha("royalblue", alpha = 1/3), 
+                  linewidth = 0) +
+  stat_lineribbon(aes(y = fitted),
+                  .width = 0.89,
+                  color = "royalblue", fill = alpha("royalblue", alpha = 1/3), 
+                  linewidth = 1/3) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  facet_wrap(~ "cubic")
+p3
+```
+
+Fit the simple linear model.
+
+```{r}
+#| echo: false
+
+# save(m4.7, file = "fits/m4.7.rda")
+load(file = "fits/m4.7.rda")
+```
+
+```{r m4.7}
+#| eval: false
+#| message: false
+#| results: "hide"
+
+linear_model_code <- '
+data {
+  int<lower=1> n;
+  vector[n] height;
+  vector[n] weight_s;
+}
+parameters {
+  real a;
+  real<lower=0> b1;
+  real<lower=0,upper=50> sigma;
+}
+model {
+  vector[n] mu;
+  mu = a + b1 * weight_s;
+  height ~ normal(mu, sigma);
+  
+  a ~ normal(178, 20);
+  b1 ~ lognormal(0, 1);
+  sigma ~ uniform(0, 50);
+}
+'
+
+m4.7 <- stan(
+  data = stan_data,
+  model_code = linear_model_code,
+  cores = 4, seed = 4)
+```
+
+Here's how to make the first panel of Figure 4.11, and then combine to display the full figure.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 3.25
+#| warning: false
+
+p1 <- as_draws_df(m4.7) |> 
+  expand_grid(weight_s = seq(from = min(d$weight_s), to = max(d$weight_s), length.out = 50)) |> 
+  mutate(fitted = a + b1 * weight_s) |> 
+  mutate(predict = rnorm(n = n(), mean = fitted, sd = sigma)) |>
+  
+  # Plot
+  ggplot(aes(x = weight_s)) +
+  geom_point(data = d,
+             aes(y = height),
+             alpha = 1/2, size = 1/2) +
+  stat_lineribbon(aes(y = predict),
+                  .width = 0.89,
+                  fill = alpha("royalblue", alpha = 1/3), 
+                  linewidth = 0) +
+  stat_lineribbon(aes(y = fitted),
+                  .width = 0.89,
+                  color = "royalblue", fill = alpha("royalblue", alpha = 1/3), 
+                  linewidth = 1/3) +
+  facet_wrap(~ "linear")
+
+# Combine
+(p1 | p2 | p3) &
+  coord_cartesian(ylim = range(d$height))
+```
+
+##### Rethinking: Linear, additive, funky.
+
+##### Overthinking: Converting back to natural scale.
+
+### Splines.
+
+I'll flesh this section out, later. For now, check out [Arel-Bundock's code](https://vincentarelbundock.github.io/rethinking2/04.html) for this part of the chapter.
+
+### Smooth functions for a rough world.
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+

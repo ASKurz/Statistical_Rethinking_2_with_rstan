@@ -1,0 +1,2748 @@
+# The Many Variables & The Spurious Waffles
+
+Load the packages.
+
+```{r}
+#| message: false
+#| warning: false
+
+# Load
+library(tidyverse)
+library(tidybayes)
+library(rstan)
+library(patchwork)
+library(posterior)
+library(ggrepel)
+library(tigris)
+library(ggdag)
+library(dagitty)
+
+# Drop grid lines
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank())
+)
+```
+
+#### Rethinking: Causal inference.
+
+## Spurious associations {#sec-Spurious-associations}
+
+Load the Waffle House data.
+
+```{r}
+data(WaffleDivorce, package = "rethinking")
+d <- WaffleDivorce
+rm(WaffleDivorce)
+```
+
+Now standardize the focal variables with the `rethinking::standardize()` function.
+
+```{r}
+d <- d |> 
+  mutate(d = rethinking::standardize(Divorce),
+         m = rethinking::standardize(Marriage),
+         a = rethinking::standardize(MedianAgeMarriage))
+```
+
+Investigate the data.
+
+```{r}
+glimpse(d)
+```
+
+Now we have our data, we can reproduce Figure 5.1. One convenient way to get the handful of sate labels into the plot was with the `geom_text_repel()` function from the **ggrepel** package.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 3
+
+d |>
+  ggplot(aes(x = WaffleHouses/Population, y = Divorce)) +
+  stat_smooth(method = "lm", formula = 'y ~ x', fullrange = TRUE, 
+              alpha = 1/5, linewidth = 1/2) +
+  geom_point(alpha = 1/2, size = 1.5) +
+  geom_text_repel(data = d |> 
+                    filter(Loc %in% c("ME", "OK", "AR", "AL", "GA", "SC", "NJ")),  
+                  aes(label = Loc), 
+                  seed = 1042, size = 3) +
+  scale_x_continuous("Waffle Houses per million", limits = c(0, 55)) +
+  ylab("Divorce rate") +
+  coord_cartesian(xlim = c(0, 50), ylim = c(5, 15))
+```
+
+Since these are geographically-based data, we might plot our three major variables in a map format. The [**tigris** package](https://github.com/walkerke/tigris) [@R-tigris] provides functions for retrieving latitude and longitude data for the 50 states and we can plot then with the `ggplot2::geom_sf()` function. We'll use the `right_join()` function to combine those data with our primary data `d`.
+
+```{r}
+#| message: false
+#| warning: false
+#| results: "hide"
+
+# Get the map data
+d_states <- states(cb = TRUE, resolution = "20m") |>
+  shift_geometry() |> 
+  # Add the primary data
+  right_join(d |> 
+               mutate(NAME = Location |> as.character()) |> 
+               select(d:a, NAME),
+             by = "NAME") |> 
+  # Convert to the long format for faceting
+  pivot_longer(cols = c("d", "m", "a"), names_to = "variable")
+```
+
+Now plot.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 2
+
+d_states |>
+  ggplot() +
+  geom_sf(aes(fill = value, geometry = geometry),
+          size = 0) +
+  scale_fill_gradient(low = "lightblue", high = "blue4", breaks = NULL) +
+  theme_void() +
+  theme(strip.text = element_text(margin = margin(0, 0, .5, 0))) +
+  facet_wrap(~ variable, labeller = label_both) 
+```
+
+Here's the standard deviation for `MedianAgeMarriage` in its current metric.
+
+```{r}
+sd(d$MedianAgeMarriage)
+```
+
+Our first statistical model follows the form
+
+```{r}
+#| eval: false
+#| echo: false
+
+divorce_std
+divorce-std
+
+median_age_at_marriage_std
+median-age-at-marriage-std
+```
+
+$$
+\begin{align*}
+\text{divorce-std}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i   & = \alpha + \beta_1 \text{median-age-at-marriage-std}_i \\
+\alpha  & \sim \operatorname{Normal}(0, 0.2) \\
+\beta_1 & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma  & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+where the `_std` suffix indicates the variables are standardized (i.e., zero centered, with a standard deviation of one). 
+
+First, we define the `model_code_5.1`.
+
+```{r}
+model_code_5.1 <- '
+data {
+  int<lower=1> n;
+  vector[n] d;
+  vector[n] a;
+}
+parameters {
+  real b0;
+  real b2;  // Planning ahead for m5.3, we call this parameter b2
+  real<lower=0> sigma;
+}
+model {
+  vector[n] mu;
+  mu = b0 + b2 * a;
+  d ~ normal(mu, sigma);
+  
+  b0 ~ normal(0, 0.2);
+  b2 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  // To be discusssed in Chapter 7
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = normal_lpdf(d[i] | b0 + b2 * a[i], sigma);
+}
+'
+```
+
+You may have noticed we have an exciting new `generated quantities` with some mysterious code defining `log_lik`. We'll have similar code for the next two models, but we won't be ready to discuss those bits until later in @sec-Estimating-divergence and @sec-Outliers-and-other-illusions. For now, just let the tension build.
+
+Make the `stan_data` with the `compose_data()` function.
+
+```{r}
+stan_data <- d |>
+  select(d, a) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Fit the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m5.1, file = "fits/m5.1.rda")
+load(file = "fits/m5.1.rda")
+```
+
+```{r m5.1}
+#| eval: false
+
+m5.1 <- stan(
+  data = stan_data,
+  model_code = model_code_5.1,
+  cores = 4, seed = 5)
+```
+
+There are two basic ways to sample from the priors using `stan()`, which Michael Betancourt explained in [this thread](https://discourse.mc-stan.org/t/sampling-from-prior-without-running-a-separate-model/10653/3) in the Stan forums. The first is to fit a single model with an if statement that turns the likelihood on an off, as needed. The second is the fit two separate models: one for just the prior, and the other for the posterior. We'll do the second. Here it is in bulk.
+
+```{r}
+#| echo: false
+
+# save(m5.1_prior, file = "fits/m5.1_prior.rda")
+load(file = "fits/m5.1_prior.rda")
+```
+
+```{r m5.1_prior}
+#| eval: false
+
+model_code_5.1_prior <- '
+data {
+  int<lower=1> n;
+  vector[n] d;
+  vector[n] a;
+}
+parameters {
+  real b0;
+  real b2;
+  real<lower=0> sigma;
+}
+model {
+  // The model only contains the prior
+  b0 ~ normal(0, 0.2);
+  b2 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+'
+
+m5.1_prior <- stan(
+  data = stan_data,
+  model_code = model_code_5.1_prior,
+  cores = 4, seed = 5)
+```
+
+Here are the samples from `m5.1_prior` in a half-eye plot.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3.5
+#| warning: false
+
+as_draws_df(m5.1_prior) |> 
+  pivot_longer(b0:sigma) |> 
+  mutate(name = case_when(
+    name == "b0" ~ "b[0]",
+    name == "b2" ~ "b[2]",
+    name == "sigma" ~ "sigma"
+  )) |> 
+  
+  ggplot(aes(x = value, y = name)) +
+  stat_halfeye(point_interval = mean_qi, .width = 0.89) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe, expand = expansion(mult = 0.1)) +
+  xlab("prior") +
+  coord_cartesian(xlim = c(-1, 5))
+```
+
+Here's Figure 5.3.
+
+```{r}
+#| fig-width: 2.5
+#| fig-height: 2.5
+
+set.seed(5)
+
+as_draws_df(m5.1_prior) |> 
+  slice_sample(n = 50) |> 
+  
+  ggplot() +
+  geom_abline(aes(intercept = b0, slope = b2, group = .draw),
+              alpha = 3/4, linewidth = 1/4) +
+  scale_x_continuous("Median age marriage (std)", limits = c(-2, 2)) +
+  scale_y_continuous("Divorce rate (std)", limits = c(-2, 2))
+```
+
+Here's the right panel of Figure 5.2.
+
+```{r}
+#| fig-width: 2.75
+#| fig-height: 2.5
+
+p2 <- as_draws_df(m5.1) |> 
+  expand_grid(a = seq(from = min(d$a), to = max(d$a), length.out = 30)) |> 
+  mutate(mu = b0 + b2 * a) |> 
+  
+  ggplot(aes(x = a)) +
+  stat_lineribbon(aes(y = mu),
+                  .width = 0.89, color = "blue", fill = alpha("blue", 1/3)) +
+  geom_point(data = d,
+             aes(y = d),
+             size = 2/3) +
+  labs(x = "Median age marriage (std)",
+       y = "Divorce rate (std)")
+
+p2
+```
+
+To make the other panel of the figure, first we need to fit `m5.2`.
+
+```{r}
+#| echo: false
+
+# save(m5.2, file = "fits/m5.2.rda")
+load(file = "fits/m5.2.rda")
+```
+
+```{r m5.2}
+#| eval: false
+
+# Define the new model code
+model_code_5.2 <- '
+data {
+  int<lower=1> n;
+  vector[n] m;
+  vector[n] d;
+}
+parameters {
+  real b0;
+  real b1;
+  real<lower=0> sigma;
+}
+model {
+  // This time we use the more compact notation
+  d ~ normal(b0 + b1 * m, sigma);
+  
+  b0 ~ normal(0, 0.2);
+  b1 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  // To be discusssed in Chapter 7
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = normal_lpdf(d[i] | b0 + b1 * m[i], sigma);
+}
+'
+
+# Update `stan_data`
+stan_data <- d |>
+  select(d, a, m) |> 
+  compose_data()
+
+# Compile and sample
+m5.2 <- stan(
+  data = stan_data,
+  model_code = model_code_5.2,
+  cores = 4, seed = 5)
+```
+
+Check the summary.
+
+```{r}
+print(m5.2, pars = c("b0", "b1", "sigma"), probs = c(0.05, 0.945))
+```
+
+Here's the rest of Figure 5.2.
+
+```{r}
+#| fig-width: 5.5
+#| fig-height: 2.75
+
+p1 <- as_draws_df(m5.2) |> 
+  expand_grid(m = seq(from = min(d$m), to = max(d$m), length.out = 30)) |> 
+  mutate(mu = b0 + b1 * m) |> 
+  
+  ggplot(aes(x = m)) +
+  stat_lineribbon(aes(y = mu),
+                  .width = 0.89, color = "blue", fill = alpha("blue", 1/3)) +
+  geom_point(data = d,
+             aes(y = d),
+             size = 2/3) +
+  labs(x = "Marriage rate (std)",
+       y = "Divorce rate (std)")
+
+# Combine
+p1 | (p2 + scale_y_continuous(NULL, breaks = NULL))
+```
+
+### Think before you regress.
+
+If all you want is a quick and dirty DAG for our three variables, you might execute something like this.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 1.75
+
+set.seed(5)
+
+dagify(M ~ A,
+       D ~ A + M) |>
+  ggdag(node_size = 8)
+```
+
+We can pretty it up a little, too.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 1.5
+
+dag_coords <- tibble(
+  name = c("A", "M", "D"),
+  x    = c(1, 3, 2),
+  y    = c(2, 2, 1))
+
+p1 <- dagify(
+  M ~ A,
+  D ~ A + M,
+  coords = dag_coords) |>
+  
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(alpha = 1/4, size = 10) +
+  geom_dag_text() +
+  geom_dag_edges() +
+  scale_x_continuous(NULL, breaks = NULL, expand = c(0.1, 0.1)) +
+  scale_y_continuous(NULL, breaks = NULL, expand = c(0.2, 0.2)) +
+  theme_dag()
+
+p1
+```
+
+Considering alternative models, "It could be that the association between $M$ and $D$ arises entirely from $A$'s influence on both $M$ and $D$. Like this:" (p. 129)
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2
+
+p2 <- dagify(
+  M ~ A,
+  D ~ A,
+  coords = dag_coords) |>
+  
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(alpha = 1/4, size = 10) +
+  geom_dag_text() +
+  geom_dag_edges() +
+  scale_x_continuous(NULL, breaks = NULL, expand = c(0.1, 0.1)) +
+  scale_y_continuous(NULL, breaks = NULL, expand = c(0.2, 0.2)) +
+  theme_dag()
+
+p1 | p2
+```
+
+#### Rethinking: What's a cause?
+
+#### Overthinking: Drawing a DAG.
+
+### Testable implications.
+
+### Multiple regression notation.
+
+We can write the statistical formula for our first multivariable model as
+
+```{r}
+#| eval: false
+#| echo: false
+
+divorce_std
+divorce-std
+Marriage_std
+MedianAgeMarriage_std
+Marriage-std
+MedianAgeMarriage-std
+```
+
+$$
+\begin{align*}
+\text{Divorce-std}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i   & = \alpha + \beta_1 \text{Marriage-std}_i + \beta_2 \text{MedianAgeMarriage-std}_i \\
+\alpha  & \sim \operatorname{Normal}(0, 0.2) \\
+\beta_1 & \sim \operatorname{Normal}(0, 0.5) \\
+\beta_2 & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma  & \sim \operatorname{Exponential}(1).
+\end{align*}
+$$
+
+#### Overthinking: Compact notation and the design matrix. {#sec-Compact-notation-and-the-design-matrix}
+
+> Often, linear models are written using a compact form like:
+>
+> $$
+> \mu_i = \alpha + \sum_{j=1}^n \beta_j x_{ji}
+> $$
+>
+> where $j$ is an index over predictor variables and $n$ is the number of predictor variables. This may be read as *the mean is modeled as the sum of an intercept and an additive combination of the products of parameters and predictors*. Even more compactly, using matrix notation:
+>
+> $$
+> \mathbf{m} = \mathbf{Xb}
+> $$
+>
+> where $\mathbf{m}$ is a vector of predicted means, one for each row in the data, $\mathbf{b}$ is a (column) vector of parameters, one for each predictor variable, and $\mathbf{X}$ is a matrix. This matrix is called a *design matrix*. (p. 132, *emphasis* in the original)
+
+I generally do not like this style of notation, and I rarely use it. It's not common to see it in papers in my field, and I suspect it many of my colleagues would find it actively discouraging. But this style of notation will come in handy for some of the `stan()` code to come, starting with the models in @sec-A-second-method.
+
+### Approximating the posterior.
+
+Define `model_code_5.3`.
+
+```{r}
+model_code_5.3 <- '
+data {
+  int<lower=1> n;
+  vector[n] d;
+  vector[n] m;
+  vector[n] a;
+}
+parameters {
+  real b0;
+  real b1;
+  real b2;
+  real<lower=0> sigma;
+}
+model {
+  vector[n] mu;
+  mu = b0 + b1 * m + b2 * a;
+  d ~ normal(mu, sigma);
+  
+  b0 ~ normal(0, 0.2);
+  b1 ~ normal(0, 0.5);
+  b2 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  // To be discusssed in Chapter 7
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = normal_lpdf(d[i] | b0 + b1 * m[i] + b2 * a[i], sigma);
+}
+'
+```
+
+The `stan_data` list already has all we need.
+
+```{r}
+str(stan_data)
+```
+
+Fit the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m5.3, file = "fits/m5.3.rda")
+load(file = "fits/m5.3.rda")
+```
+
+```{r m5.3}
+#| eval: false
+
+m5.3 <- stan(
+  data = stan_data,
+  model_code = model_code_5.3,
+  cores = 4, seed = 5)
+```
+
+Behold the summary.
+
+```{r}
+print(m5.3, pars = c("b0", "b1", "b2", "sigma"),  probs = c(0.05, 0.945))
+```
+
+Here's a variant of McElreath's `rethinking::coeftab()` plot (p. 133).
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2.25
+#| warning: false
+
+bind_rows(
+  as_draws_df(m5.1) |> mutate(model = "m5.1"),
+  as_draws_df(m5.2) |> mutate(model = "m5.2"),
+  as_draws_df(m5.3) |> mutate(model = "m5.3")
+) |> 
+  pivot_longer(starts_with("b")) |> 
+  filter(name != "b0") |> 
+  drop_na(value) |> 
+  mutate(name = case_when(
+    name == "b1" ~ "beta[1]",
+    name == "b2" ~ "beta[2]"
+  ) |> factor(levels = c("beta[2]", "beta[1]"))) |> 
+  
+  ggplot(aes(x = value, y = model)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_pointinterval(.width = 0.89) +
+  labs(x = "posterior",
+       y = NULL) +
+  facet_wrap(~ name, labeller = label_parsed, ncol = 1)
+```
+
+#### Overthinking: Simulating the divorce example.
+
+Okay, let's simulate our divorce data in a **tidyverse** sort of way.
+
+```{r}
+# How many states would you like?
+n <- 50 
+
+set.seed(5)
+sim_d <- tibble(a = rnorm(n, mean = 0, sd = 1)) |>  # A 
+  mutate(m = rnorm(n, mean = -a, sd = 1),           # A -> M 
+         d = rnorm(n, mean =  a, sd = 1))           # A -> D
+
+# What?
+head(sim_d)
+```
+
+We simulated those data based on this formulation.
+
+```{r}
+dagitty('dag{divorce <- age -> marriage}') |> 
+  impliedConditionalIndependencies()
+```
+
+Update the `stan_data`.
+
+```{r}
+stan_data <- sim_d |>
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Since the goal of this section is to simulate data like those in the `d` data frame and then fit three models corresponding to those from above, we can re-use the Stan model DSO's. If you execute `str(m5.1, max.level = 2)`, you'll notice the `stan()` fit object has a `stanmodel` section which is a "S4 class stanmodel." We can input that directly into the `object` argument of the `sampling()` function, and then sample from the posterior when applied to the new `stan_data` from the simulation. We'll save the results as `m5.1_sim`.
+
+```{r}
+#| echo: false
+#| eval: false
+
+str(m5.1, max.level = 2)
+```
+
+```{r}
+#| echo: false
+
+# save(m5.1_sim, file = "fits/m5.1_sim.rda")
+load(file = "fits/m5.1_sim.rda")
+```
+
+```{r m5.1_sim}
+#| eval: false
+
+m5.1_sim <- sampling(
+  object = m5.1@stanmodel,
+  data = stan_data,
+  cores = 4, seed = 5)
+```
+
+Check the summary.
+
+```{r}
+print(m5.1_sim, probs = c(0.05, 0.945))
+```
+
+Now do the same thing for the next two models.
+
+```{r}
+#| echo: false
+
+# save(m5.2_sim, file = "fits/m5.2_sim.rda")
+# save(m5.3_sim, file = "fits/m5.3_sim.rda")
+
+load(file = "fits/m5.2_sim.rda")
+load(file = "fits/m5.3_sim.rda")
+```
+
+```{r m5.2_sim}
+#| eval: false
+
+m5.2_sim <- sampling(
+  object = m5.2@stanmodel,
+  data = stan_data,
+  cores = 4, seed = 5)
+
+m5.3_sim <- sampling(
+  object = m5.3@stanmodel,
+  data = stan_data,
+  cores = 4, seed = 5)
+```
+
+
+Here's our new `rethinking::coeftab()` plot variant for the simulated data.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2.25
+#| warning: false
+
+bind_rows(
+  as_draws_df(m5.1_sim) |> mutate(model = "m5.1"),
+  as_draws_df(m5.2_sim) |> mutate(model = "m5.2"),
+  as_draws_df(m5.3_sim) |> mutate(model = "m5.3")
+) |> 
+  pivot_longer(starts_with("b")) |> 
+  filter(name != "b0") |> 
+  drop_na(value) |> 
+  mutate(name = case_when(
+    name == "b1" ~ "beta[1]",
+    name == "b2" ~ "beta[2]"
+  ) |> factor(levels = c("beta[2]", "beta[1]"))) |> 
+  
+  ggplot(aes(x = value, y = model)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_pointinterval(.width = 0.89) +
+  labs(x = "posterior",
+       y = NULL) +
+  facet_wrap(~ name, labeller = label_parsed, ncol = 1)
+```
+
+### Plotting multivariate posteriors.
+
+#### Predictor residual plots. {#sec-Predictor-residual-plots}
+
+As we start this section, it's important to clarify some wording. When McElreath described residuals, he used the following wording:
+
+> And then we compute the residuals by subtracting the observed marriage rate in each State from the *predicted* rate, based upon the model above. (p. 135, *emphasis* added)
+
+In this context, a *prediction* for each State is a fitted or expected value. This is in contrast with the kind of predicted values that come from posterior-predictive checks. With **brms**, this would mean we'd use `fitted()`, rather than `predict()`. Since those options are not available for a `stan()`-based workflow, we need more technical language. The predictions we're making are done using the linear model $\eta$, but not the stochastic term, $\sigma$.
+
+Until this point, we have made predictions by hand using the `as_draws_df()` output. Another option is to build them into the `generated quantities` block of the `model_code`. Here we'll define our predicted values as a vector of `mu[i]` parameters.
+
+```{r}
+model_code_5.4 <- '
+data {
+  int<lower=1> n;
+  vector[n] m;
+  vector[n] a;
+}
+parameters {
+  real b0;
+  real b1;
+  real<lower=0> sigma;
+}
+model {
+  m ~ normal(b0 + b1 * a, sigma);  // Model m as the criterion
+  
+  b0 ~ normal(0, 0.2);
+  b1 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n] mu;
+  mu = b0 + b1 * a;  // Expected values defined w/o the stochastic parameter
+}
+'
+```
+
+Update the `stan_data` to include values from good-old `d`, again.
+
+```{r}
+stan_data <- d |> 
+  select(d, a, m) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Fit the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m5.4, file = "fits/m5.4.rda")
+load(file = "fits/m5.4.rda")
+```
+
+```{r m5.4}
+#| eval: false
+
+m5.4 <- stan(
+  data = stan_data,
+  model_code = model_code_5.4,
+  cores = 4, seed = 5)
+```
+
+Behold the summary.
+
+```{r}
+print(m5.4, probs = c(0.05, 0.945))
+```
+
+Now we have a series of `mu[i]` rows in the summary. These also show up in the `as_draws_df()` output.
+
+```{r}
+as_draws_df(m5.4) |> 
+  colnames()
+```
+
+These are our expected or fitted values, one for each case in the data. Again, we technically don't need those expected `mu[i]` values. We can also compute them by hand. To prove it, here we connect the `mu[i]` rows to their original `Loc` values, and then summarize them by their means and 89% intervals.
+
+```{r}
+#| warning: false
+
+# Isolate and wrangle the `mu[i]` values from the `generated quantities` block
+mu_mean_qi <- as_draws_df(m5.4) |> 
+  select(.draw, starts_with("mu")) |> 
+  pivot_longer(starts_with("mu"), 
+               names_to = "rownumber",
+               values_to = "m_hat") |> 
+  mutate(rownumber = str_extract(rownumber, "\\d+") |> 
+           as.integer()) |> 
+  # Match them up with the data
+  left_join(d |> 
+              mutate(rownumber = 1:n()) |> 
+              select(rownumber, Loc, a, m, d),
+            by = join_by(rownumber)) |> 
+  group_by(Loc, a, m, d) |> 
+  mean_qi(m_hat, .width = 0.89)
+
+# What?
+head(mu_mean_qi)
+```
+
+Now we compute the expected values for the `Loc` levels, by hand with the `b0` and `b1` posteriors.
+
+```{r}
+#| warning: false
+
+beta_mean_qi <- as_draws_df(m5.4) |> 
+  select(.draw, b0, b1) |> 
+  expand_grid(select(d, Loc, a, m, d)) |> 
+  mutate(m_hat = b0 + b1 * a) |> 
+  group_by(Loc, a, m, d) |> 
+  mean_qi(m_hat, .width = 0.89)
+
+# What?
+head(beta_mean_qi)
+```
+
+Are they the same? The `all.equal()` function will tell.
+
+```{r}
+all.equal(mu_mean_qi, beta_mean_qi)
+```
+
+Yes, they are the same to the exact values. Sometimes it might be easier to compute expected values by hand, like in @sec-Geocentric-Models. Other times, it might be easier to use the `generated quantities` block approach. It's good to know both.
+
+Here's how to make Figure 5.4, top row, left column, with the `mu[i]` summaries from our `generated quantities` block.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+loc_vector <- c("WY", "ND", "ME", "HI", "DC")
+
+p1 <- mu_mean_qi |> 
+  ggplot(aes(x = a)) +
+  geom_line(aes(y = m_hat),
+            color = "blue") +
+  geom_segment(aes(xend = a, y = m_hat, yend = m),
+               color = "blue") +
+  geom_point(aes(y = m)) +
+  geom_text(data = d |> 
+              filter(Loc %in% loc_vector),
+            aes(y = m, label = Loc),
+            hjust = 1.2, size = 3, vjust = -0.2)
+
+p1
+```
+
+Here's how to make Figure 5.4, bottom row, left column, with the `mu[i]` summaries from our `generated quantities` block.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+p2 <- mu_mean_qi |> 
+  # Define the residual means
+  mutate(r_hat = m - m_hat) |> 
+  
+  ggplot(aes(x = r_hat, y = d)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_smooth(method = "lm", formula = 'y ~ x',
+              alpha = 1/5, color = "blue", 
+              fill = "blue", level = 0.89, linewidth = 1/2) +
+  geom_point(color = "blue") +
+  geom_text(data = mu_mean_qi |> 
+              mutate(r_hat = m - m_hat) |> 
+              filter(Loc %in% loc_vector),
+            aes(label = Loc),
+            hjust = 1.2, size = 3, vjust = -0.2)
+
+p2
+```
+
+How define the `model_code` for what we'll call `m5.4b`, the residual model for the other predictor, `a`. Note we continue to practice with the `generated quantities` block.
+
+```{r}
+model_code_5.4b <- '
+data {
+  int<lower=1> n;
+  vector[n] a;
+  vector[n] m;
+}
+parameters {
+  real b0;
+  real b1;
+  real<lower=0> sigma;
+}
+model {
+  a ~ normal(b0 + b1 * m, sigma);  // This time we model a as the criterion
+  
+  b0 ~ normal(0, 0.2);
+  b1 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n] mu;
+  mu = b0 + b1 * m;  // Expected values for m
+}
+'
+```
+
+Fit the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m5.4b, file = "fits/m5.4b.rda")
+load(file = "fits/m5.4b.rda")
+```
+
+```{r m5.4b}
+#| eval: false
+
+m5.4b <- stan(
+  data = stan_data,
+  model_code = model_code_5.4b,
+  cores = 4, seed = 5)
+```
+
+Check the model summary.
+
+```{r}
+print(m5.4b, pars = c("b0", "b1", "sigma"), probs = c(0.05, 0.945))
+```
+
+Did you notice our use of the `pars` argument, there? That restricted the `print()` output to the parameters listed in that character vector. Had we left that out, the output would also have contained the summaries of the 50 rows of `mu[i]` parameters.
+
+Speaking of which, the 50 rows of `mu[i]` from this model are the expected values for `a`, conditional on `m`. This time we'll compute the mean and 89% intervals for the `mu[i]` posteriors with the `summarise_draws()` function from **posterior**. Note that this time, the mean will be saved in a column named `mean`. We continue to call the summary object `mu_mean_qi`.
+
+```{r}
+#| warning: false
+
+mu_mean_qi <- as_draws_df(m5.4b) |> 
+  select(.draw, starts_with("mu")) |> 
+  summarise_draws(mean, ~quantile(.x, probs = c(0.055, 0.945))) |> 
+  rename(rownumber = variable) |> 
+  mutate(rownumber = str_extract(rownumber, "\\d+") |> 
+           as.integer()) |> 
+  left_join(d |> 
+              mutate(rownumber = 1:n()) |> 
+              select(rownumber, Loc, a, m, d),
+            by = join_by(rownumber))
+
+# What?
+head(mu_mean_qi)
+```
+
+Now make Figure 5.4, top row, right column.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+p3 <- mu_mean_qi |> 
+  rename(a_hat = mean) |> 
+  
+  ggplot(aes(x = m)) +
+  geom_line(aes(y = a_hat),
+            color = "blue") +
+  geom_segment(aes(xend = m, y = a_hat, yend = a),
+               color = "blue") +
+  geom_point(aes(y = a)) +
+  geom_text(data = d |> 
+              filter(Loc %in% loc_vector),
+            aes(y = a, label = Loc),
+            hjust = 1.2, size = 3, vjust = -0.2)
+
+p3
+```
+
+Make Figure 5.4, bottom row, right column.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+p4 <- mu_mean_qi |> 
+  rename(a_hat = mean) |> 
+  # Define the residual means
+  mutate(r_hat = a - a_hat) |> 
+  
+  ggplot(aes(x = r_hat, y = d)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_smooth(method = "lm", formula = 'y ~ x',
+              alpha = 1/5, color = "blue", 
+              fill = "blue", level = 0.89, linewidth = 1/2) +
+  geom_point(color = "blue") +
+  geom_text(data = mu_mean_qi |> 
+              rename(a_hat = mean) |> 
+              mutate(r_hat = a - a_hat) |> 
+              filter(Loc %in% loc_vector),
+            aes(label = Loc),
+            hjust = 1.2, size = 3, vjust = -0.2)
+
+p4
+```
+
+Here's the full Figure 5.4.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 5.75
+
+(p1 / p2) | (p3 / p4)
+```
+
+##### Rethinking: Residuals are parameters, not data.
+
+To give a sense of the residual distributions for each case, here's the lower right panel of Figure 5.4, again, but including the 89% interval ranges.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+mu_mean_qi <- mu_mean_qi |> 
+  # Define the residual summaries
+  mutate(r_hat = a - mean,
+         .lower = a - `5.5%`, 
+         .upper = a - `94.5%`)
+
+mu_mean_qi |> 
+  ggplot(aes(x = r_hat, y = d)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_smooth(method = "lm", formula = 'y ~ x',
+              alpha = 1/5, color = "blue", 
+              fill = "blue", level = 0.89, linewidth = 1/2) +
+  geom_pointinterval(aes(xmin = .lower, xmax = .upper),
+                     color = "blue", linewidth = 1/10, point_size = 1/2) +  
+  geom_text(data = mu_mean_qi |> 
+              filter(Loc %in% loc_vector),
+            aes(label = Loc),
+            hjust = 1.2, size = 3, vjust = -0.2)
+```
+
+#### Posterior prediction plots.
+
+You can refresh your memory of the model for `m5.3` by indexing the `stanmodel` part of the stanfit object.
+
+```{r}
+m5.3@stanmodel
+```
+
+We can make Figure 5.5 by computing the predictions (i.e., the expected or fitted values) by hand with the model parameters `b0` through `b2` from the `as_draws_df()` output.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+#| message: false
+#| warning: false
+
+loc_vector <- c("ID", "RI", "UT", "ME")
+
+draws <- as_draws_df(m5.3) |> 
+  select(.draw, b0, b1, b2) |> 
+  expand_grid(select(d, Loc, d, a, m)) |> 
+  mutate(mu = b0 + b1 * m + b2 * a) 
+
+draws |> 
+  ggplot(aes(x = d, y = mu)) +
+  geom_abline(color = "white") +
+  stat_pointinterval(aes(group = Loc),
+                     point_interval = mean_qi, .width = 0.89, 
+                     color = "blue", linewidth = 1/4, shape = 1) +  
+  geom_text(data = draws |> 
+              filter(Loc %in% loc_vector) |> 
+              group_by(Loc, d) |> 
+              summarise(mu = mean(mu)),
+            aes(label = Loc),
+            hjust = -0.4, size = 3) +
+  ylab(expression(widehat(divorce)))
+```
+
+Had we fit `m5.3` with a `generated quantities`, we could have also made the same plot with summaries from the `mu[i]` posteriors. For the sake of practice, here's such a plot for `m5.4`, the residual model for `m`.
+
+```{r}
+#| echo: false
+#| eval: false
+
+m5.4@stanmodel
+```
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+draws <- m5.4 |> 
+  summarise_draws(mean, ~quantile(.x, probs = c(0.055, 0.945))) |> 
+  filter(str_detect(variable, "mu")) |> 
+  rename(rownumber = variable) |> 
+  mutate(rownumber = str_extract(rownumber, "\\d+") |> 
+           as.integer()) |> 
+  left_join(d |> 
+              mutate(rownumber = 1:n()), 
+            by = join_by(rownumber))
+
+draws |> 
+  ggplot(aes(x = m, y = mean)) +
+  geom_abline(color = "white") +
+  geom_pointinterval(aes(group = Loc, ymin = `5.5%`, ymax = `94.5%`),
+                     color = "blue", linewidth = 1/4, shape = 1) +  
+  geom_text(data = draws |> 
+              filter(Loc %in% loc_vector),
+            aes(label = Loc),
+            hjust = -0.4, size = 3) +
+  ylab(expression(widehat(m)))
+```
+
+##### Rethinking: Stats, huh, yeah what is it good for?
+
+##### Overthinking: Simulating spurious association.
+
+Here's the simulated data.
+
+```{r}
+# number of cases
+n <- 100
+
+# setting the seed makes the results reproducible
+set.seed(5)
+
+d_spur <- tibble(
+  x_real = rnorm(n = n),                 # x_real as Gaussian with mean 0 and SD 1 (i.e., the defaults)
+  x_spur = rnorm(n = n, mean = x_real),  # x_spur as Gaussian with mean = x_real
+  y =      rnorm(n = n, mean = x_real))  # y as Gaussian with mean = x_real
+```
+
+Fit the model.
+
+```{r}
+#| echo: false
+
+# save(m5.0_spur, file = "fits/m5.0_spur.rda")
+load(file = "fits/m5.0_spur.rda")
+```
+
+```{r m5.0_spur}
+#| eval: false
+
+model_code_spur <- '
+data {
+  int<lower=1> n;
+  vector[n] x_real;
+  vector[n] x_spur;
+  vector[n] y;
+}
+parameters {
+  real b0;
+  real b1;
+  real b2;
+  real<lower=0> sigma;
+}
+model {
+  y ~ normal(b0 + b1 * x_real + b2 * x_spur, sigma);
+  
+  b0 ~ normal(0, 0.2);
+  b1 ~ normal(0, 0.5);
+  b2 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+'
+
+stan_data <- d_spur |> 
+  compose_data()
+
+m5.0_spur <- stan(
+  data = stan_data,
+  model_code = model_code_spur,
+  cores = 4, seed = 5)
+```
+
+Summarize.
+
+```{r}
+print(m5.0_spur, probs = c(0.05, 0.945))
+```
+
+If we let "r" stand for `x_rel` and "s" stand for `x_spur`, here's how we might depict that our simulation in a DAG.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 1.5
+
+dag_coords <- tibble(
+  name = c("r", "s", "y"),
+  x    = c(1, 3, 2),
+  y    = c(2, 2, 1))
+
+dagify(s ~ r,
+       y ~ r,
+       coords = dag_coords) |>
+  
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(alpha = 1/4, size = 10) +
+  geom_dag_text() +
+  geom_dag_edges() +
+  scale_x_continuous(NULL, breaks = NULL, expand = c(0.1, 0.1)) +
+  scale_y_continuous(NULL, breaks = NULL, expand = c(0.2, 0.2)) +
+  theme_dag()
+```
+
+#### Counterfactual plots.
+
+Take another look at one of the DAGs from back in Section 5.1.2.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 1.5
+
+dag_coords <- tibble(
+  name = c("A", "M", "D"),
+  x    = c(1, 3, 2),
+  y    = c(2, 2, 1))
+
+dagify(M ~ A,
+       D ~ A + M,
+       coords = dag_coords) |>
+  
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(alpha = 1/4, size = 10) +
+  geom_dag_text() +
+  geom_dag_edges() +
+  scale_x_continuous(NULL, breaks = NULL, expand = c(0.1, 0.1)) +
+  scale_y_continuous(NULL, breaks = NULL, expand = c(0.2, 0.2)) +
+  theme_dag()
+```
+
+Define the bivariate model.
+
+```{r}
+model_code_5.3_a <- '
+data {
+  int<lower=1> n;
+  vector[n] a;
+  vector[n] d;
+  vector[n] m;
+}
+parameters {
+  real b0;
+  real b1;
+  real b2;
+  real<lower=0> sigma;
+  real g0;
+  real g1;
+  real<lower=0> zeta;
+}
+model {
+  d ~ normal(b0 + b1 * m + b2 * a, sigma);
+  m ~ normal(g0 + g1 * a, zeta);
+  
+  b0 ~ normal(0, 0.2);
+  b1 ~ normal(0, 0.5);
+  b2 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+  g0 ~ normal(0, 0.2);
+  g1 ~ normal(0, 0.5);
+  zeta ~ exponential(1);
+}
+'
+```
+
+Update the `stan_data`.
+
+```{r}
+stan_data <- d |> 
+  select(a, d, m) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Fit the bivariate model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m5.3_a, file = "fits/m5.3_a.rda")
+load(file = "fits/m5.3_a.rda")
+```
+
+```{r m5.3_a}
+#| eval: false
+
+m5.3_a <- stan(
+  data = stan_data,
+  model_code = model_code_5.3_a,
+  cores = 4, seed = 5)
+```
+
+Check the model summary.
+
+```{r}
+print(m5.3_a, probs = c(0.05, 0.945))
+```
+
+Figure 5.6
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2.75
+
+p1 <- as_draws_df(m5.3_a) |> 
+  expand_grid(a = seq(from = -2, to = 2, length.out = 30),
+              m = 0) |> 
+  mutate(pred_d = rnorm(n = n(), mean = b0 + b1 * m + b2 * a, sd = sigma)) |> 
+  
+  ggplot(aes(x = a, y = pred_d)) +
+  stat_lineribbon(.width = 0.89, fill = "gray67", linewidth = 1/2) +
+  facet_wrap(~ "Total counterfactual effect of A on D")
+
+p2 <- as_draws_df(m5.3_a) |> 
+  expand_grid(a = seq(from = -2, to = 2, length.out = 30),
+              m = 0) |> 
+  mutate(pred_m = rnorm(n = n(), mean = g0 + g1 * a, sd = zeta)) |> 
+  
+  ggplot(aes(x = a, y = pred_m)) +
+  stat_lineribbon(.width = 0.89, fill = "gray67", linewidth = 1/2) +
+  facet_wrap(~ "Counterfactual effect of A on M")
+
+(p1 + p2) & coord_cartesian(ylim = c(-2, 2))
+```
+
+We can compute "the expected causal effect of increasing median age at marriage from 20 to 30" with the `compare_levels()` function.
+
+```{r}
+as_draws_df(m5.3_a) |> 
+  expand_grid(a = (c(20, 30) - 26.1) / 1.24,
+              m = 0) |> 
+  mutate(pred_d = rnorm(n = n(), mean = b0 + b1 * m + b2 * a, sd = sigma)) |> 
+  compare_levels(variable = pred_d, by = a) |> 
+  ungroup() |> 
+  summarise(expectation = mean(pred_d))
+```
+
+> The trick with simulating counterfactuals is to realize that when we manipulate some variable $X$, we break the causal influence of other variables on $X$. This is the same as saying we modify the DAG so that no arrows enter $X$. Suppose for example that we now simulate the effect of manipulating $M.$ (p. 143)
+
+Here's how to plot that DAG.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 1.5
+
+dag_coords <- tibble(
+  name = c("A", "M", "D"),
+  x    = c(1, 3, 2),
+  y    = c(2, 2, 1))
+
+dagify(D ~ A + M,
+       coords = dag_coords) |>
+  
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(alpha = 1/4, size = 10) +
+  geom_dag_text() +
+  geom_dag_edges() +
+  scale_x_continuous(NULL, breaks = NULL, expand = c(0.1, 0.1)) +
+  scale_y_continuous(NULL, breaks = NULL, expand = c(0.2, 0.2)) +
+  theme_dag()
+```
+
+Here's the new counterfactual plot focusing on $M \rightarrow D$, holding $A = 0$, Figure 5.7.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 3
+
+as_draws_df(m5.3_a) |> 
+  expand_grid(a = 0,
+              m = seq(from = -2, to = 2, length.out = 30)) |> 
+  mutate(pred_d = rnorm(n = n(), mean = b0 + b1 * m + b2 * a, sd = sigma)) |> 
+  
+  ggplot(aes(x = m, y = pred_d)) +
+  stat_lineribbon(.width = 0.89, fill = "gray67", linewidth = 1/2) +
+  coord_cartesian(ylim = c(-2, 2)) +
+  facet_wrap(~ "Total counterfactual effect of M on D")
+```
+
+##### Overthinking: Simulating counterfactuals.
+
+## Masked relationship
+
+Load the `milk` data.
+
+```{r}
+data(milk, package = "rethinking")
+d <- milk
+rm(milk)
+
+# What?
+glimpse(d)
+```
+
+Let's standardize our variables by hand.
+
+```{r}
+d <- d |> 
+  mutate(k = (kcal.per.g - mean(kcal.per.g)) / sd(kcal.per.g), 
+         n = (neocortex.perc - mean(neocortex.perc, na.rm = T)) / sd(neocortex.perc, na.rm = T), 
+         m = (log(mass) - mean(log(mass))) / sd(log(mass)))
+```
+
+Define the `stan_data`.
+
+```{r}
+stan_data <- d |> 
+  select(k, n, m) |> 
+  compose_data(.n_name = n_prefix("N"))
+
+# What?
+str(stan_data)
+```
+
+Define `model_code_5.5_draft`.
+
+```{r}
+model_code_5.5_draft <- '
+data {
+  int<lower=1> N;
+  vector[N] k;
+  vector[N] n;
+}
+parameters {
+  real b0;
+  real b1;
+  real<lower=0> sigma;
+}
+model {
+  k ~ normal(b0 + b1 * n, sigma);
+
+  b0 ~ normal(0, 1);
+  b1 ~ normal(0, 1);
+  sigma ~ exponential(1);
+}
+'
+```
+
+Now attempt to fit `m5.5_draft`.
+
+```{r m5.5_draft}
+#| eval: false
+
+m5.5_draft <- stan(
+  data = stan_data,
+  model_code = model_code_5.5_draft,
+  cores = 4, seed = 5)
+```
+
+
+The model did not fit due to the `NA` values, as indicated by the warning message: `Stan does not support NA (in n) in data`.
+
+Drop cases with missingness in any of our three focal variables.
+
+```{r}
+dcc <- d |>
+  drop_na(k, n, m)
+```
+
+Update the `data_list`.
+
+```{r}
+stan_data <- dcc |> 
+  select(k, n, m) |> 
+  compose_data(.n_name = n_prefix("N"))
+
+# What?
+str(stan_data)
+```
+
+```{r}
+#| echo: false
+
+# save(m5.5_draft, file = "fits/m5.5_draft.rda")
+load(file = "fits/m5.5_draft.rda")
+```
+
+```{r m5.5_draft2}
+#| eval: false
+
+m5.5_draft <- stan(
+  data = stan_data,
+  model_code = model_code_5.5_draft,
+  cores = 4, seed = 5)
+```
+
+Check the model summary.
+
+```{r}
+print(m5.5_draft, probs = c(0.05, 0.945))
+```
+
+Take samples from just the priors with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m5.5_draft_prior, file = "fits/m5.5_draft_prior.rda")
+load(file = "fits/m5.5_draft_prior.rda")
+```
+
+```{r m5.5_draft_prior}
+#| eval: false
+
+model_code_5.5_draft_prior <- '
+data {
+  int<lower=1> N;
+  vector[N] k;
+  vector[N] n;
+}
+parameters {
+  real b0;
+  real b1;
+  real<lower=0> sigma;
+}
+model {
+  b0 ~ normal(0, 1);
+  b1 ~ normal(0, 1);
+  sigma ~ exponential(1);
+}
+'
+
+m5.5_draft_prior <- stan(
+  data = stan_data,
+  model_code = model_code_5.5_draft_prior,
+  cores = 4, seed = 5)
+```
+
+Here's the left panel of Figure 5.8.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 3
+
+set.seed(5)
+
+p1 <- as_draws_df(m5.5_draft_prior) |> 
+  slice_sample(n = 30) |> 
+  
+  ggplot() +
+  geom_abline(aes(intercept = b0, slope = b1, group = .draw)) +
+  scale_x_continuous("neocortex percent (std)", limits = c(-2, 2)) +
+  scale_y_continuous("kilocal per g (std)", limits = c(-2, 2)) +
+  facet_wrap(~ "a ~ dnorm(0, 1)\nbN ~ dnorm(0, 1)")
+
+p1
+```
+
+Now take samples from the tighter priors.
+
+```{r}
+#| echo: false
+
+# save(m5.5_prior, file = "fits/m5.5_prior.rda")
+load(file = "fits/m5.5_prior.rda")
+```
+
+```{r m5.5_prior}
+#| eval: false
+
+model_code_5.5_prior <- '
+data {
+  int<lower=1> N;
+  vector[N] k;
+  vector[N] n;
+}
+parameters {
+  real b0;
+  real b1;
+  real<lower=0> sigma;
+}
+model {
+  b0 ~ normal(0, 0.2);
+  b1 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+'
+
+m5.5_prior <- stan(
+  data = stan_data,
+  model_code = model_code_5.5_prior,
+  cores = 4, seed = 5)
+```
+
+Now complete Figure 5.8.
+
+```{r}
+#| fig-width: 5.5
+#| fig-height: 3
+
+set.seed(5)
+
+p2 <- as_draws_df(m5.5_prior) |> 
+  slice_sample(n = 30) |> 
+  
+  ggplot() +
+  geom_abline(aes(intercept = b0, slope = b1, group = .draw)) +
+  scale_x_continuous("neocortex percent (std)", limits = c(-2, 2)) +
+  scale_y_continuous(NULL, breaks = NULL, limits = c(-2, 2)) +
+  facet_wrap(~ "a ~ dnorm(0, 0.2)\nbN ~ dnorm(0, 0.5)")
+
+p1 | p2
+```
+
+Define `model_code_5.5` and fit `m5.5`.
+
+```{r}
+#| echo: false
+
+# save(m5.5, file = "fits/m5.5.rda")
+load(file = "fits/m5.5.rda")
+```
+
+```{r m5.5}
+#| eval: false
+
+model_code_5.5 <- '
+data {
+  int<lower=1> N;
+  vector[N] k;
+  vector[N] n;
+}
+parameters {
+  real b0;
+  real b1;
+  real<lower=0> sigma;
+}
+model {
+  k ~ normal(b0 + b1 * n, sigma);
+
+  b0 ~ normal(0, 0.2);
+  b1 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+'
+
+m5.5 <- stan(
+  data = stan_data,
+  model_code = model_code_5.5,
+  cores = 4, seed = 5)
+```
+
+Check the model summary.
+
+```{r}
+print(m5.5, probs = c(0.05, 0.945))
+```
+
+Figure 5.9, upper left
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+p1 <- as_draws_df(m5.5) |> 
+  expand_grid(n = seq(from = -2.5, to = 2.5, length.out = 50)) |> 
+  mutate(mu = b0 + b1 * n) |> 
+  
+  ggplot(aes(x = n)) +
+  stat_lineribbon(aes(y = mu),
+                  .width = 0.89, 
+                  color = "blue", fill = alpha("blue", 1/3), linewidth = 1/2) +
+  geom_point(data = dcc,
+             aes(y = k)) +
+  coord_cartesian(xlim = range(dcc$n),
+                  ylim = range(dcc$k)) +
+  labs(x = "neocortex percent (std)",
+       y = "kilocal per g (std)")
+
+p1
+```
+
+Now we use `m` as the new sole predictor.
+
+```{r}
+#| echo: false
+
+# save(m5.6, file = "fits/m5.6.rda")
+load(file = "fits/m5.6.rda")
+```
+
+```{r m5.6}
+#| eval: false
+
+model_code_5.6 <- '
+data {
+  int<lower=1> N;
+  vector[N] k;
+  vector[N] m;
+}
+parameters {
+  real b0;
+  real b2;
+  real<lower=0> sigma;
+}
+model {
+  k ~ normal(b0 + b2 * m, sigma);
+
+  b0 ~ normal(0, 0.2);
+  b2 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+'
+
+m5.6 <- stan(
+  data = stan_data,
+  model_code = model_code_5.6,
+  cores = 4, seed = 5)
+```
+
+Check the model summary.
+
+```{r}
+print(m5.6, probs = c(0.05, 0.945))
+```
+
+Make Figure 5.9, upper right.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+p2 <- as_draws_df(m5.6) |> 
+  expand_grid(m = seq(from = -2.5, to = 2.5, length.out = 50)) |> 
+  mutate(mu = b0 + b2 * m) |> 
+  
+  ggplot(aes(x = m)) +
+  stat_lineribbon(aes(y = mu),
+                  .width = 0.89, 
+                  color = "blue", fill = alpha("blue", 1/3), linewidth = 1/2) +
+  geom_point(data = dcc,
+             aes(y = k)) +
+  coord_cartesian(xlim = range(dcc$m),
+                  ylim = range(dcc$k)) +
+  labs(x = "log body mass (std)",
+       y = "kilocal per g (std)") +
+  facet_grid("Univariable" ~ .)
+
+p2
+```
+
+
+Finally, we're ready to fit with both predictors included in a multivariable model. The statistical formula is
+
+$$
+\begin{align*}
+\text{k}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i & = \alpha + \beta_1 \text{n}_i + \beta_2 \text{m} \\
+\alpha  & \sim \operatorname{Normal}(0, 0.2) \\
+\beta_1 & \sim \operatorname{Normal}(0, 0.5) \\
+\beta_2 & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma  & \sim \operatorname{Exponential}(1).
+\end{align*}
+$$
+
+Fit the multivariable model.
+
+```{r}
+#| echo: false
+
+# save(m5.7, file = "fits/m5.7.rda")
+load(file = "fits/m5.7.rda")
+```
+
+```{r m5.7}
+#| eval: false
+
+model_code_5.7 <- '
+data {
+  int<lower=1> N;
+  vector[N] k;
+  vector[N] n;
+  vector[N] m;
+}
+parameters {
+  real b0;
+  real b1;
+  real b2;
+  real<lower=0> sigma;
+}
+model {
+  k ~ normal(b0 + b1 * n + b2 * m, sigma);
+
+  b0 ~ normal(0, 0.2);
+  b1 ~ normal(0, 0.5);
+  b2 ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+'
+
+m5.7 <- stan(
+  data = stan_data,
+  model_code = model_code_5.7,
+  cores = 4, seed = 5)
+```
+
+```{r}
+print(m5.7, probs = c(0.05, 0.945))
+```
+
+Here's an alternative to McElreath's `coefplot()` plot code.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 1.5
+#| warning: false
+
+bind_rows(
+  as_draws_df(m5.5) |> 
+    transmute(`b[0]` = b0, `b[1]` = b1, fit = "m5.5"),
+  as_draws_df(m5.6) |> 
+    transmute(`b[0]` = b0, `b[2]` = b2, fit = "m5.6"),
+  as_draws_df(m5.7) |> 
+    transmute(`b[0]` = b0, `b[1]` = b1, `b[2]` = b2, fit = "m5.7")
+) |> 
+  
+  pivot_longer(contains("[")) |> 
+  drop_na(value) |> 
+  
+  ggplot(aes(x = value, y = fit)) +
+  stat_pointinterval(.width = 0.89, linewidth = 1/4, shape = 1) +
+  labs(x = "posterior",
+       y = NULL) +
+  facet_wrap(~ name, labeller = label_parsed)
+```
+
+On page 151, McElreath suggested we look at a pairs plot to get a sense of the zero-order correlations.
+
+```{r}
+#| fig-width: 3.5
+#| fig-height: 3.5
+
+dcc |> 
+  select(k, n, m) |> 
+  pairs()
+```
+
+I'm not aware we can facet `dagify()` objects. But we can take cues from @sec-Geocentric-Models to link our three DAGs like McElreath did his. First, we'll recognize the **ggplot2** code will be nearly identical for each DAG. So we can just wrap the **ggplot2** code into a compact function, like so.
+
+```{r}
+gg_dag <- function(d) {
+  
+  d |> 
+    ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+    geom_dag_point(alpha = 1/4, size = 10) +
+    geom_dag_text() +
+    geom_dag_edges() +
+    scale_x_continuous(NULL, breaks = NULL, expand = c(0.1, 0.1)) +
+    scale_y_continuous(NULL, breaks = NULL, expand = c(0.2, 0.2)) +
+    theme_dag()
+  
+}
+```
+
+Now we'll make the three individual DAGs, saving each.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 1.5
+
+# Left DAG
+dag_coords <- tibble(
+  name = c("M", "N", "K"),
+  x    = c(1, 3, 2),
+  y    = c(2, 2, 1))
+
+dag1 <- dagify(
+  N ~ M,
+  K ~ M + N,
+  coords = dag_coords) |>
+  gg_dag()
+
+# Middle DAG
+dag2 <- dagify(
+  M ~ N,
+  K ~ M + N,
+  coords = dag_coords) |>
+  gg_dag()
+
+# Right DAG
+dag_coords <- tibble(
+  name = c("M", "N", "K", "U"),
+  x    = c(1, 3, 2, 2),
+  y    = c(2, 2, 1, 2))
+
+dag3 <- dagify(
+  M ~ U,
+  N ~ U,
+  K ~ M + N,
+  coords = dag_coords) |>
+  gg_dag() +
+  geom_point(x = 2, y = 2,
+             shape = 1, size = 10, stroke = 1.25)
+```
+
+Now we combine our `gg_dag()` plots together with **patchwork** syntax.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 2
+#| message: false
+#| warning: false
+
+dag1 + dag2 + dag3
+```
+
+Let's make the counterfactual plots at the bottom of Figure 5.9. Here's the one on the left.
+
+
+Figure 5.9, lower left
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+p3 <- as_draws_df(m5.7) |> 
+  expand_grid(n = seq(from = -2.5, to = 2.5, length.out = 50),
+              m = 0) |> 
+  mutate(mu = b0 + b1 * n + b2 * m) |> 
+  
+  ggplot(aes(x = n)) +
+  stat_lineribbon(aes(y = mu),
+                  .width = 0.89, 
+                  color = "blue", fill = alpha("blue", 1/3), linewidth = 1/2) +
+  coord_cartesian(xlim = range(dcc$n),
+                  ylim = range(dcc$k)) +
+  labs(x = "neocortex percent (std)",
+       y = "kilocal per g (std)")
+
+p3
+```
+
+Figure 5.9, lower right
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+p4 <- as_draws_df(m5.7) |> 
+  expand_grid(n = 0,
+              m = seq(from = -2.5, to = 2.5, length.out = 50)) |> 
+  mutate(mu = b0 + b1 * n + b2 * m) |> 
+  
+  ggplot(aes(x = m)) +
+  stat_lineribbon(aes(y = mu),
+                  .width = 0.89, 
+                  color = "blue", fill = alpha("blue", 1/3), linewidth = 1/2) +
+  coord_cartesian(xlim = range(dcc$n),
+                  ylim = range(dcc$k)) +
+  labs(x = "log body mass (std)",
+       y = "kilocal per g (std)") +
+  facet_grid("Multivariable" ~ .)
+
+p4
+```
+
+Now combine all 4 panels to make the full Figure 5.9.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 5.5
+
+((p1 + scale_x_continuous(NULL, breaks = NULL)) / p3) |
+  ((p2 + scale_x_continuous(NULL, breaks = NULL)) / p4) & 
+  scale_y_continuous(NULL, breaks = NULL)
+```
+
+
+#### Overthinking: Simulating a masking relationship.
+
+As a refresher, here's our focal DAG.
+
+```{r}
+#| fig-width: 2.5
+#| fig-height: 1.5
+
+dag_coords <- tibble(
+  name = c("M", "N", "K"),
+  x    = c(1, 3, 2),
+  y    = c(2, 2, 1))
+
+dagify(N ~ M,
+       K ~ M + N,
+       coords = dag_coords) |>
+  gg_dag()
+```
+
+Now simulate data consistent with that DAG.
+
+```{r}
+# How many cases would you like?
+n <- 100
+
+set.seed(5)
+d_sim <- tibble(m = rnorm(n = n, mean = 0, sd = 1)) |> 
+  mutate(n = rnorm(n = n, mean = m, sd = 1)) |> 
+  mutate(k = rnorm(n = n, mean = n - m, sd = 1))
+```
+
+Use `pairs()` to get a sense of what we just simulated.
+
+```{r}
+#| fig-width: 3.5
+#| fig-height: 3.5
+
+d_sim |> 
+  pairs()
+```
+
+Update the `stan_data`.
+
+```{r}
+stan_data <- d_sim |>
+  compose_data(.n_name = n_prefix("N"))
+
+# What?
+str(stan_data)
+```
+
+Fit the three models to the new data with the `sampling()` function.
+
+```{r}
+#| echo: false
+
+# save(m5.5_sim, file = "fits/m5.5_sim.rda")
+# save(m5.6_sim, file = "fits/m5.6_sim.rda")
+# save(m5.7_sim, file = "fits/m5.7_sim.rda")
+
+load(file = "fits/m5.5_sim.rda")
+load(file = "fits/m5.6_sim.rda")
+load(file = "fits/m5.7_sim.rda")
+```
+
+```{r m5.5_sim}
+#| eval: false
+
+m5.5_sim <- sampling(
+  object = m5.5@stanmodel,
+  data = stan_data,
+  cores = 4, seed = 5)
+
+m5.6_sim <- sampling(
+  object = m5.6@stanmodel,
+  data = stan_data,
+  cores = 4, seed = 5)
+
+m5.7_sim <- sampling(
+  object = m5.7@stanmodel,
+  data = stan_data,
+  cores = 4, seed = 5)
+```
+
+Here's the coefficient plot.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2.25
+#| warning: false
+
+bind_rows(
+  as_draws_df(m5.5_sim) |> mutate(model = "m5.5_sim"),
+  as_draws_df(m5.6_sim) |> mutate(model = "m5.6_sim"),
+  as_draws_df(m5.7_sim) |> mutate(model = "m5.7_sim")
+) |> 
+  pivot_longer(starts_with("b")) |> 
+  filter(name != "b0") |> 
+  drop_na(value) |> 
+  mutate(name = case_when(
+    name == "b1" ~ "beta[1]",
+    name == "b2" ~ "beta[2]"
+  ) |> factor(levels = c("beta[2]", "beta[1]"))) |> 
+  
+  ggplot(aes(x = value, y = model)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_pointinterval(.width = 0.89,
+                     linewidth = 1/2, shape = 1) +
+  labs(x = "posterior",
+       y = NULL) +
+  facet_wrap(~ name, labeller = label_parsed, ncol = 1)
+```
+
+## Categorical variables
+
+#### Rethinking: Continuous countries.
+
+### Binary categories.
+
+Reload the `Howell1` data.
+
+```{r}
+data(Howell1, package = "rethinking")
+d <- Howell1
+rm(Howell1)
+```
+
+If you forgot what these data were like, take a `glimpse()`.
+
+```{r}
+d |>
+  glimpse()
+```
+
+The statistical model including a `male` dummy might follow the form
+
+$$
+\begin{align*}
+\text{height}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i   & = \alpha + \beta_1 \text{male}_i \\
+\alpha  & \sim \operatorname{Normal}(178, 20) \\
+\beta_1 & \sim \operatorname{Normal}(0, 10) \\
+\sigma  & \sim \operatorname{Uniform}(0, 50),
+\end{align*}
+$$
+
+where $\beta_1$ is the expected (i.e., average) difference between males and females for `height`. Here we simulate from our priors and `summarise()` the results.
+
+```{r}
+set.seed(5)
+
+prior <- tibble(mu_female = rnorm(n = 1e4, mean = 178, sd = 20)) |> 
+  mutate(mu_male = mu_female + rnorm(n = 1e4, mean = 0, sd = 10))
+
+prior |> 
+  pivot_longer(everything()) |> 
+  group_by(name) |> 
+  summarise(mean = mean(value),
+            sd   = sd(value),
+            ll   = quantile(value, prob = .025),
+            ul   = quantile(value, prob = .975)) |> 
+  mutate_if(is.double, round, digits = 2)
+```
+
+We might visualize the two prior predictive distributions as overlapping densities.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 2.75
+
+prior |> 
+  pivot_longer(everything()) |> 
+  ggplot(aes(x = value, fill = name, color = name)) +
+  geom_density(linewidth = 2/3, alpha = 2/3) +
+  scale_fill_manual(NULL, values = c("red", "blue")) +
+  scale_color_manual(NULL, values = c("red", "blue")) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("prior predictive distribution for our dummy groups") 
+```
+
+Yep, this parameterization makes $\alpha + \beta_1$ more uncertain than $\alpha$. A nice alternative is to make an index variable. We'll call it `sex`, for which 1 = *female* and 2 = *male.* "No order is implied. These are just labels" (p. 155).
+
+```{r}
+d <- d |> 
+  mutate(sex = ifelse(male == 1, 2, 1) |> as.character())
+
+head(d)
+```
+
+Note how we have saved `sex` as a character variable. This will come in handy in just a moment.
+
+We can update our statistical model to include `sex` with the formula
+
+$$
+\begin{align*}
+\text{height}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i    & = \alpha_{\text{sex}[i]} \\
+\alpha_j & \sim \operatorname{Normal}(178, 20) & \text{for } j = 1 \; \& \; 2 \\
+\sigma   & \sim \operatorname{Uniform}(0, 50),
+\end{align*}
+$$
+
+where now we have rows indexed by $i$ and two levels of `sex` indexed by $j$.
+
+We'll fit the model 2 ways. The first, `m5.8` will follow McElreath's index-variable approach. The second, `m5.8b` will use the dummy approach. First, we'll make the `stan_data` with the `compose_data()` function.
+
+```{r}
+stan_data <- d |>
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Do you see the `n_sex` value there? When you save variables as characters or as factors, the `compose_data()` function will automatically compute a corresponding `n_` value. To learn more, execute `?compose_data` in your console.
+
+Define the two `model_code`s. Notice how we've used the `n_sex` value in the first.
+
+```{r}
+# Index variable approach
+model_code_5.8 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_sex;
+  vector[n] height;
+  int sex[n];
+}
+parameters {
+  vector[n_sex] a;
+  real<lower=0,upper=50> sigma;
+}
+model {
+  height ~ normal(a[sex], sigma);
+  
+  a ~ normal(178, 20);
+  
+  // As an alternative, this syntax works in this example, 
+  // and allows the prior to differ by level
+  // a[1] ~ normal(178, 20);
+  // a[2] ~ normal(178, 20);
+  
+  // This snytax does not work
+  // a[sex] ~ normal(178, 20);
+  
+  sigma ~ uniform(0, 50);
+}
+'
+
+# Dummy variable approach
+model_code_5.8b <- '
+data {
+  int<lower=1> n;
+  vector[n] height;
+  vector[n] male;
+}
+parameters {
+  real b0;
+  real b1;
+  real<lower=0,upper=50> sigma;
+}
+model {
+  height ~ normal(b0 + b1 * male, sigma);
+  
+  b0 ~ normal(178, 20);
+  b1 ~ normal(0, 10);
+  sigma ~ uniform(0, 50);
+}
+'
+```
+
+Fit the models with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m5.8, file = "fits/m5.8.rda")
+# save(m5.8b, file = "fits/m5.8b.rda")
+load(file = "fits/m5.8.rda")
+load(file = "fits/m5.8b.rda")
+```
+
+```{r m5.8}
+#| eval: false
+
+m5.8 <- stan(
+  data = stan_data,
+  model_code = model_code_5.8,
+  cores = 4, seed = 5)
+
+m5.8b <- stan(
+  data = stan_data,
+  model_code = model_code_5.8b,
+  cores = 4, seed = 5)
+```
+
+Check the model summaries.
+
+```{r}
+print(m5.8, probs = c(0.05, 0.945))
+print(m5.8b, probs = c(0.05, 0.945))
+```
+
+Compare the posteriors, by model type.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 3
+#| warning: false
+
+bind_rows(
+  as_draws_df(m5.8) |> 
+    transmute(.draw = .draw,
+              female = `a[1]`,
+              male = `a[2]`,
+              diff = `a[1]` - `a[2]`),
+  as_draws_df(m5.8b) |> 
+    transmute(.draw = .draw,
+              female = b0,
+              male = b0 + b1,
+              diff = -b1)
+) |> 
+  mutate(type = rep(c("index", "dummy"), each = n() / 2)) |> 
+  pivot_longer(female:diff) |> 
+  
+  ggplot(aes(x = value, color = type, fill = type)) +
+  stat_slab(alpha = 0.5, normalize = "panels", linewidth = 0) +
+  # At the moment, this method fails of you alter the .width argument;
+  # see: https://github.com/mjskay/ggdist/issues/27
+  stat_pointinterval(position = position_dodge(width = 0.15, preserve = "single")) +
+  scale_y_continuous(NULL, breaks = NULL, expand = expansion(mult = 0)) +
+  xlab("posterior") +
+  facet_wrap( ~ name, scales = "free_x")
+```
+
+### Many categories.
+
+Load the `milk` data.
+
+```{r}
+data(milk, package = "rethinking")
+d <- milk
+rm(milk)
+```
+
+With the **tidyverse**, we can peek at `clade` with `distinct()` in the place of base **R** `unique()`.
+
+```{r}
+d |>
+  distinct(clade)
+```
+
+Now add a `clade_id` index variable.
+
+```{r}
+d <- d |> 
+  mutate(clade_id = as.integer(clade) |> as.character()) |> 
+  # Add `clade` dummies
+  mutate(ape = ifelse(clade == "Ape", 1, 0),
+         nwm = ifelse(clade == "New World Monkey", 1, 0),
+         owm = ifelse(clade == "Old World Monkey", 1, 0),
+         strepsirrhine = ifelse(clade == "Strepsirrhine", 1, 0)) |> 
+  # Standardize the criterion
+  mutate(k = (kcal.per.g - mean(kcal.per.g)) / sd(kcal.per.g))
+
+# What?
+d |>
+  distinct(clade, clade_id, ape, nwm, owm, strepsirrhine) |> 
+  arrange(clade)
+```
+
+Our statistical model follows the form
+
+```{r}
+#| eval: false
+#| echo: false
+
+clade_id
+clade-id
+```
+
+$$
+\begin{align*}
+\text{k}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i    & = \alpha_{\text{clade-id}[i]} \\
+\alpha_j & \sim \operatorname{Normal}(0, 0.5), & \text{for } j = 1, \dots, 4 \\
+\sigma   & \sim \operatorname{Exponential}(1).
+\end{align*}
+$$
+
+We might also fit this model using one-hot encoding, following the form
+
+$$
+\begin{align*}
+\text{k}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i    & = \beta_0 \text{ape}_i + \beta_1 \text{nwm}_i + \beta_2 \text{owm}_i + \beta_3 \text{strepsirrhine}_i \\
+\beta_0, \dots, \beta_3 & \sim \operatorname{Normal}(0, 0.5), \\
+\sigma   & \sim \operatorname{Exponential}(1).
+\end{align*}
+$$
+
+Make the `stan_data` with the `compose_data()` function.
+
+```{r}
+stan_data <- d |>
+  select(k, clade, clade_id, ape, nwm, owm, strepsirrhine) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Define the two `model_code`s. Note our use of the `n_clade_id` value in the first.
+
+```{r}
+# Index variable approach
+model_code_5.9 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_clade_id;
+  vector[n] k;
+  int clade_id[n];
+}
+parameters {
+  vector[n_clade_id] a;
+  real<lower=0> sigma;
+}
+model {
+  k ~ normal(a[clade_id], sigma);
+  
+  a ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+'
+
+# One-hot encoding approach
+model_code_5.9b <- '
+data {
+  int<lower=1> n;
+  vector[n] k;
+  vector[n] ape;
+  vector[n] nwm;
+  vector[n] owm;
+  vector[n] strepsirrhine;
+}
+parameters {
+  real b0;
+  real b1;
+  real b2;
+  real b3;
+  real<lower=0> sigma;
+}
+model {
+  k ~ normal(b0 * ape + b1 * nwm + b2 * owm + b3 * strepsirrhine, sigma);
+  
+  b0 ~ normal(0, 0.5);
+  b1 ~ normal(0, 0.5);
+  b2 ~ normal(0, 0.5);
+  b3 ~ normal(0, 0.5);
+  // This also works
+  // [b0, b1, b2, b3] ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+'
+```
+
+Fit the two versions of the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m5.9, file = "fits/m5.9.rda")
+# save(m5.9b, file = "fits/m5.9b.rda")
+load(file = "fits/m5.9.rda")
+load(file = "fits/m5.9b.rda")
+```
+
+```{r m5.9}
+#| eval: false
+
+m5.9 <- stan(
+  data = stan_data,
+  model_code = model_code_5.9,
+  cores = 4, seed = 5)
+
+m5.9b <- stan(
+  data = stan_data,
+  model_code = model_code_5.9b,
+  cores = 4, seed = 5)
+```
+
+Check the model summaries.
+
+```{r}
+print(m5.9, probs = c(0.05, 0.945))
+print(m5.9b, probs = c(0.05, 0.945))
+```
+
+The results are the same within HMC variance.
+
+Display the results in a coefficient plot.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2
+#| warning: false
+
+bind_rows(
+  as_draws_df(m5.9) |> 
+    transmute(.draw = .draw,
+              ape = `a[1]`,
+              nwm = `a[2]`,
+              owm = `a[3]`,
+              strepsirrhine = `a[4]`),
+  as_draws_df(m5.9b) |>
+    transmute(.draw = .draw,
+              ape = b0,
+              nwm = b1,
+              owm = b2,
+              strepsirrhine = b3)
+) |>
+  mutate(type = rep(c("index", "one-hot"), each = n() / 2)) |> 
+  pivot_longer(ape:strepsirrhine) |> 
+  mutate(name = fct_rev(name)) |> 
+  
+  ggplot(aes(x = value, y = name, color = type)) +
+  stat_pointinterval(point_interval = mean_qi, .width = 0.89, 
+                     position = position_dodge(width = 0.5),
+                     linewidth = 1/2, shape = 1) +
+  labs(x = "expected kcal (std)",
+       y = NULL)
+```
+
+This is a good place to introduce `tidybayes::spread_draws()` function, which can be handy for extracting posterior draws in a long format. When you have a model that uses an indexed parameter, such as the `a` parameter in `m5.9`, you can request the draws for each of those indices using `[]` notation. Note below how we have indicated we want those indices named `j` with our `a[j]` syntax. We could have also called them something more descriptive like `clade_id`, or more generic like `index`.
+
+```{r}
+m5.9 |> 
+  spread_draws(a[j]) |>
+  # spread_draws(a[clade_id]) |>  # More descriptive
+  # spread_draws(a[index]) |>     # More generic 
+  arrange(.draw) |> 
+  head(n = 10)
+```
+
+This kind of long-formatted output can make for thriftier post-processing code for, say, coefficient plots like the one above.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2
+
+m5.9 |> 
+  spread_draws(a[clade_id]) |>
+  left_join(d |> 
+              distinct(clade_id, clade) |> 
+              mutate(clade_id = as.integer(clade_id)),
+            by = join_by(clade_id)) |> 
+  mutate(clade = fct_rev(clade)) |>
+  
+  ggplot(aes(x = a, y = clade)) +
+  stat_pointinterval(point_interval = mean_qi, .width = 0.89, 
+                     linewidth = 1/2, shape = 1) +
+  labs(x = "expected kcal (std)",
+       y = NULL)
+```
+
+Okay, let's simulate some "made up categories" (p. 157). We'll save the variable as a factor `house`, and an index `house_id`.
+
+```{r}
+houses <- c("Gryffindor", "Hufflepuff", "Ravenclaw", "Slytherin")
+
+set.seed(63)
+d <- d |> 
+  mutate(house = sample(rep(houses, each = 8), size = n()) |> 
+           factor(levels = houses)) |> 
+  mutate(house_id = as.integer(house) |> as.character())
+
+# What?
+d |> 
+  count(house, house_id)
+```
+
+McElreath's `m5.10` followed the statistical formula of
+
+```{r}
+#| eval: false
+#| echo: false
+
+kcal.per.g_s
+kcal.per.g-s
+```
+
+$$
+\begin{align*}
+\text{kcal.per.g-s}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i    & = \alpha_{\color{#8B1A1A}{\text{clade}[i]}} + \beta_{\color{#8B1A1A}{\text{house}[i]}} \\
+\alpha_{\color{#8B1A1A}{\text{clade}, j}} & \sim \operatorname{Normal}(0, 0.5), && \color{#8B1A1A}{\text{for } j = 1, \dots, 4} \\
+\beta_{\color{#8B1A1A}{\text{house}, k}} & \sim \operatorname{Normal}(0, 0.5), && \color{#8B1A1A}{\text{for } k = 1, \dots, 4} \\
+\sigma   & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+where there is an $\alpha_\text{clade}$ "intercept" for each of the four levels of `clade` and an $\beta_\text{house}$ "intercept" for each of the four levels of `house`. But there is no **overall** intercept, $\alpha$, that stands for the expected value when all the predictors are set to 0.
+
+Update the `stan_data` with the `compose_data()` function.
+
+```{r}
+stan_data <- d |>
+  select(k, clade, clade_id, ape, nwm, owm, strepsirrhine, house, house_id) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Define `model_code_5.10`.
+
+```{r}
+# Index variable approach
+model_code_5.10 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_clade_id;
+  int<lower=1> n_house_id;
+  vector[n] k;
+  int clade_id[n];
+  int house_id[n];
+}
+parameters {
+  vector[n_clade_id] a;
+  vector[n_house_id] b;
+  real<lower=0> sigma;
+}
+model {
+  k ~ normal(a[clade_id] + b[house_id], sigma);
+  
+  a ~ normal(0, 0.5);
+  b ~ normal(0, 0.5);
+  sigma ~ exponential(1);
+}
+'
+```
+
+Fit the models with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m5.10, file = "fits/m5.10.rda")
+load(file = "fits/m5.10.rda")
+```
+
+```{r m5.10}
+#| eval: false
+
+m5.10 <- stan(
+  data = stan_data,
+  model_code = model_code_5.10,
+  cores = 4, seed = 5)
+```
+
+Check the summary.
+
+```{r}
+print(m5.10, probs = c(0.05, 0.945))
+```
+
+Here's the coefficient plot for the $a_{[i]}$ parameters.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2
+#| warning: false
+
+as_draws_df(m5.10) |> 
+  pivot_longer(starts_with("a")) |> 
+  mutate(clade_id = str_extract(name, "\\d") |> 
+           as.integer()) |> 
+  left_join(d |> 
+              distinct(clade, clade_id) |> 
+              mutate(clade_id = as.integer(clade_id)),
+            by = join_by(clade_id)) |> 
+  mutate(y = str_c(name, "~('", clade, "')")) |> 
+  
+  ggplot(aes(x = value, y = y)) +
+  stat_halfeye(.width = 0.89) +
+  scale_y_discrete(labels = ggplot2:::parse_safe, expand = expansion(mult = 0.1)) +
+  labs(x = "posterior", 
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0))
+```
+
+Here's the coefficient plot for the new $b_{[i]}$ parameters.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2
+#| warning: false
+
+as_draws_df(m5.10) |> 
+  pivot_longer(starts_with("b")) |> 
+  mutate(house_id = str_extract(name, "\\d") |> 
+           as.integer()) |> 
+  left_join(d |> 
+              distinct(house, house_id) |> 
+              mutate(house_id = as.integer(house_id)),
+            by = join_by(house_id)) |> 
+  mutate(y = str_c(name, "~('", house, "')")) |> 
+  
+  ggplot(aes(x = value, y = y)) +
+  stat_halfeye(.width = 0.89) +
+  scale_y_discrete(labels = ggplot2:::parse_safe, expand = expansion(mult = 0.1)) +
+  labs(x = "posterior", 
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0))
+```
+
+The `spread_draws()` function can be handy for models with multiple index parameters, like `a` and `b`.
+
+```{r}
+m5.10 |> 
+  spread_draws(a[j], b[k]) |> 
+  head(n = 10)
+```
+
+For example, here's how you can use `spread_draws()` to make the coefficient plots from above with slightly thriftier code.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2
+
+m5.10 |> 
+  spread_draws(a[clade_id]) |> 
+  left_join(d |> 
+              distinct(clade, clade_id) |> 
+              mutate(clade_id = as.integer(clade_id)),
+            by = join_by(clade_id)) |> 
+  mutate(y = str_c("a[", clade_id,  "]~('", clade, "')")) |> 
+  
+  ggplot(aes(x = a, y = y)) +
+  stat_halfeye(.width = 0.89) +
+  scale_y_discrete(labels = ggplot2:::parse_safe, expand = expansion(mult = 0.1)) +
+  labs(x = "posterior", 
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0))
+
+m5.10 |> 
+  spread_draws(b[house_id]) |> 
+  left_join(d |> 
+              distinct(house, house_id) |> 
+              mutate(house_id = as.integer(house_id)),
+            by = join_by(house_id)) |> 
+  mutate(y = str_c("b[", house_id,  "]~('", house, "')")) |> 
+  
+  ggplot(aes(x = b, y = y)) +
+  stat_halfeye(.width = 0.89) +
+  scale_y_discrete(labels = ggplot2:::parse_safe, expand = expansion(mult = 0.1)) +
+  labs(x = "posterior", 
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0))
+```
+
+#### Rethinking: Differences and statistical significance.
+
+## Summary
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
