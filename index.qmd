@@ -1,0 +1,40 @@
+# Preface {.unnumbered}
+
+## What and why {-}
+
+This ebook is based on the second edition of [Richard McElreath](https://twitter.com/rlmcelreath)'s [-@mcelreathStatisticalRethinkingBayesian2020] text, [*Statistical rethinking: A Bayesian course with examples in R and Stan*](https://xcelab.net/rm/statistical-rethinking/). My contributions show how to fit the models he covered with [**rstan**](https://mc-stan.org/rstan/) [@R-rstan], which allows one to fit Bayesian models in **R** [@R-base] using Hamiltonian Monte Carlo. I also prefer plotting and data wrangling with the packages from the [**tidyverse**](https://www.tidyverse.org/) [@R-tidyverse; @wickhamWelcomeTidyverse2019], so we'll be using those methods, too.
+
+This is a sibling book of my translation of McElreath's second edition into **brms** code [@kurzStatisticalRethinkingSecondEd2023], which you can find by clicking [here](https://bookdown.org/content/4857/).
+
+## How this compares with the **brms** translation, and what this means for readers {-}
+
+I think **rstan** is harder to use than **brms**. It's syntax is more technical, and doesn't follow many of the conventions used by other popular statistics packages, such as **stats** and **lme4**. **rstan** is also more general, allowing for a variety of unconventional and bespoke models. Therefore I'm presuming the readership for this book will be intermediate to advanced in both statistical skills, and general **R** programming skills. I will still take a pedagogical tone in this book, but my pace will be a little faster than in my other ebooks.
+
+Also, because this is sibling book to my **brms** translation, I will not replicate all my previous work. Rather, the code in this book will be more tightly focused on reproducing the models and primary analyses with an **rstan** + **tidyverse** framework. The supporting prose will be sparser, and I will have fewer quotes from the text. If you want a richer engagement with McElreath's text, you probably want my **brms** translation instead.
+
+## Conventions  {-}
+
+As in my other ebooks, I use a handful of formatting conventions gleaned from [*R4DS*](https://r4ds.had.co.nz/introduction.html#running-r-code), [*The tidyverse style guide*](https://style.tidyverse.org/) [@wickhamTidyverseStyleGuide2020], and [*R markdown: The definitive guide*](https://bookdown.org/yihui/rmarkdown/software-info.html) [@xieMarkdownDefinitiveGuide2020].
+
+* **R** code blocks and their output appear in a gray background. E.g.,
+
+```{r}
+2 + 2 == 5
+```
+
+* **R** and the names of specific package (e.g., **rstan**) are in **boldface** font.
+* Functions are in a typewriter font and followed by parentheses, all atop a gray background (e.g., `stan()`).
+* When I want to make explicit the package a given function comes from, I insert the double-colon operator `::` between the package name and the function (e.g., `posterior::as_draws_df()`).
+* **R** objects, such as data or function arguments, are in typewriter font atop gray backgrounds (e.g., `chimpanzees`, `.width = 0.89`).
+* You can detect hyperlinks by their typical [blue-colored font](https://solomonkurz.netlify.app/).
+
+## Thank-you's are in order {-}
+
+I'd like to thank the following for their helpful contributions:
+
+* Vincent Arel-Bundock ([\@vincentarelbundock](https://github.com/vincentarelbundock)),
+* Andrew Heiss ([\@andrewheiss](https://github.com/andrewheiss)), and
+* John K. Kruschke ([\@kruschke](https://github.com/kruschke)).
+
+Science is better when we work together.
+
