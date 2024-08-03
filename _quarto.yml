@@ -1,0 +1,33 @@
+project:
+  type: book
+
+book:
+  title: "*Statistical rethinking* 2 with rstan and the tidyverse"
+  subtitle: "version 0.0.1"
+  author: "A. Solomon Kurz"
+  date: now
+  search: true
+  chapters:
+    - index.qmd
+    - 01.qmd
+    - 02.qmd
+    - 03.qmd
+    - 04.qmd
+    - 05.qmd
+    - 06.qmd
+    - 07.qmd
+    - references.qmd
+
+bibliography: rethinking_2_rstan.bib
+biblio-style: apalike
+csl: apa.csl
+link-citations: true
+
+format:
+  html:
+    theme: cosmo
+
+editor: source
+
+number-sections: true
+
