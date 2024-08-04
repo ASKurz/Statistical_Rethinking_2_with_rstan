@@ -1940,3 +1940,5 @@ The standard error for the LOO difference was about the same size as the differe
 sessionInfo()
 ```
 
+## Comments {-}
+
