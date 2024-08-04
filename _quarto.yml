@@ -31,3 +31,6 @@ editor: source
 
 number-sections: true
 
+comments:
+  giscus: 
+    repo: ASKurz/Statistical_Rethinking_2_with_rstan
