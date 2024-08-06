@@ -80,7 +80,7 @@ d |>
 
 ### The data.
 
-Load the `Howell1` data.
+Load the `Howell1` data [-@howell2001demography; -@howell2010life].
 
 ```{r}
 data(Howell1, package = "rethinking")
