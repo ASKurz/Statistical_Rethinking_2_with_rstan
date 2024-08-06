@@ -7,6 +7,8 @@ book:
   author: "A. Solomon Kurz"
   date: now
   search: true
+  repo-url: https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan
+  repo-actions: issue
   chapters:
     - index.qmd
     - 01.qmd
@@ -19,6 +21,9 @@ book:
     - 08.qmd
     - references.qmd
 
+toc: true
+toc-depth: 5
+  
 bibliography: rethinking_2_rstan.bib
 biblio-style: apalike
 csl: apa.csl
@@ -27,6 +32,7 @@ link-citations: true
 format:
   html:
     theme: cosmo
+    code-copy: true
 
 editor: source
 
@@ -35,3 +41,12 @@ number-sections: true
 comments:
   giscus: 
     repo: ASKurz/Statistical_Rethinking_2_with_rstan
+
+highlight-style: github
+
+
+
+
+
+
+
