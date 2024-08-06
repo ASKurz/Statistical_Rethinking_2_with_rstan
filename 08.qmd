@@ -1,0 +1,1098 @@
+# Conditional Manatees
+
+Load the packages.
+
+```{r}
+#| message: false
+#| warning: false
+
+# Load
+library(tidyverse)
+library(ggdag)
+library(rstan)
+library(posterior)
+library(loo)
+library(tidybayes)
+
+# Drop grid lines
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank())
+)
+```
+
+## Building an interaction
+
+Let's load the `rugged` data [@nunn2012ruggedness].
+
+```{r}
+data(rugged, package = "rethinking")
+d <- rugged
+rm(rugged)
+```
+
+Make the first DAG.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 1.5
+
+dag_coords <- tibble(
+  name = c("R", "G", "C", "U"),
+  x    = c(1, 2, 3, 2),
+  y    = c(2, 2, 2, 1))
+
+dagify(R ~ U,
+       G ~ R + U + C,
+       coords = dag_coords) |>
+  
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(aes(color = name == "U"),
+                 alpha = 2/3, show.legend = FALSE, size = 6) +
+  geom_point(x = 2, y = 1, 
+             shape = 1, size = 6, stroke = 3/4) +
+  geom_dag_text() +
+  geom_dag_edges() +
+  scale_color_viridis_d(option = "A", end = 0.6) +
+  theme_dag()
+```
+
+#### Overthinking: Not so simple causation.
+
+Here's the DAG for a fuller model for the data.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2
+
+dag_coords <- tibble(
+  name = c("G", "R", "H", "C", "U"),
+  x    = c(1, 1.5, 2.5, 3.5, 1),
+  y    = c(3, 2, 2, 2, 1))
+
+dagify(G ~ R + U + H,
+       R ~ U,
+       H ~ R + U + C,
+       coords = dag_coords) |>
+  
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(aes(color = name == "U"),
+                 alpha = 2/3, size = 6, show.legend = FALSE) +
+  geom_point(x = 1, y = 1, 
+             shape = 1, size = 6, stroke = 3/4) +
+  geom_dag_text() +
+  geom_dag_edges() +
+  scale_color_viridis_d(option = "A", end = 0.6) +
+  theme_dag()
+```
+
+### Making a rugged model.
+
+We'll continue to use **tidyverse**-style syntax to wrangle the data.
+
+```{r}
+# Make the log version of criterion
+d <- d |>
+  mutate(log_gdp = log(rgdppc_2000))
+
+# Extract countries with GDP data
+dd <- d |>
+  filter(complete.cases(rgdppc_2000)) |> 
+  # Re-scale variables
+  mutate(log_gdp_std = log_gdp / mean(log_gdp), 
+         rugged_std  = rugged / max(rugged)) |> 
+  # For plotting
+  mutate(nations = ifelse(cont_africa == 0, "Non-African nations", "African nations"))
+```
+
+Before we fit our first Bayesian models, let's back track a bit and make our version of Figure 8.2. In the title, McElreath indicated it was a depiction of two linear regressions separated by whether the nations were African. A fairly simple way to make those plots is to simultaneously fit and plot the two regression models using OLS via the `geom_smooth()` function using the `method = "lm"` argument.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3.125
+
+country_vec <- c("Lesotho", "Seychelles", "Switzerland", "Tajikistan")
+
+dd |> 
+  ggplot(aes(x = rugged_std, y = log_gdp_std)) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  geom_point() +
+  geom_text(data = dd |> 
+              filter(country %in% country_vec),  
+            aes(label = country), 
+            hjust = 0.99, size = 3, vjust = -0.6) +
+  labs(x = "ruggedness (standardized)",
+       y = "log GDP (as proportion of mean)") +
+  facet_wrap(~ nations)
+```
+
+Our first Bayesian model will follow the form
+
+```{r}
+#| eval: false
+#| echo: false
+
+log_gdp_std
+log-gdp-std
+
+rugged_std
+rugged-std
+```
+
+$$
+\begin{align*}
+\text{log-gdp-std}_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i  & = \alpha + \beta \left (\text{rugged-std}_i - \overline{\text{rugged-std}} \right ) \\
+\alpha & \sim \operatorname{Normal}(1, 1) \\
+\beta  & \sim \operatorname{Normal}(0, 1) \\
+\sigma & \sim \operatorname{Exponential}(1).
+\end{align*}
+$$
+
+Here we compute $\overline{\text{rugged-std}}$.
+
+```{r}
+mean(dd$rugged_std)
+```
+
+To start the model fitting process, define the `stan_data` with the `compose_data()` function. Note how we define the `xbar` value within `compose_data()`.
+
+```{r}
+stan_data <- dd |>
+  select(log_gdp_std, rugged_std) |>  
+  compose_data(xbar = mean(dd$rugged_std))
+
+# What?
+str(stan_data)
+```
+
+Define what I'm calling `stan_program_8.1a`. Note that for this first version, we'll be sampling from the prior.
+
+```{r}
+stan_program_8.1a <- '
+data {
+  int<lower=1> n;
+  real xbar;
+  vector[n] log_gdp_std;
+  vector[n] rugged_std;
+}
+parameters {
+  real a;
+  real b;
+  real<lower=0> sigma;
+}
+model {
+  // vector[n] mu;
+  // mu = a + b * (rugged_std - xbar);
+  // log_gdp_std ~ normal(mu, sigma);
+  a ~ normal(1, 1);
+  b ~ normal(0, 1);
+  sigma ~ exponential(1);
+}
+'
+```
+
+Compile and fit the initial model with `stan()`. For the sake of bookkeeping, we'll detract a little from the text and call this `m8.1a`. You'll see why in a moment.
+
+```{r}
+#| echo: false
+
+# save(m8.1a, file = "fits/m8.1a.rda")
+load(file = "fits/m8.1a.rda")
+```
+
+```{r}
+#| eval: false
+
+m8.1a <- stan(
+  data = stan_data,
+  model_code = stan_program_8.1a,
+  cores = 4, seed = 8)
+```
+
+Define `stan_program_8.1b`. We're still sampling from the prior, but this time the priors are tighter.
+
+```{r}
+stan_program_8.1b <- '
+data {
+  int<lower=1> n;
+  real xbar;
+  vector[n] log_gdp_std;
+  vector[n] rugged_std;
+}
+parameters {
+  real a;
+  real b;
+  real<lower=0> sigma;
+}
+model {
+  // vector[n] mu;
+  // mu = a + b * (rugged_std - xbar);
+  // log_gdp_std ~ normal(mu, sigma);
+  a ~ normal(1, 0.1);
+  b ~ normal(0, 0.3);
+  sigma ~ exponential(1);
+}
+'
+```
+
+Now sample from the tighter priors, and call the object `m8.1b`.
+
+```{r}
+#| echo: false
+
+# save(m8.1b, file = "fits/m8.1b.rda")
+load(file = "fits/m8.1b.rda")
+```
+
+```{r}
+#| eval: false
+
+m8.1b <- stan(
+  data = stan_data,
+  model_code = stan_program_8.1b,
+  cores = 4, seed = 8)
+```
+
+Display the two prior-predictive distributions with Figure 8.3.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3.125
+
+fit_labels <- c("a ~ dnorm(1, 1)\nb ~ dnorm(0, 1)", "a ~ dnorm(1, 0.1)\nb ~ dnorm(0, 0.3)")
+
+bind_rows(as_draws_df(m8.1a), as_draws_df(m8.1b)) |> 
+  mutate(fit = rep(c("m8.1a", "m8.1b"), each = n() / 2)) |> 
+  group_by(fit) |> 
+  slice_sample(n = 50) |> 
+  expand_grid(rugged_std = c(-1, 2),
+              xbar = mean(dd$rugged_std)) |> 
+  mutate(log_gdp_std = a + b * (rugged_std - xbar),
+         fit = factor(fit, labels = fit_labels)) |> 
+  
+  ggplot(aes(x = rugged_std, y = log_gdp_std, group = .draw)) +
+  geom_hline(yintercept = range(dd$log_gdp_std), linetype = 2) +
+  geom_line(alpha = 0.4)  +
+  labs(x = "ruggedness",
+       y = "log GDP (prop of mean)") +
+  coord_cartesian(xlim = c(0, 1),
+                  ylim = c(0.5, 1.5)) +
+  facet_wrap(~fit)
+```
+
+Now define what we'll just call `stan_program_8.1`, where the likelihood is now included in the `model` block. Note how we're also defining the `log_lik` vector within the `generated quantities` block so we can compute information criteria later.
+
+```{r}
+stan_program_8.1 <- '
+data {
+  int<lower=1> n;
+  real xbar;
+  vector[n] log_gdp_std;
+  vector[n] rugged_std;
+}
+parameters {
+  real a;
+  real b;
+  real<lower=0> sigma;
+}
+transformed parameters {
+  vector[n] mu;
+  mu = a + b * (rugged_std - xbar);
+}
+model {
+  log_gdp_std ~ normal(mu, sigma);
+  
+  a ~ normal(1, 0.1);
+  b ~ normal(0, 0.3);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = normal_lpdf(log_gdp_std[i] | mu[i], sigma);
+}
+'
+```
+
+Sample from the posterior.
+
+```{r}
+#| echo: false
+
+# save(m8.1, file = "fits/m8.1.rda")
+load(file = "fits/m8.1.rda")
+```
+
+```{r}
+#| eval: false
+
+m8.1 <- stan(
+  data = stan_data,
+  model_code = stan_program_8.1,
+  cores = 4, seed = 8)
+```
+
+Check the summary for `b8.1`.
+
+```{r}
+print(m8.1, pars = c("a", "b", "sigma"), probs = c(0.05, 0.945))
+```
+
+#### Rethinking: Practicing for when it matters.
+
+### Adding an indicator variable isn't enough.
+
+Make the `cid` index variable.
+
+```{r}
+dd <- dd |> 
+  mutate(cid = if_else(cont_africa == 1, "1", "2"))
+```
+
+Update the `stan_data` to include the `cid` index. As we have saved `cid` as a character variable, note how `compose_data()` automatically computes an `n_cid` value.
+
+```{r}
+stan_data <- dd |>
+  select(log_gdp_std, rugged_std, cid) |>  
+  compose_data(xbar = mean(dd$rugged_std))
+
+# What?
+str(stan_data)
+```
+
+Make `stan_program_8.2` for the varying-intercepts model.
+
+```{r}
+stan_program_8.2 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_cid;
+  real xbar;
+  int cid[n];
+  vector[n] rugged_std;
+  vector[n] log_gdp_std;
+}
+parameters {
+  vector[n_cid] a;
+  real b;
+  real<lower=0> sigma;
+}
+transformed parameters {
+  vector[n] mu;
+  mu = a[cid] + b * (rugged_std - xbar);
+}
+model {
+  log_gdp_std ~ normal(mu, sigma);
+  
+  a ~ normal(1, 0.1);
+  b ~ normal(0, 0.3);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = normal_lpdf(log_gdp_std[i] | mu[i], sigma);
+}
+'
+```
+
+Sample from the posterior.
+
+```{r}
+#| echo: false
+
+# save(m8.2, file = "fits/m8.2.rda")
+load(file = "fits/m8.2.rda")
+```
+
+```{r}
+#| eval: false
+
+m8.2 <- stan(
+  data = stan_data,
+  model_code = stan_program_8.2,
+  cores = 4, seed = 8)
+```
+
+Check the summary for `b8.2`.
+
+```{r}
+print(m8.2, pars = c("a", "b", "sigma"), probs = c(0.05, 0.945))
+```
+
+Use the `extract_log_lik()` and `waic()` functions to compute the WAIC summaries for the models.
+
+```{r}
+#| warning: false
+
+w8.1 <- extract_log_lik(m8.1) |> 
+  waic()
+
+w8.2 <- extract_log_lik(m8.2) |> 
+  waic()
+```
+
+Use the `loo_compare()` functions to compare the models by their WAIC distributions.
+
+```{r}
+loo_compare(w8.1, w8.2) |> 
+  print(simplify = FALSE)
+```
+
+I'm not going to continue to compute the WAIC weights by hand, like in @sec-Model-mis-selection, but here are the stacking weights.
+
+```{r}
+loo_model_weights(
+  list(extract_log_lik(m8.1) |> loo(),
+       extract_log_lik(m8.2) |> loo()),
+  method = "stacking")
+```
+
+Here's the posterior mean and 89% interval for the $a_{[1]} - a_{[2]}$ contrast.
+
+```{r}
+m8.2 |> 
+  spread_draws(a[j]) |> 
+  # Requires the emmeans package for this `comparison` option
+  compare_levels(a, j, comparison = emmeans_comparison("revpairwise")) |> 
+  mean_qi(a, .width = 0.89)
+```
+
+Here's a way to make Figure 8.4.
+
+```{r}
+#| fig-width: 5
+#| fig-height: 3
+#| warning: false
+
+as_draws_df(m8.2) |> 
+  select(.draw, `a[1]`:sigma) |> 
+  expand_grid(cid = distinct(dd, cid) |> pull(),
+              rugged_std = seq(from = -0.1, to = 1.1, length.out = 30),
+              xbar = mean(dd$rugged_std)) |> 
+  mutate(nations = ifelse(cid == "1", "African nations", "Non-African nations"),
+         mu = case_when(
+    cid == "1" ~ `a[1]` + b * (rugged_std - xbar),
+    cid == "2" ~ `a[2]` + b * (rugged_std - xbar))) |> 
+  
+  ggplot(aes(x = rugged_std, color = nations)) +
+  stat_lineribbon(aes(y = mu, fill = nations),
+                  .width = 0.97, alpha = 1/3) +
+  geom_point(data = dd,
+             aes(y = log_gdp_std))  +
+  scale_color_viridis_d(NULL, option = "B", begin = 0.2, end = 0.6) +
+  scale_fill_viridis_d(NULL, option = "B", begin = 0.2, end = 0.6) +
+  labs(x = "ruggedness (standardized)",
+       y = "log GDP (prop of mean)") +
+  coord_cartesian(xlim = 0:1)
+```
+
+Note our use of the `case_when()` function when defining the linear models for the two levels of `cid`.
+
+#### Rethinking: Why 97%?
+
+### Adding an interaction does work.
+
+In `stan_program_8.3` we add an interaction to the model via the index-variable approach by setting `vector[n_cid] b` within the `parameters` block, and then by setting `b[cid]` in the `mu` formula within the `transformed parameters` block.
+
+```{r}
+stan_program_8.3 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_cid;
+  real xbar;
+  int cid[n];
+  vector[n] rugged_std;
+  vector[n] log_gdp_std;
+}
+parameters {
+  vector[n_cid] a;
+  vector[n_cid] b;
+  real<lower=0> sigma;
+}
+transformed parameters {
+  vector[n] mu;
+  mu = a[cid] + b[cid] .* (rugged_std - xbar);
+}
+model {
+  log_gdp_std ~ normal(mu, sigma);
+  
+  a ~ normal(1, 0.1);
+  b ~ normal(0, 0.3);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = normal_lpdf(log_gdp_std[i] | mu[i], sigma);
+}
+'
+```
+
+Sample from the posterior.
+
+```{r}
+#| echo: false
+
+# save(m8.3, file = "fits/m8.3.rda")
+load(file = "fits/m8.3.rda")
+```
+
+```{r}
+#| eval: false
+
+m8.3 <- stan(
+  data = stan_data,
+  model_code = stan_program_8.3,
+  cores = 4, seed = 8)
+```
+
+Check the summary for `b8.2`.
+
+```{r}
+print(m8.3, pars = c("a", "b", "sigma"), probs = c(0.05, 0.945))
+```
+
+Compute and save the `waic()` summary for `m8.3`.
+
+```{r}
+#| warning: false
+
+w8.3 <- extract_log_lik(m8.3) |> 
+  waic()
+```
+
+Use the `loo_compare()` functions to compare the three models by their WAIC estimates.
+
+```{r}
+loo_compare(w8.1, w8.2, w8.3) |> 
+  print(simplify = FALSE)
+```
+
+McElreath mentioned Pareto-$k$ warnings as a reason to switch to the `loo()`. 
+
+```{r}
+l8.1 <- extract_log_lik(m8.1) |> 
+  loo()
+
+l8.2 <- extract_log_lik(m8.2) |> 
+  loo()
+
+l8.3 <- extract_log_lik(m8.3) |> 
+  loo()
+```
+
+We can make a quick plot for the $k$ values by inserting our `loo()` objects into the `plot()` function.
+  
+```{r}
+#| fig-width: 5
+#| fig-height: 3.75
+
+plot(l8.3)
+```
+
+McElreath is using an 0.5 threshold for the $k$ values, but the **loo** team currently uses 0.7 for warnings. We can get a sense of that with the `pareto_k_table()` function.
+
+```{r}
+pareto_k_table(l8.3)
+```
+
+However, if we wanted to see which cases might be above 0.5, we could use `pareto_k_ids()` with `threshold = 0.5`.
+
+```{r}
+pareto_k_ids(l8.3, threshold = 0.5)
+```
+
+Case number 93 in the data was above 0.5. We can extract their specific $k$ value with the `pareto_k_values()` function.
+
+```{r}
+pareto_k_values(l8.3)[93]
+```
+
+Anyway, here's the comparison by the `loo()`.
+
+```{r}
+loo_compare(l8.1, l8.2, l8.3) |> 
+  print(simplify = FALSE)
+```
+
+Here are the stacking weights.
+
+```{r}
+loo_model_weights(
+  list(l8.1, l8.2, l8.3),
+  method = "stacking")
+```
+
+They don't match up exactly with the LOO weights McElreath reported in the text (p. 249), but the basic pattern is the same.
+
+### Plotting the interaction.
+
+The code for Figure 8.5 is a minor extension of the code we used for Figure 8.4. The main changes are the `mu` formulas have changed within `case_when()`, and we have added a call to `facet_wrap()`.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3
+#| warning: false
+
+as_draws_df(m8.3) |> 
+  select(.draw, `a[1]`:sigma) |> 
+  expand_grid(cid = distinct(dd, cid) |> pull(),
+              rugged_std = seq(from = -0.1, to = 1.1, length.out = 30),
+              xbar = mean(dd$rugged_std)) |> 
+  mutate(nations = ifelse(cid == "1", "African nations", "Non-African nations"),
+         mu = case_when(
+    cid == "1" ~ `a[1]` + `b[1]` * (rugged_std - xbar),
+    cid == "2" ~ `a[2]` + `b[2]` * (rugged_std - xbar))) |> 
+  
+  ggplot(aes(x = rugged_std, color = nations)) +
+  stat_lineribbon(aes(y = mu, fill = nations),
+                  .width = 0.97, alpha = 1/3) +
+  geom_point(data = dd,
+             aes(y = log_gdp_std))  +
+  scale_color_viridis_d(option = "B", begin = 0.2, end = 0.6, breaks = NULL) +
+  scale_fill_viridis_d(option = "B", begin = 0.2, end = 0.6, breaks = NULL) +
+  labs(x = "ruggedness (standardized)",
+       y = "log GDP (prop of mean)") +
+  coord_cartesian(xlim = 0:1) +
+  facet_wrap(~ nations)
+```
+
+#### Rethinking: All Greek to me.
+
+## Symmetry of interactions
+
+Another way to express the model is
+
+```{r}
+#| eval: false
+#| echo: false
+
+rugged_std
+rugged-std
+```
+
+$$
+\begin{align*}
+\mu_i & = \underbrace{(2 - \text{cid}_{i}) \left (\alpha_1 + \beta_1 \left [\text{rugged-std}_i - \overline{\text{rugged-std}} \right ] \right )}_{\text{cid}[i] = 1} \\
+      & \;\;\; + \underbrace{(\text{cid}_{i} - 1) \left (\alpha_2 + \beta_2 \left [\text{rugged-std}_i - \overline{\text{rugged-std}} \right ] \right )}_{\text{cid}[i] = 2},
+\end{align*}
+$$
+
+where the first term vanishes when $\text{cid}_i = 2$ and the second term vanishes when $\text{cid}_i = 1$. In contrast to the plots above, we can re-express this equation as saying "*The association of being in Africa with log GDP depends upon terrain ruggedness*" (p. 251, *emphasis* in the original). Here we follow McElreath's Figure 8.6  and plot the difference between a nation in Africa and outside Africa, conditional on ruggedness.
+
+```{r}
+#| fig-width: 2.875
+#| fig-height: 2.875
+#| warning: false
+
+as_draws_df(m8.3) |> 
+  select(.draw, `a[1]`:sigma) |> 
+  expand_grid(cid = distinct(dd, cid) |> pull(),
+              rugged_std = seq(from = -0.1, to = 1.1, length.out = 30),
+              xbar = mean(dd$rugged_std)) |> 
+  mutate(nations = ifelse(cid == "1", "African nations", "Non-African nations"),
+         mu = case_when(
+    cid == "1" ~ `a[1]` + `b[1]` * (rugged_std - xbar),
+    cid == "2" ~ `a[2]` + `b[2]` * (rugged_std - xbar))) |> 
+  group_by(rugged_std) |> 
+  compare_levels(mu, by = nations, comparison = list(c("African nations", "Non-African nations")), draw_indices = ".draw") |> 
+  
+  ggplot(aes(x = rugged_std, y = mu)) +
+  stat_lineribbon(.width = 0.97, alpha = 1/3, fill = "gray50") +
+  geom_hline(yintercept = 0, linetype = 2) +
+  annotate(geom = "text",
+           x = 0, y = 0,
+           label = "Africa higher GDP\nAfrica lower GDP",
+           hjust = 0) +
+  labs(x = "ruggedness (standardized)",
+       y = "expected difference log GDP") +
+  coord_cartesian(xlim = c(0, 1),
+                  ylim = c(-0.3, 0.2)) +
+  theme(legend.position = "none")
+```
+
+## Continuous interactions
+
+### A winter flower.
+
+Look at the `tulips` data, which were adapted from @grafenModernStatisticsLife2002.
+
+```{r}
+data(tulips, package = "rethinking")
+d <- tulips
+rm(tulips)
+
+glimpse(d)
+```
+
+### The models.
+
+Wrangle a little.
+
+```{r}
+d <- d |> 
+  mutate(blooms_std = blooms / max(blooms),
+         water_cent = water - mean(water),
+         shade_cent = shade - mean(shade))
+```
+
+If we let $B$, $W$, and $S$ stand for the scaled/centered versions of the variables, we might express an unconditional (additive) model as
+
+$$
+\begin{align*}
+B_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i   & = \alpha + \beta_1 W_i + \beta_2 S_i \\
+\alpha  & \sim \operatorname{Normal}(0.5, 1) \\
+\beta_1 & \sim \operatorname{Normal}(0, 1) \\
+\beta_2 & \sim \operatorname{Normal}(0, 1) \\
+\sigma  & \sim \operatorname{Exponential}(1).
+\end{align*}
+$$
+
+Even though "the intercept $\alpha$ must be greater than zero and less than one,... this prior assigns most of the probability outside that range" (p. 254).
+
+```{r}
+set.seed(8)
+
+tibble(a = rnorm(n = 1e4, mean = 0.5, sd = 1)) |> 
+  summarise(proportion_outside_of_the_range = sum(a < 0 | a > 1) / n())
+```
+
+Tightening up the prior to $\operatorname{Normal}(0, 0.25)$ helps.
+
+```{r}
+set.seed(8)
+
+tibble(a = rnorm(n = 1e4, mean = 0.5, sd = 0.25)) |> 
+  summarise(proportion_outside_of_the_range = sum(a < 0 | a > 1) / n())
+```
+
+Here are the ranges for our two predictors.
+
+```{r}
+range(d$water_cent)
+range(d$shade_cent)
+```
+
+Putting the same $\operatorname{Normal}(0, 0.25)$ prior on each would indicate a 0.95 probability each coefficient would be within -0.5 to 0.5. Since the total range for both is $1 - (-1) = 2$, that would imply either could account for the full range of `blooms_std` because $0.5 \cdot 2 = 1$, which is the full range of `blooms_std`. Our first model, then, will be
+
+$$
+\begin{align*}
+B_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i   & = \alpha + \beta_1 W_i + \beta_2 S_i \\
+\alpha  & \sim \operatorname{Normal}(0.5, 0.25) \\
+\beta_1 & \sim \operatorname{Normal}(0, 0.25) \\
+\beta_2 & \sim \operatorname{Normal}(0, 0.25) \\
+\sigma  & \sim \operatorname{Exponential}(1).
+\end{align*}
+$$
+
+With our second model we extend to the interaction model,
+
+$$
+\begin{align*}
+B_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i   & = \alpha + \beta_1 W_i + \beta_2 S_i + \beta_3 W_i S_i \\
+\alpha  & \sim \operatorname{Normal}(0.5, 0.25) \\
+\beta_1, \dots, \beta_3 & \sim \operatorname{Normal}(0, 0.25) \\
+\sigma  & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+where $\beta_3$ is the continuous interaction term.
+
+Make the `stan_data`.
+
+This time when we fit the model, we'll build in some model-based expected values within the `generated quantities` block. To prepare, we'll first make a data frame with our predictor grid.
+
+```{r}
+d_pred <- crossing(
+  w = -1:1,
+  s = -1:1) |> 
+  mutate(i = 1:n())
+
+# What?
+print(d_pred)
+```
+
+Now make the `stan_data`. Note how we've defined the `w_pred` through `n_pred` values within `compose_data()`, based on our predictor grid `d_pred`.
+
+```{r}
+stan_data <- d |> 
+  transmute(b = blooms_std,
+            w = water_cent,
+            s = shade_cent) |>  
+  compose_data(w_pred = pull(d_pred, w),
+               s_pred = pull(d_pred, s),
+               n_pred = nrow(d_pred))
+
+# What?
+str(stan_data)
+```
+
+Make `stan_program_8.4` and `stan_program_8.5`.
+
+```{r}
+# No interaction
+stan_program_8.4 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_pred;
+  vector[n] b;
+  vector[n] s;
+  vector[n] w;
+  vector[n_pred] s_pred;
+  vector[n_pred] w_pred;
+}
+parameters {
+  real a;
+  real b1;
+  real b2;
+  real<lower=0> sigma;
+}
+model {
+  b ~ normal(a + b1 * w + b2 * s, sigma);
+  
+  a ~ normal(0.5, 0.25);
+  b1 ~ normal(0, 0.25);
+  b2 ~ normal(0, 0.25);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n_pred] mu;
+  mu = a + b1 * w_pred + b2 * s_pred;
+}
+'
+
+# Interaction
+stan_program_8.5 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_pred;
+  vector[n] b;
+  vector[n] s;
+  vector[n] w;
+  vector[n_pred] s_pred;
+  vector[n_pred] w_pred;
+}
+parameters {
+  real a;
+  real b1;
+  real b2;
+  real b3;
+  real<lower=0> sigma;
+}
+model {
+  b ~ normal(a + b1 * w + b2 * s + b3 .* w .* s, sigma);
+  
+  a ~ normal(0.5, 0.25);
+  [b1, b2, b3] ~ normal(0, 0.25);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n_pred] mu;
+  mu = a + b1 * w_pred + b2 * s_pred + b3 .* w_pred .* s_pred;
+}
+'
+```
+
+Sample from the two posteriors.
+
+```{r}
+#| echo: false
+
+# save(m8.4, file = "fits/m8.4.rda")
+# save(m8.5, file = "fits/m8.5.rda")
+
+load(file = "fits/m8.4.rda")
+load(file = "fits/m8.5.rda")
+```
+
+```{r}
+#| eval: false
+
+m8.4 <- stan(
+  data = stan_data,
+  model_code = stan_program_8.4,
+  cores = 4, seed = 8)
+
+m8.5 <- stan(
+  data = stan_data,
+  model_code = stan_program_8.5,
+  cores = 4, seed = 8)
+```
+
+Check the summaries for `m8.4` and `m8.5`.
+
+```{r}
+print(m8.4, include = FALSE, pars = "mu", probs = c(0.05, 0.945))
+print(m8.5, include = FALSE, pars = "mu", probs = c(0.05, 0.945))
+```
+
+Here's a look at the $\beta_3$ posterior.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 2.75
+
+as_draws_df(m8.5) |> 
+  ggplot(aes(x = b3)) +
+  stat_halfeye(.width = 0.89) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(beta[3]~(the~continuous~interaction~term)))
+```
+
+#### Overthinking: How is interaction formed?
+
+### Plotting posterior predictions.
+
+Here's how we might use `spread_draws()` to make Figure 8.7.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+
+set.seed(8)
+
+bind_rows(
+  spread_draws(m8.4, mu[i], ndraws = 20),
+  spread_draws(m8.5, mu[i], ndraws = 20)
+) |> 
+  mutate(fit = rep(c("m8.4", "m8.5"), each = n() / 2)) |> 
+  left_join(d_pred, by = join_by(i)) |> 
+  mutate(s = str_c("shade~(centered)==", s)) |>
+  
+  ggplot() +
+  geom_line(aes(x = w, y = mu, group = .draw),
+            alpha = 1/3, color = "blue", linewidth = 1/3) +
+  geom_point(data = d |> 
+               mutate(s = str_c("shade~(centered)==", shade_cent)),
+             aes(x = water_cent, y = blooms_std)) +
+  labs(x = "water (centered)",
+       y = "blooms (scaled)") +
+  facet_grid(fit ~ s, labeller = label_parsed)
+```
+
+### Plotting prior predictions.
+
+To plot the prior-predictive expectations, we'll need to first sample from the priors. Toward that end, we define what I'll call `stan_program_8.4p` and `stan_program_8.5p`.
+
+```{r}
+# No interaction
+stan_program_8.4p <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_pred;
+  vector[n] b;
+  vector[n] s;
+  vector[n] w;
+  vector[n_pred] s_pred;
+  vector[n_pred] w_pred;
+}
+parameters {
+  real a;
+  real b1;
+  real b2;
+  real<lower=0> sigma;
+}
+model {
+  // Only the priors
+  a ~ normal(0.5, 0.25);
+  b1 ~ normal(0, 0.25);
+  b2 ~ normal(0, 0.25);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n_pred] mu;
+  mu = a + b1 * w_pred + b2 * s_pred;
+}
+'
+
+# Interaction
+stan_program_8.5p <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_pred;
+  vector[n] b;
+  vector[n] s;
+  vector[n] w;
+  vector[n_pred] s_pred;
+  vector[n_pred] w_pred;
+}
+parameters {
+  real a;
+  real b1;
+  real b2;
+  real b3;
+  real<lower=0> sigma;
+}
+model {
+  // Only the priors
+  a ~ normal(0.5, 0.25);
+  [b1, b2, b3] ~ normal(0, 0.25);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n_pred] mu;
+  mu = a + b1 * w_pred + b2 * s_pred + b3 .* w_pred .* s_pred;
+}
+'
+```
+
+Sample from the two priors with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m8.4p, file = "fits/m8.4p.rda")
+# save(m8.5p, file = "fits/m8.5p.rda")
+
+load(file = "fits/m8.4p.rda")
+load(file = "fits/m8.5p.rda")
+```
+
+```{r}
+#| eval: false
+
+m8.4p <- stan(
+  data = stan_data,
+  model_code = stan_program_8.4p,
+  cores = 4, seed = 8)
+
+m8.5p <- stan(
+  data = stan_data,
+  model_code = stan_program_8.5p,
+  cores = 4, seed = 8)
+```
+
+Now make Figure 8.8.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+
+set.seed(8)
+
+bind_rows(
+  spread_draws(m8.4p, mu[i], ndraws = 20),
+  spread_draws(m8.5p, mu[i], ndraws = 20)
+) |> 
+  mutate(fit = rep(c("m8.4~(prior)", "m8.5~(prior)"), each = n() / 2)) |> 
+  left_join(d_pred, by = join_by(i)) |> 
+  mutate(s = str_c("shade~(centered)==", s)) |>
+  
+  ggplot(aes(x = w, y = mu)) +
+  geom_hline(yintercept = 0:1, color = "white", linetype = 2) +
+  geom_line(aes(group = .draw),
+            alpha = 1/3, color = "blue", linewidth = 1/3) +
+  scale_y_continuous("blooms (scaled)", breaks = 0:2 / 2) +
+  xlab("water (centered)") +
+  coord_cartesian(ylim = c(-0.5, 1.5)) +
+  facet_grid(fit ~ s, labeller = label_parsed)
+```
+
+## Summary
+
+## Session info {-}
+
+## Comments {-}
+
