@@ -12,7 +12,6 @@ library(tidybayes)
 library(rstan)
 library(patchwork)
 library(posterior)
-library(ggrepel)
 library(tigris)
 library(ggdag)
 library(dagitty)
@@ -28,7 +27,7 @@ theme_set(
 
 ## Spurious associations {#sec-Spurious-associations}
 
-Load the Waffle House data.
+Load the [Waffle House](https://www.snopes.com/fact-check/fema-waffle-house-index/) data.
 
 ```{r}
 data(WaffleDivorce, package = "rethinking")
@@ -51,7 +50,7 @@ Investigate the data.
 glimpse(d)
 ```
 
-Now we have our data, we can reproduce Figure 5.1. One convenient way to get the handful of sate labels into the plot was with the `geom_text_repel()` function from the **ggrepel** package.
+Now we have our data, we can reproduce Figure 5.1.
 
 ```{r}
 #| fig-width: 3
@@ -62,10 +61,10 @@ d |>
   stat_smooth(method = "lm", formula = 'y ~ x', fullrange = TRUE, 
               alpha = 1/5, linewidth = 1/2) +
   geom_point(alpha = 1/2, size = 1.5) +
-  geom_text_repel(data = d |> 
-                    filter(Loc %in% c("ME", "OK", "AR", "AL", "GA", "SC", "NJ")),  
-                  aes(label = Loc), 
-                  seed = 1042, size = 3) +
+  geom_text(data = d |> 
+              filter(Loc %in% c("ME", "OK", "AR", "AL", "GA", "SC", "NJ")),  
+            aes(label = Loc), 
+            hjust = -0.2, size = 3, vjust = -0.4) +
   scale_x_continuous("Waffle Houses per million", limits = c(0, 55)) +
   ylab("Divorce rate") +
   coord_cartesian(xlim = c(0, 50), ylim = c(5, 15))
@@ -1391,7 +1390,7 @@ as_draws_df(m5.3_a) |>
 
 ## Masked relationship
 
-Load the `milk` data.
+Load the `milk` data [@hindePrimateMilkProximate2011].
 
 ```{r}
 data(milk, package = "rethinking")
