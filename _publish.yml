@@ -1,0 +1,4 @@
+- source: project
+  quarto-pub:
+    - id: 7cad495d-4203-4eed-ac63-1de59a1f058d
+      url: 'https://solomon.quarto.pub/sr2rstan'
