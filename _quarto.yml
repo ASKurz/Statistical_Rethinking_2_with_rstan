@@ -16,6 +16,7 @@ book:
     - 05.qmd
     - 06.qmd
     - 07.qmd
+    - 08.qmd
     - references.qmd
 
 bibliography: rethinking_2_rstan.bib
