@@ -47,7 +47,7 @@ d |>
   summarise(r = cor(leg_left, leg_right) |> round(digits = 4))
 ```
 
-Have you ever even seen a $\rho = .9997$ correlation, before? Here it is in a plot.
+Have you ever even seen a $\rho = .9997$ correlation, before? Here's what such data look like in a plot.
 
 ```{r}
 #| fig-width: 3
@@ -58,7 +58,7 @@ d |>
   geom_point(alpha = 1/2)
 ```
 
-Make the `stan_data` with the `compose_data()` function.
+Anyway, make the `stan_data` with the `compose_data()` function.
 
 ```{r}
 stan_data <- d |>
@@ -119,13 +119,13 @@ The model did fit, but we got this warning:
 
 > Warning: There were 2007 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10
 
-Check the model summary.
+We don't know that some of those words mean, yet, at this point in the text. But trust me, friends, it's not good. For now, check the model summary.
 
 ```{r}
 print(m6.1, probs = c(0.055, 0.945))
 ```
 
-The results mimic those in the text. The posterior standard deviations are very large for $\beta_1$ and $\beta_2$. Here's a coefficient plot.
+The results mimic those in the text. The posterior standard deviations are very large for $\beta_1$ and $\beta_2$. Here's what the damage looks like in a coefficient plot.
 
 ```{r}
 #| fig-width: 6.5
@@ -142,7 +142,7 @@ as_draws_df(m6.1) |>
        y = NULL)
 ```
 
-In the middle of page 164, McElreath suggested we might try this again with different seeds. This might be a good place to introduce iteration. Our first step will be to make a custom function that will simulate new data of the same form as above and then immediately fit a model based on `b6.1` to those new data. To speed up the process, we'll use the `update()` function to avoid recompiling the model. Our custom function, `sim_and_fit()`, will take two arguments. The `seed` argument will allow us to keep the results reproducible by setting a seed for the data simulation. The `n` argument will allow us, should we wish, to change the sample size.
+In the middle of page 164, McElreath suggested we might try this again with different seeds. This is a good place to practice some iteration. Our first step will be to make a custom function that will simulate new data of the same form as above and then immediately fit a model based on `m6.1` to those new data. To speed up the process, we'll use the `update()` function to avoid recompiling the model. Our custom function, `sim_and_fit()`, will take two arguments. The `seed` argument will allow us to keep the results reproducible by setting a seed for the data simulation. The `n` argument will allow us, should we wish, to change the sample size.
 
 ```{r}
 sim_and_sample <- function(seed, n = 100) {
@@ -334,7 +334,7 @@ stan_data <- d |>
 glimpse(stan_data)
 ```
 
-Define the two univariable models, and the multivariable model.
+Define the two univariable models, and define the multivariable model, too.
 
 ```{r}
 # Univariable models
