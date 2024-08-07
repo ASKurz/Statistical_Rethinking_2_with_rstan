@@ -1,6 +1,6 @@
 # Sampling the Imaginary
 
-Load the packages and remove the plot grid lines, by default.
+Load the packages, and remove the grid lines.
 
 ```{r}
 #| message: false
@@ -29,9 +29,9 @@ theme_set(
 
 ## Sampling to summarize
 
-I'm not going to cover the grid approach McElreath highlighted in this section. But we might take the time to explore some of these analyses with a `stan()` based posterior.
+I'm not going to cover the grid approach McElreath highlighted in this section. But we might take the time to explore some of these analyses with a `stan()`-based posterior.
 
-Here we fit a model like `m2.1` from the last chapter, but this time based on the simple globe-tossing data of $w = 6$ and $n = 9$. Note how this time we are adjusting some of the default settings in the `stan()` arguments. Notably, our changes to the `warmup` and `iter` arguments will give us 100,000 posterior draws, which will help our MCMC results more closely mimic the analytic results in the chapter.
+Here we fit a model like `m2.1` from the last chapter, but this time based on the simple globe-tossing data of $w = 6$ and $n = 9$. Note how we are now adjusting some of the default settings in the `stan()` arguments. Notably, our changes to the `warmup` and `iter` arguments will give us 100,000 posterior draws, which will help our MCMC results more closely mimic the analytic results in the text.
 
 ```{r}
 #| echo: false
@@ -68,10 +68,10 @@ m3.1 <- stan(
   warmup = 500, iter = 25500, seed = 3)
 ```
 
-Check the model summary. Note how we can use the `probs` argument to select 89% intervals.
+Check the model summary. Note how we can use the `probs` argument to compute 89% intervals.
 
 ```{r}
-print(m3.1, probs = c(0.05, 0.945))
+print(m3.1, probs = c(0.055, 0.945))
 ```
 
 ### Intervals of defined boundaries.
@@ -85,7 +85,7 @@ draws <- as_draws_df(m3.1)
 head(draws)
 ```
 
-We can compute the proportion of the posterior distribution below 0.5 like so.
+We can compute the proportion of the posterior distribution of `p` below 0.5 like so.
 
 ```{r}
 draws |> 
@@ -105,7 +105,7 @@ About 60%.
 
 ### Intervals of defined mass.
 
-We can make the full version of Figure 3.2 with our `draws` object, buy including the proportion summaries form above, along with similar ones for the lower and middle 80 percentiles as new columns within `draws`. Then we just wrangle and make a faceted histogram with conditional a `fill`.
+We can make the full version of Figure 3.2 with our `draws` object by including the proportion summaries from above, along with similar ones for the lower and middle 80 percentiles as new columns within `draws`. Then we just wrangle and make a faceted histogram with a conditional `fill`.
 
 ```{r}
 #| fig-width: 5
@@ -175,7 +175,7 @@ m3.2 <- stan(
 Check the model summary.
 
 ```{r}
-print(m3.2, probs = c(0.05, 0.945))
+print(m3.2, probs = c(0.055, 0.945))
 ```
 
 Extract the posterior draws, and save them as `draws`.
@@ -263,7 +263,7 @@ draws |>
 
 ### Point estimates.
 
-We can compute the mean or medians for a `stan()`-based posterior with the typical `mean()` and `median()` functions. Though there is a base-**R** function called `mode()`, it returned the 'storage mode' of an object, not the kind of mode we often think of in statistics. We do, however, have the `tidybayes::Mode()` function for that purpose. Here are those three values for `p` from `m3.2`.
+We can compute the mean or medians for a `stan()`-based posterior with the typical `mean()` and `median()` functions. Though there is a base-**R** function called `mode()`, it returns the 'storage mode' of an object, which is not the kind of mode we often think of in statistics. We do, however, have the `tidybayes::Mode()` function for that purpose. Here are those three values for `p` from `m3.2`.
 
 ```{r}
 point_estimates <- draws |> 
@@ -313,6 +313,7 @@ To start of with how we might plot an HMC-derived posterior density like McElrea
 #| fig-width: 8
 #| fig-height: 3
 
+# Left
 p1 <- as_draws_df(m3.1) |> 
   ggplot(aes(x = p)) +
   geom_histogram(boundary = 0, binwidth = 0.01)
@@ -320,6 +321,7 @@ p1 <- as_draws_df(m3.1) |>
 # Save the breaks as a vector
 p_breaks <- seq(from = 0, to = 1, by = 0.01)
 
+# Right
 p2 <- as_draws_df(m3.1) |> 
   mutate(bin = cut(p, breaks = p_breaks)) |> 
   
@@ -327,12 +329,13 @@ p2 <- as_draws_df(m3.1) |>
   geom_bar() +
   theme(axis.text.x = element_text(angle = 90, size = 5))
 
+# Combine
 p1 | p2
 ```
 
-The left histogram is made with the usual `geom_histogram()` code, with adjustments to the `boundary` and `binwidth` arguments. The histogram on the right was made with `geom_bar()` which we might usually use to make bar charts. In our data-wrangling code, we used the base-**R** `cut()` function to discretize the HMC draws for `p` into bins. We defined those bins using the `breaks` argument, into which we inserted our `p_breaks` sequence. That sequence of breaks via `cut()` produced the exact same bins as `geom_histogram()` with our custom `boundary` and `binwidth` settings.
+The left histogram is made with the usual `geom_histogram()` code, with adjustments to the `boundary` and `binwidth` arguments. The histogram on the right was made with `geom_bar()`, which we might usually use to make bar charts. In our data-wrangling code, we used the base-**R** `cut()` function to discretize the HMC draws for `p` into bins. We defined those bins using the `breaks` argument, into which we inserted our `p_breaks` sequence. Note how that sequence of breaks via `cut()` produced the exact same bins as `geom_histogram()` with our custom `boundary` and `binwidth` settings.
 
-The reason we'd go through all this extra labor with `cut()` is because we can use those bins to compute the counts for the ones containing the nine example parameter values McElreath showcased with his vertical lines. Here are those counts.
+The reason we'd go through all this extra labor with `cut()` is because we can use those bins to compute the counts for the bins containing the nine example parameter values McElreath showcased with his vertical lines. Here are those counts.
 
 ```{r}
 #| warning: false
@@ -507,10 +510,10 @@ layout <- c(
 ```
 
 
-In Figure 3.7, McElreath considered the longest sequence of the sample values. We've been using `rbinom()` with the size parameter set to 9 for our simulations. E.g.,
+In Figure 3.7, McElreath considered the longest sequence of the sample values. We've been using `rbinom()` with the `size` argument set to 9 for our simulations. E.g.,
 
 ```{r}
-rbinom(10, size = 9, prob = .6)
+rbinom(10, size = 9, prob = 0.6)
 ```
 
 Notice this collapsed (i.e., aggregated) over the sequences within the individual sets of 9. What we need is to simulate nine individual trials many times over. For example, this
@@ -521,7 +524,7 @@ rbinom(9, size = 1, prob = .6)
 
 would be the disaggregated version of just one of the numerals returned by `rbinom()` when `size = 9`. So let's try simulating again with un-aggregated samples.
 
-We can use our `m3.1` posterior draws of `p` to simulate disaggregated counts. For each of the draws, well do the `n = 9` simulations from `rbinom()` from within the `purrr::map()` function, saving the results in a nested column called `w_draws`. Then we'll un-nest that column with the `unnest()` function. Since this is a substantial change to the original `as_draws_df()` output, we'll save the results as `d_w_draws`.
+We can use our `m3.1` posterior draws of `p` to simulate disaggregated counts. For each of the draws, we'll do the `n = 9` simulations from `rbinom()` from within the `purrr::map()` function, saving the results in a nested column called `w_draws`. Then we'll un-nest that column with the `unnest()` function. Since this is a substantial change to the original `as_draws_df()` output, we'll save the results as `d_w_draws`.
 
 ```{r d_w_draws}
 #| warning: false
@@ -539,7 +542,7 @@ head(d_w_draws, n = 10)
 
 Now each of the original levels of `.draw` has nine rows, on for each of the nine `w_draws` values.
 
-Next we count the longest sequences. The base **R** [`rle()` function](https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/rle) will help with that. Consider McElreath's sequence of tosses.
+Next we count the longest sequences. The base-**R** `rle()` function will help with that. Consider McElreath's sequence of tosses.
 
 ```{r}
 tosses <- c("w", "l", "w", "w", "w", "l", "w", "l", "w")
@@ -551,7 +554,7 @@ You can plug that into `rle()`.
 rle(tosses)
 ```
 
-For our purposes, we're interested in `lengths`. That tells us the length of each sequences of the same value. The `3` corresponds to our run of three `w`s. The `max()` function will help us confirm it's the largest value.
+For our purposes, we're interested in the `lengths` portion of the output. That tells us the length of each sequences of the same value. The `3` corresponds to our run of three `w` values. The `max()` function will help us confirm it's the largest value.
 
 ```{r}
 rle(tosses)$lengths %>% max()

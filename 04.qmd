@@ -40,7 +40,7 @@ theme_set(
 
 #### Overthinking: From model definition to Bayes' theorem.
 
-We can use grid approximation to work through our globe tossing model.
+We can use grid approximation to work through our globe-tossing model.
 
 ```{r}
 # How many `p_grid` points would you like?
@@ -80,7 +80,7 @@ d |>
 
 ### The data.
 
-Load the `Howell1` data [-@howell2001demography; -@howell2010life].
+Load the `Howell1` data [@howell2001demography; @howell2010life].
 
 ```{r}
 data(Howell1, package = "rethinking")
@@ -89,7 +89,7 @@ rm(Howell1)
 str(d)
 ```
 
-I'm not aware of a `precis()` function for numeric and graphical summaries of variables outside of McElreath's **rethinking** package. We can get some of that information with `summary()`.
+I'm not aware of a `precis()` function for numeric and graphical summaries of variables outside of McElreath's **rethinking** package. We can, at least, get some of that information with `summary()`.
 
 ```{r}
 summary(d)
@@ -159,7 +159,7 @@ $$\text{heights}_i \sim \operatorname{Normal}(\mu, \sigma),$$
 
 where the $i$ subscript indexes the individual cases in the data. Our two parameters are $\mu$ and $\sigma$, which we will estimate using Bayes' formula. Our prior for $\mu$ will be
 
-$$\mu \sim \operatorname{Normal}(178, 20)$$
+$$\mu \sim \operatorname{Normal}(178, 20),$$
 
 and our prior for $\sigma$ will be
 
@@ -182,7 +182,7 @@ p1 <- tibble(x = seq(from = 100, to = 250, by = 0.1)) |>
 p1
 ```
 
-And here's the **ggplot2** code for our prior for $\sigma$, a uniform distribution with a minimum value of 0 and a maximum value of 50. We don't really need the $y$-axis when looking at the shapes of a density, so we'll just remove it with `scale_y_continuous()`.
+And here's the **ggplot2** code for $p(\sigma)$, a uniform distribution with a minimum value of 0 and a maximum value of 50. We don't really need the $y$-axis when looking at the shapes of a density, so we'll just remove it with `scale_y_continuous()`.
 
 ```{r}
 #| fig-width: 3
@@ -319,7 +319,7 @@ d_grid <- crossing(
 glimpse(d_grid)
 ```
 
-`d_grid` contains every combination of `mu` and `sigma` across their specified values. Instead of base **R** `sapply()`, we'll do the computations by making a custom function which we'll then plug into `purrr::map2()`.
+`d_grid` contains every combination of `mu` and `sigma` across their specified values. Instead of base-**R** `sapply()`, we'll do the computations by making a custom function which we'll then plug into `purrr::map2()`.
 
 ```{r}
 grid_function <- function(mu, sigma) {
@@ -368,7 +368,7 @@ We'll make our heat map with `geom_raster()`.
 
 d_grid |> 
   ggplot(aes(x = mu, y = sigma, fill = probability)) + 
-  geom_raster(interpolate = T) +
+  geom_raster(interpolate = TRUE) +
   scale_fill_viridis_c(option = "B") +
   labs(x = expression(mu),
        y = expression(sigma))
@@ -528,7 +528,7 @@ model {
 '
 ```
 
-Next we use the `tidybayes::compose_data()` function to convert the data to a list in the format expected by **rstan**, which is a list.
+Next we use the `tidybayes::compose_data()` function to convert the data to a list, which is the format expected by **rstan**.
 
 ```{r}
 stan_data <- d2 |>
@@ -538,7 +538,7 @@ stan_data <- d2 |>
 str(stan_data)
 ```
 
-Note how by default, `compose_data()` adds a variable called `n`, which tells the number of rows in the original data frame. If you look at the `model_code` above, you'll see how I used that value when defining the `height` data.
+Note how the `compose_data()` function automatically added a variable called `n`, which tells the number of rows in the original data frame. If you look at the `model_code` above, you'll see how I used that value when defining the vector of `height` values.
 
 Now we fit the model with the `stan()` function.
 
@@ -566,7 +566,7 @@ m4.1 <- stan(
 Here's the model summary.
 
 ```{r}
-print(m4.1, probs = c(0.05, 0.945))
+print(m4.1, probs = c(0.055, 0.945))
 ```
 
 Here's the second model with the stronger prior for $\mu$.
@@ -609,7 +609,7 @@ m4.2 <- stan(
 Here's the model summary.
 
 ```{r}
-print(m4.2, probs = c(0.05, 0.945))
+print(m4.2, probs = c(0.055, 0.945))
 ```
 
 #### Overthinking: Start values for ~~quap~~ `rstan()`.
@@ -989,7 +989,7 @@ m4.3 <- stan(
 Look at the `print()` summary.
 
 ```{r}
-print(m4.3, probs = c(0.05, 0.945))
+print(m4.3, probs = c(0.055, 0.945))
 ```
 
 #### Rethinking: Everything that depends upon parameters has a posterior distribution.
@@ -1044,7 +1044,7 @@ m4.3b <- stan(
 Check the summary.
 
 ```{r}
-print(m4.3b, probs = c(0.05, 0.945))
+print(m4.3b, probs = c(0.055, 0.945))
 ```
 
 We can exponentiate the `log_b` parameter to convert it back to the $\beta$ scale.
@@ -1285,8 +1285,7 @@ n_df |>
   geom_abline(data = n_df |> 
                 select(n, xbar, as_draws_df) |> 
                 unnest(as_draws_df),
-              aes(intercept = a,
-                  slope = b,
+              aes(intercept = a, slope = b,
                   group = .draw),
               color = "royalblue", linewidth = 1/4) +
   scale_x_continuous("weight",
@@ -1338,7 +1337,7 @@ We'll use `mean_hdi()` to get both 89% and 95% HDIs, along with the mean.
 #| warning: false
 
 draws |> 
-  mean_hdi(mu_at_50, .width = c(.89, .95))
+  mean_hdi(mu_at_50, .width = c(0.89, 0.95))
 ```
 
 The `fitted()` functions are not available for `stan()` models. However, we can adjust our `as_draws_df()` output (i.e., `draws`) with `expand_grid()` to compute the fitted values by hand. We save the results as `draws_fitted_df`.
@@ -1536,7 +1535,7 @@ m4.5 <- stan(
 Check the summary.
 
 ```{r}
-print(m4.5, probs = c(0.05, 0.945))
+print(m4.5, probs = c(0.055, 0.945))
 ```
 
 Here's how to make the middle panel of Figure 4.11.
@@ -1620,7 +1619,7 @@ m4.6 <- stan(
 Check the summary.
 
 ```{r}
-print(m4.6, probs = c(0.05, 0.945))
+print(m4.6, probs = c(0.055, 0.945))
 ```
 
 Here's how to make the right panel of Figure 4.11.

@@ -53,7 +53,7 @@ glimpse(d)
 Now we have our data, we can reproduce Figure 5.1.
 
 ```{r}
-#| fig-width: 3
+#| fig-width: 3.5
 #| fig-height: 3
 
 d |>
@@ -134,7 +134,7 @@ $$
 \end{align*}
 $$
 
-where the `_std` suffix indicates the variables are standardized (i.e., zero centered, with a standard deviation of one). 
+where the "std" suffix indicates the variables are standardized (i.e., zero centered, with a standard deviation of one). 
 
 First, we define the `model_code_5.1`.
 
@@ -351,7 +351,7 @@ m5.2 <- stan(
 Check the summary.
 
 ```{r}
-print(m5.2, pars = c("b0", "b1", "sigma"), probs = c(0.05, 0.945))
+print(m5.2, pars = c("b0", "b1", "sigma"), probs = c(0.055, 0.945))
 ```
 
 Here's the rest of Figure 5.2.
@@ -490,7 +490,7 @@ $$
 >
 > where $\mathbf{m}$ is a vector of predicted means, one for each row in the data, $\mathbf{b}$ is a (column) vector of parameters, one for each predictor variable, and $\mathbf{X}$ is a matrix. This matrix is called a *design matrix*. (p. 132, *emphasis* in the original)
 
-I generally do not like this style of notation, and I rarely use it. It's not common to see it in papers in my field, and I suspect it many of my colleagues would find it actively discouraging. But this style of notation will come in handy for some of the `stan()` code to come, starting with the models in @sec-A-second-method.
+I generally do not like this style of notation, and I rarely use it. It's not common to see it in papers in my field, and I suspect it many of my colleagues would find it actively discouraging. However, this style of notation will come in handy for some of the `stan()` code to come, starting with the models in @sec-A-second-method.
 
 ### Approximating the posterior.
 
@@ -555,7 +555,7 @@ m5.3 <- stan(
 Behold the summary.
 
 ```{r}
-print(m5.3, pars = c("b0", "b1", "b2", "sigma"),  probs = c(0.05, 0.945))
+print(m5.3, pars = c("b0", "b1", "b2", "sigma"),  probs = c(0.055, 0.945))
 ```
 
 Here's a variant of McElreath's `rethinking::coeftab()` plot (p. 133).
@@ -648,7 +648,7 @@ m5.1_sim <- sampling(
 Check the summary.
 
 ```{r}
-print(m5.1_sim, probs = c(0.05, 0.945))
+print(m5.1_sim, probs = c(0.055, 0.945))
 ```
 
 Now do the same thing for the next two models.
@@ -731,7 +731,7 @@ parameters {
   real<lower=0> sigma;
 }
 model {
-  m ~ normal(b0 + b1 * a, sigma);  // Model m as the criterion
+  m ~ normal(b0 + b1 * a, sigma);  // Model `m` as the criterion
   
   b0 ~ normal(0, 0.2);
   b1 ~ normal(0, 0.5);
@@ -776,17 +776,17 @@ m5.4 <- stan(
 Behold the summary.
 
 ```{r}
-print(m5.4, probs = c(0.05, 0.945))
+print(m5.4, probs = c(0.055, 0.945))
 ```
 
-Now we have a series of `mu[i]` rows in the summary. These also show up in the `as_draws_df()` output.
+Now we have a series of `mu[i]` rows in the summary. These show up in the `as_draws_df()` output, too.
 
 ```{r}
 as_draws_df(m5.4) |> 
   colnames()
 ```
 
-These are our expected or fitted values, one for each case in the data. Again, we technically don't need those expected `mu[i]` values. We can also compute them by hand. To prove it, here we connect the `mu[i]` rows to their original `Loc` values, and then summarize them by their means and 89% intervals.
+These are our *expected* or *fitted* values, one for each case in the data. Again, we technically don't need those expected `mu[i]` values. We can also compute them by hand. To prove it, here we connect the `mu[i]` rows to their original `Loc` values, and then summarize them by their means and 89% intervals.
 
 ```{r}
 #| warning: false
@@ -811,7 +811,7 @@ mu_mean_qi <- as_draws_df(m5.4) |>
 head(mu_mean_qi)
 ```
 
-Now we compute the expected values for the `Loc` levels, by hand with the `b0` and `b1` posteriors.
+Now we compute the expected values for the `Loc` levels *by hand* with the `b0` and `b1` posteriors.
 
 ```{r}
 #| warning: false
@@ -932,7 +932,7 @@ m5.4b <- stan(
 Check the model summary.
 
 ```{r}
-print(m5.4b, pars = c("b0", "b1", "sigma"), probs = c(0.05, 0.945))
+print(m5.4b, pars = c("b0", "b1", "sigma"), probs = c(0.055, 0.945))
 ```
 
 Did you notice our use of the `pars` argument, there? That restricted the `print()` output to the parameters listed in that character vector. Had we left that out, the output would also have contained the summaries of the 50 rows of `mu[i]` parameters.
@@ -1124,16 +1124,16 @@ draws |>
 Here's the simulated data.
 
 ```{r}
-# number of cases
+# Number of cases
 n <- 100
 
-# setting the seed makes the results reproducible
+# Setting the seed makes the results reproducible
 set.seed(5)
 
 d_spur <- tibble(
-  x_real = rnorm(n = n),                 # x_real as Gaussian with mean 0 and SD 1 (i.e., the defaults)
-  x_spur = rnorm(n = n, mean = x_real),  # x_spur as Gaussian with mean = x_real
-  y =      rnorm(n = n, mean = x_real))  # y as Gaussian with mean = x_real
+  x_real = rnorm(n = n),                 # Gaussian with mean 0 and SD 1 (i.e., the defaults)
+  x_spur = rnorm(n = n, mean = x_real),  # Gaussian with `mean = x_real`
+  y =      rnorm(n = n, mean = x_real))  # Gaussian with `mean = x_real`
 ```
 
 Fit the model.
@@ -1183,7 +1183,7 @@ m5.0_spur <- stan(
 Summarize.
 
 ```{r}
-print(m5.0_spur, probs = c(0.05, 0.945))
+print(m5.0_spur, probs = c(0.055, 0.945))
 ```
 
 If we let "r" stand for `x_rel` and "s" stand for `x_spur`, here's how we might depict that our simulation in a DAG.
@@ -1302,10 +1302,10 @@ m5.3_a <- stan(
 Check the model summary.
 
 ```{r}
-print(m5.3_a, probs = c(0.05, 0.945))
+print(m5.3_a, probs = c(0.055, 0.945))
 ```
 
-Figure 5.6
+Make Figure 5.6.
 
 ```{r}
 #| fig-width: 6
@@ -1406,7 +1406,7 @@ Let's standardize our variables by hand.
 ```{r}
 d <- d |> 
   mutate(k = (kcal.per.g - mean(kcal.per.g)) / sd(kcal.per.g), 
-         n = (neocortex.perc - mean(neocortex.perc, na.rm = T)) / sd(neocortex.perc, na.rm = T), 
+         n = (neocortex.perc - mean(neocortex.perc, na.rm = TRUE)) / sd(neocortex.perc, na.rm = TRUE), 
          m = (log(mass) - mean(log(mass))) / sd(log(mass)))
 ```
 
@@ -1496,7 +1496,7 @@ m5.5_draft <- stan(
 Check the model summary.
 
 ```{r}
-print(m5.5_draft, probs = c(0.05, 0.945))
+print(m5.5_draft, probs = c(0.055, 0.945))
 ```
 
 Take samples from just the priors with `stan()`.
@@ -1652,10 +1652,10 @@ m5.5 <- stan(
 Check the model summary.
 
 ```{r}
-print(m5.5, probs = c(0.05, 0.945))
+print(m5.5, probs = c(0.055, 0.945))
 ```
 
-Figure 5.9, upper left
+Make Figure 5.9, upper left.
 
 ```{r}
 #| fig-width: 3
@@ -1720,7 +1720,7 @@ m5.6 <- stan(
 Check the model summary.
 
 ```{r}
-print(m5.6, probs = c(0.05, 0.945))
+print(m5.6, probs = c(0.055, 0.945))
 ```
 
 Make Figure 5.9, upper right.
@@ -1804,7 +1804,7 @@ m5.7 <- stan(
 ```
 
 ```{r}
-print(m5.7, probs = c(0.05, 0.945))
+print(m5.7, probs = c(0.055, 0.945))
 ```
 
 Here's an alternative to McElreath's `coefplot()` plot code.
@@ -1822,7 +1822,6 @@ bind_rows(
   as_draws_df(m5.7) |> 
     transmute(`b[0]` = b0, `b[1]` = b1, `b[2]` = b2, fit = "m5.7")
 ) |> 
-  
   pivot_longer(contains("[")) |> 
   drop_na(value) |> 
   
@@ -1913,10 +1912,7 @@ Now we combine our `gg_dag()` plots together with **patchwork** syntax.
 dag1 + dag2 + dag3
 ```
 
-Let's make the counterfactual plots at the bottom of Figure 5.9. Here's the one on the left.
-
-
-Figure 5.9, lower left
+Let's make the counterfactual plots at the bottom of Figure 5.9. Here's the one on the left. We start with Figure 5.9, lower left.
 
 ```{r}
 #| fig-width: 3
@@ -1939,7 +1935,7 @@ p3 <- as_draws_df(m5.7) |>
 p3
 ```
 
-Figure 5.9, lower right
+Next we make Figure 5.9, lower right.
 
 ```{r}
 #| fig-width: 3
@@ -2134,8 +2130,8 @@ prior |>
   group_by(name) |> 
   summarise(mean = mean(value),
             sd   = sd(value),
-            ll   = quantile(value, prob = .025),
-            ul   = quantile(value, prob = .975)) |> 
+            ll   = quantile(value, prob = 0.055),
+            ul   = quantile(value, prob = 0.945)) |> 
   mutate_if(is.double, round, digits = 2)
 ```
 
@@ -2273,8 +2269,8 @@ m5.8b <- stan(
 Check the model summaries.
 
 ```{r}
-print(m5.8, probs = c(0.05, 0.945))
-print(m5.8b, probs = c(0.05, 0.945))
+print(m5.8, probs = c(0.055, 0.945))
+print(m5.8b, probs = c(0.055, 0.945))
 ```
 
 Compare the posteriors, by model type.
@@ -2319,7 +2315,7 @@ d <- milk
 rm(milk)
 ```
 
-With the **tidyverse**, we can peek at `clade` with `distinct()` in the place of base **R** `unique()`.
+With the **tidyverse**, we can peek at `clade` with `distinct()` in the place of base-**R** `unique()`.
 
 ```{r}
 d |>
@@ -2468,8 +2464,8 @@ m5.9b <- stan(
 Check the model summaries.
 
 ```{r}
-print(m5.9, probs = c(0.05, 0.945))
-print(m5.9b, probs = c(0.05, 0.945))
+print(m5.9, probs = c(0.055, 0.945))
+print(m5.9b, probs = c(0.055, 0.945))
 ```
 
 The results are the same within HMC variance.
@@ -2501,13 +2497,13 @@ bind_rows(
   
   ggplot(aes(x = value, y = name, color = type)) +
   stat_pointinterval(point_interval = mean_qi, .width = 0.89, 
-                     position = position_dodge(width = 0.5),
+                     position = position_dodge(width = -0.5),
                      linewidth = 1/2, shape = 1) +
   labs(x = "expected kcal (std)",
        y = NULL)
 ```
 
-This is a good place to introduce `tidybayes::spread_draws()` function, which can be handy for extracting posterior draws in a long format. When you have a model that uses an indexed parameter, such as the `a` parameter in `m5.9`, you can request the draws for each of those indices using `[]` notation. Note below how we have indicated we want those indices named `j` with our `a[j]` syntax. We could have also called them something more descriptive like `clade_id`, or more generic like `index`.
+This is a good place to introduce the `tidybayes::spread_draws()` function, which can be handy for extracting posterior draws in a long format. When you have a model that uses an indexed parameter, such as the `a` parameter in `m5.9`, you can request the draws for each of those indices using `[]` notation. Note below how we have indicated we want those indices named `j` with our `a[j]` syntax. We could have also called them something more descriptive like `clade_id`, or more generic like `index`.
 
 ```{r}
 m5.9 |> 
@@ -2637,7 +2633,7 @@ m5.10 <- stan(
 Check the summary.
 
 ```{r}
-print(m5.10, probs = c(0.05, 0.945))
+print(m5.10, probs = c(0.055, 0.945))
 ```
 
 Here's the coefficient plot for the $a_{[i]}$ parameters.
