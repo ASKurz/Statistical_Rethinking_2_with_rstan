@@ -126,6 +126,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./"><em>Statistical rethinking</em> 2 with rstan and the tidyverse</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -185,6 +188,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./08.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Conditional Manatees</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -199,32 +208,48 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#multicollinearity" id="toc-multicollinearity" class="nav-link active" data-scroll-target="#multicollinearity"><span class="header-section-number">6.1</span> Multicollinearity</a>
-  <ul class="collapse">
+  <li><a href="#overthinking-simulated-science-distortion." id="toc-overthinking-simulated-science-distortion." class="nav-link active" data-scroll-target="#overthinking-simulated-science-distortion."><span class="header-section-number">6.0.0.1</span> Overthinking: Simulated science distortion.</a></li>
+  <li><a href="#multicollinearity" id="toc-multicollinearity" class="nav-link" data-scroll-target="#multicollinearity"><span class="header-section-number">6.1</span> Multicollinearity</a>
+  <ul>
   <li><a href="#multicollinear-legs." id="toc-multicollinear-legs." class="nav-link" data-scroll-target="#multicollinear-legs."><span class="header-section-number">6.1.1</span> Multicollinear legs.</a></li>
-  <li><a href="#multicollinear-milk." id="toc-multicollinear-milk." class="nav-link" data-scroll-target="#multicollinear-milk."><span class="header-section-number">6.1.2</span> Multicollinear <code>milk</code>.</a></li>
+  <li><a href="#multicollinear-milk." id="toc-multicollinear-milk." class="nav-link" data-scroll-target="#multicollinear-milk."><span class="header-section-number">6.1.2</span> Multicollinear <code>milk</code>.</a>
+  <ul>
+  <li><a href="#rethinking-identification-guaranteed-comprehension-up-to-you." id="toc-rethinking-identification-guaranteed-comprehension-up-to-you." class="nav-link" data-scroll-target="#rethinking-identification-guaranteed-comprehension-up-to-you."><span class="header-section-number">6.1.2.1</span> Rethinking: Identification guaranteed; comprehension up to you.</a></li>
+  <li><a href="#overthinking-simulating-collinearity." id="toc-overthinking-simulating-collinearity." class="nav-link" data-scroll-target="#overthinking-simulating-collinearity."><span class="header-section-number">6.1.2.2</span> Overthinking: Simulating collinearity.</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#sec-Post-treatment-bias" id="toc-sec-Post-treatment-bias" class="nav-link" data-scroll-target="#sec-Post-treatment-bias"><span class="header-section-number">6.2</span> Post-treatment bias</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#a-prior-is-born." id="toc-a-prior-is-born." class="nav-link" data-scroll-target="#a-prior-is-born."><span class="header-section-number">6.2.1</span> A prior is born.</a></li>
   <li><a href="#blocked-by-consequence." id="toc-blocked-by-consequence." class="nav-link" data-scroll-target="#blocked-by-consequence."><span class="header-section-number">6.2.2</span> Blocked by consequence.</a></li>
-  <li><a href="#fungus-and-d-separation." id="toc-fungus-and-d-separation." class="nav-link" data-scroll-target="#fungus-and-d-separation."><span class="header-section-number">6.2.3</span> Fungus and <span class="math inline">\(d\)</span>-separation.</a></li>
+  <li><a href="#fungus-and-d-separation." id="toc-fungus-and-d-separation." class="nav-link" data-scroll-target="#fungus-and-d-separation."><span class="header-section-number">6.2.3</span> Fungus and <span class="math inline">\(d\)</span>-separation.</a>
+  <ul>
+  <li><a href="#rethinking-model-selection-doesnt-help." id="toc-rethinking-model-selection-doesnt-help." class="nav-link" data-scroll-target="#rethinking-model-selection-doesnt-help."><span class="header-section-number">6.2.3.1</span> Rethinking: Model selection doesn’t help.</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#collider-bias" id="toc-collider-bias" class="nav-link" data-scroll-target="#collider-bias"><span class="header-section-number">6.3</span> Collider bias</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#collider-of-false-sorrow." id="toc-collider-of-false-sorrow." class="nav-link" data-scroll-target="#collider-of-false-sorrow."><span class="header-section-number">6.3.1</span> Collider of false sorrow.</a></li>
-  <li><a href="#the-haunted-dag." id="toc-the-haunted-dag." class="nav-link" data-scroll-target="#the-haunted-dag."><span class="header-section-number">6.3.2</span> The haunted DAG.</a></li>
+  <li><a href="#the-haunted-dag." id="toc-the-haunted-dag." class="nav-link" data-scroll-target="#the-haunted-dag."><span class="header-section-number">6.3.2</span> The haunted DAG.</a>
+  <ul>
+  <li><a href="#sec-A-second-method" id="toc-sec-A-second-method" class="nav-link" data-scroll-target="#sec-A-second-method"><span class="header-section-number">6.3.2.1</span> Bonus: A second method.</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#confronting-confounding" id="toc-confronting-confounding" class="nav-link" data-scroll-target="#confronting-confounding"><span class="header-section-number">6.4</span> Confronting confounding</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#shutting-the-backdoor." id="toc-shutting-the-backdoor." class="nav-link" data-scroll-target="#shutting-the-backdoor."><span class="header-section-number">6.4.1</span> Shutting the backdoor.</a></li>
   <li><a href="#two-roads." id="toc-two-roads." class="nav-link" data-scroll-target="#two-roads."><span class="header-section-number">6.4.2</span> Two roads.</a></li>
-  <li><a href="#backdoor-waffles." id="toc-backdoor-waffles." class="nav-link" data-scroll-target="#backdoor-waffles."><span class="header-section-number">6.4.3</span> Backdoor waffles.</a></li>
+  <li><a href="#backdoor-waffles." id="toc-backdoor-waffles." class="nav-link" data-scroll-target="#backdoor-waffles."><span class="header-section-number">6.4.3</span> Backdoor waffles.</a>
+  <ul>
+  <li><a href="#rethinking-dags-are-not-enough." id="toc-rethinking-dags-are-not-enough." class="nav-link" data-scroll-target="#rethinking-dags-are-not-enough."><span class="header-section-number">6.4.3.1</span> Rethinking: DAGs are not enough.</a></li>
+  <li><a href="#overthinking-a-smooth-operator." id="toc-overthinking-a-smooth-operator." class="nav-link" data-scroll-target="#overthinking-a-smooth-operator."><span class="header-section-number">6.4.3.2</span> Overthinking: A smooth operator.</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">6.5</span> Summary</a></li>
   <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info">Session info</a></li>
+  <li><a href="#comments" id="toc-comments" class="nav-link" data-scroll-target="#comments">Comments</a></li>
   </ul>
-</nav>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -291,7 +316,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 1  1.00</code></pre>
 </div>
 </div>
-<p>Have you ever even seen a <span class="math inline">\(\rho = .9997\)</span> correlation, before? Here it is in a plot.</p>
+<p>Have you ever even seen a <span class="math inline">\(\rho = .9997\)</span> correlation, before? Here’s what such data look like in a plot.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>d <span class="sc">|&gt;</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> leg_left, <span class="at">y =</span> leg_right)) <span class="sc">+</span></span>
@@ -300,7 +325,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><img src="06_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="288"></p>
 </div>
 </div>
-<p>Make the <code>stan_data</code> with the <code>compose_data()</code> function.</p>
+<p>Anyway, make the <code>stan_data</code> with the <code>compose_data()</code> function.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>stan_data <span class="ot">&lt;-</span> d <span class="sc">|&gt;</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compose_data</span>()</span>
@@ -354,7 +379,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <blockquote class="blockquote">
 <p>Warning: There were 2007 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10</p>
 </blockquote>
-<p>Check the model summary.</p>
+<p>We don’t know that some of those words mean, yet, at this point in the text. But trust me, friends, it’s not good. For now, check the model summary.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m6<span class="fl">.1</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -375,7 +400,7 @@ and Rhat is the potential scale reduction factor on split chains (at
 convergence, Rhat=1).</code></pre>
 </div>
 </div>
-<p>The results mimic those in the text. The posterior standard deviations are very large for <span class="math inline">\(\beta_1\)</span> and <span class="math inline">\(\beta_2\)</span>. Here’s a coefficient plot.</p>
+<p>The results mimic those in the text. The posterior standard deviations are very large for <span class="math inline">\(\beta_1\)</span> and <span class="math inline">\(\beta_2\)</span>. Here’s what the damage looks like in a coefficient plot.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_draws_df</span>(m6<span class="fl">.1</span>) <span class="sc">|&gt;</span> </span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(b0<span class="sc">:</span>sigma) <span class="sc">|&gt;</span> </span>
@@ -389,7 +414,7 @@ convergence, Rhat=1).</code></pre>
 <p><img src="06_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="624"></p>
 </div>
 </div>
-<p>In the middle of page 164, McElreath suggested we might try this again with different seeds. This might be a good place to introduce iteration. Our first step will be to make a custom function that will simulate new data of the same form as above and then immediately fit a model based on <code>b6.1</code> to those new data. To speed up the process, we’ll use the <code>update()</code> function to avoid recompiling the model. Our custom function, <code>sim_and_fit()</code>, will take two arguments. The <code>seed</code> argument will allow us to keep the results reproducible by setting a seed for the data simulation. The <code>n</code> argument will allow us, should we wish, to change the sample size.</p>
+<p>In the middle of page 164, McElreath suggested we might try this again with different seeds. This is a good place to practice some iteration. Our first step will be to make a custom function that will simulate new data of the same form as above and then immediately fit a model based on <code>m6.1</code> to those new data. To speed up the process, we’ll use the <code>update()</code> function to avoid recompiling the model. Our custom function, <code>sim_and_fit()</code>, will take two arguments. The <code>seed</code> argument will allow us to keep the results reproducible by setting a seed for the data simulation. The <code>n</code> argument will allow us, should we wish, to change the sample size.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sim_and_sample <span class="ot">&lt;-</span> <span class="cf">function</span>(seed, <span class="at">n =</span> <span class="dv">100</span>) {</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a> </span>
@@ -577,7 +602,7 @@ convergence, Rhat=1).</code></pre>
  $ n: int 29</code></pre>
 </div>
 </div>
-<p>Define the two univariable models, and the multivariable model.</p>
+<p>Define the two univariable models, and define the multivariable model, too.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Univariable models</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>model_code_6<span class="fl">.3</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
@@ -2259,6 +2284,9 @@ loaded via a namespace (and not attached):
 [85] pkgconfig_2.0.3     </code></pre>
 </div>
 </div>
+</section>
+<section id="comments" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="comments">Comments</h2>
 
 
 </section>
@@ -2496,6 +2524,8 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }
   }
 });
+</script>
+<script src="https://giscus.app/client.js" data-repo="ASKurz/Statistical_Rethinking_2_with_rstan" data-repo-id="R_kgDOMeljUg" data-category="General" data-category-id="DIC_kwDOMeljUs4ChZXD" data-mapping="title" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">

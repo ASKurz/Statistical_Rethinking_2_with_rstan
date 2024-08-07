@@ -126,6 +126,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./"><em>Statistical rethinking</em> 2 with rstan and the tidyverse</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -185,6 +188,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./08.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Conditional Manatees</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -199,22 +208,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#sampling-from-a-grid-approximate-posterior" id="toc-sampling-from-a-grid-approximate-posterior" class="nav-link active" data-scroll-target="#sampling-from-a-grid-approximate-posterior"><span class="header-section-number">3.1</span> Sampling from a grid-approximate posterior</a></li>
+  <li><a href="#rethinking-the-natural-frequency-phenomenon-is-not-unique." id="toc-rethinking-the-natural-frequency-phenomenon-is-not-unique." class="nav-link active" data-scroll-target="#rethinking-the-natural-frequency-phenomenon-is-not-unique."><span class="header-section-number">3.0.0.1</span> Rethinking: The natural frequency phenomenon is not unique.</a></li>
+  <li><a href="#rethinking-why-statistics-cant-save-bad-science." id="toc-rethinking-why-statistics-cant-save-bad-science." class="nav-link" data-scroll-target="#rethinking-why-statistics-cant-save-bad-science."><span class="header-section-number">3.0.0.2</span> Rethinking: Why statistics can’t save bad science.</a></li>
+  <li><a href="#sampling-from-a-grid-approximate-posterior" id="toc-sampling-from-a-grid-approximate-posterior" class="nav-link" data-scroll-target="#sampling-from-a-grid-approximate-posterior"><span class="header-section-number">3.1</span> Sampling from a grid-approximate posterior</a></li>
   <li><a href="#sampling-to-summarize" id="toc-sampling-to-summarize" class="nav-link" data-scroll-target="#sampling-to-summarize"><span class="header-section-number">3.2</span> Sampling to summarize</a>
-  <ul class="collapse">
-  <li><a href="#intervals-of-defined-boundaries." id="toc-intervals-of-defined-boundaries." class="nav-link" data-scroll-target="#intervals-of-defined-boundaries."><span class="header-section-number">3.2.1</span> Intervals of defined boundaries.</a></li>
-  <li><a href="#intervals-of-defined-mass." id="toc-intervals-of-defined-mass." class="nav-link" data-scroll-target="#intervals-of-defined-mass."><span class="header-section-number">3.2.2</span> Intervals of defined mass.</a></li>
+  <ul>
+  <li><a href="#intervals-of-defined-boundaries." id="toc-intervals-of-defined-boundaries." class="nav-link" data-scroll-target="#intervals-of-defined-boundaries."><span class="header-section-number">3.2.1</span> Intervals of defined boundaries.</a>
+  <ul>
+  <li><a href="#overthinking-counting-with-sum." id="toc-overthinking-counting-with-sum." class="nav-link" data-scroll-target="#overthinking-counting-with-sum."><span class="header-section-number">3.2.1.1</span> Overthinking: Counting with <code>sum</code>.</a></li>
+  </ul></li>
+  <li><a href="#intervals-of-defined-mass." id="toc-intervals-of-defined-mass." class="nav-link" data-scroll-target="#intervals-of-defined-mass."><span class="header-section-number">3.2.2</span> Intervals of defined mass.</a>
+  <ul>
+  <li><a href="#rethinking-what-do-compatibility-intervals-mean" id="toc-rethinking-what-do-compatibility-intervals-mean" class="nav-link" data-scroll-target="#rethinking-what-do-compatibility-intervals-mean"><span class="header-section-number">3.2.2.1</span> Rethinking: What do compatibility intervals mean?</a></li>
+  </ul></li>
   <li><a href="#point-estimates." id="toc-point-estimates." class="nav-link" data-scroll-target="#point-estimates."><span class="header-section-number">3.2.3</span> Point estimates.</a></li>
   </ul></li>
   <li><a href="#sampling-to-simulate-prediction" id="toc-sampling-to-simulate-prediction" class="nav-link" data-scroll-target="#sampling-to-simulate-prediction"><span class="header-section-number">3.3</span> Sampling to simulate prediction</a>
-  <ul class="collapse">
-  <li><a href="#dummy-data." id="toc-dummy-data." class="nav-link" data-scroll-target="#dummy-data."><span class="header-section-number">3.3.1</span> Dummy data.</a></li>
-  <li><a href="#model-checking." id="toc-model-checking." class="nav-link" data-scroll-target="#model-checking."><span class="header-section-number">3.3.2</span> Model checking.</a></li>
+  <ul>
+  <li><a href="#dummy-data." id="toc-dummy-data." class="nav-link" data-scroll-target="#dummy-data."><span class="header-section-number">3.3.1</span> Dummy data.</a>
+  <ul>
+  <li><a href="#rethinking-sampling-distributions." id="toc-rethinking-sampling-distributions." class="nav-link" data-scroll-target="#rethinking-sampling-distributions."><span class="header-section-number">3.3.1.1</span> Rethinking: Sampling distributions.</a></li>
+  </ul></li>
+  <li><a href="#model-checking." id="toc-model-checking." class="nav-link" data-scroll-target="#model-checking."><span class="header-section-number">3.3.2</span> Model checking.</a>
+  <ul>
+  <li><a href="#did-the-software-work" id="toc-did-the-software-work" class="nav-link" data-scroll-target="#did-the-software-work"><span class="header-section-number">3.3.2.1</span> Did the software work?</a></li>
+  <li><a href="#is-the-model-adequate" id="toc-is-the-model-adequate" class="nav-link" data-scroll-target="#is-the-model-adequate"><span class="header-section-number">3.3.2.2</span> Is the model adequate?</a></li>
+  <li><a href="#rethinking-what-does-more-extreme-mean" id="toc-rethinking-what-does-more-extreme-mean" class="nav-link" data-scroll-target="#rethinking-what-does-more-extreme-mean"><span class="header-section-number">3.3.2.3</span> Rethinking: What does more extreme mean?</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">3.4</span> Summary</a></li>
   <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info">Session info</a></li>
+  <li><a href="#comments" id="toc-comments" class="nav-link" data-scroll-target="#comments">Comments</a></li>
   </ul>
-</nav>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -236,7 +262,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<p>Load the packages and remove the plot grid lines, by default.</p>
+<p>Load the packages, and remove the grid lines.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
@@ -263,8 +289,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sampling-to-summarize" class="level2" data-number="3.2">
 <h2 data-number="3.2" class="anchored" data-anchor-id="sampling-to-summarize"><span class="header-section-number">3.2</span> Sampling to summarize</h2>
-<p>I’m not going to cover the grid approach McElreath highlighted in this section. But we might take the time to explore some of these analyses with a <code>stan()</code> based posterior.</p>
-<p>Here we fit a model like <code>m2.1</code> from the last chapter, but this time based on the simple globe-tossing data of <span class="math inline">\(w = 6\)</span> and <span class="math inline">\(n = 9\)</span>. Note how this time we are adjusting some of the default settings in the <code>stan()</code> arguments. Notably, our changes to the <code>warmup</code> and <code>iter</code> arguments will give us 100,000 posterior draws, which will help our MCMC results more closely mimic the analytic results in the chapter.</p>
+<p>I’m not going to cover the grid approach McElreath highlighted in this section. But we might take the time to explore some of these analyses with a <code>stan()</code>-based posterior.</p>
+<p>Here we fit a model like <code>m2.1</code> from the last chapter, but this time based on the simple globe-tossing data of <span class="math inline">\(w = 6\)</span> and <span class="math inline">\(n = 9\)</span>. Note how we are now adjusting some of the default settings in the <code>stan()</code> arguments. Notably, our changes to the <code>warmup</code> and <code>iter</code> arguments will give us 100,000 posterior draws, which will help our MCMC results more closely mimic the analytic results in the text.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">w =</span> <span class="fu">as.integer</span>(<span class="dv">6</span>), </span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">n =</span> <span class="fu">as.integer</span>(<span class="dv">9</span>))</span>
@@ -288,17 +314,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code, </span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">warmup =</span> <span class="dv">500</span>, <span class="at">iter =</span> <span class="dv">25500</span>, <span class="at">seed =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Check the model summary. Note how we can use the <code>probs</code> argument to select 89% intervals.</p>
+<p>Check the model summary. Note how we can use the <code>probs</code> argument to compute 89% intervals.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m3<span class="fl">.1</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m3<span class="fl">.1</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=25500; warmup=500; thin=1; 
 post-warmup draws per chain=25000, total post-warmup draws=1e+05.
 
-      mean se_mean   sd    5% 94.5% n_eff Rhat
-p     0.64       0 0.14  0.39  0.84 37525    1
-lp__ -7.74       0 0.76 -9.26 -7.21 36724    1
+      mean se_mean   sd  5.5% 94.5% n_eff Rhat
+p     0.64       0 0.14  0.40  0.84 37525    1
+lp__ -7.74       0 0.76 -9.18 -7.21 36724    1
 
 Samples were drawn using NUTS(diag_e) at Wed Jul 31 17:43:32 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
@@ -326,7 +352,7 @@ convergence, Rhat=1).</code></pre>
 # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</code></pre>
 </div>
 </div>
-<p>We can compute the proportion of the posterior distribution below 0.5 like so.</p>
+<p>We can compute the proportion of the posterior distribution of <code>p</code> below 0.5 like so.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>draws <span class="sc">|&gt;</span> </span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">p_below_0.5 =</span> <span class="fu">mean</span>(p <span class="sc">&lt;</span> <span class="fl">0.5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -355,7 +381,7 @@ convergence, Rhat=1).</code></pre>
 </section>
 <section id="intervals-of-defined-mass." class="level3" data-number="3.2.2">
 <h3 data-number="3.2.2" class="anchored" data-anchor-id="intervals-of-defined-mass."><span class="header-section-number">3.2.2</span> Intervals of defined mass.</h3>
-<p>We can make the full version of Figure 3.2 with our <code>draws</code> object, buy including the proportion summaries form above, along with similar ones for the lower and middle 80 percentiles as new columns within <code>draws</code>. Then we just wrangle and make a faceted histogram with conditional a <code>fill</code>.</p>
+<p>We can make the full version of Figure 3.2 with our <code>draws</code> object by including the proportion summaries from above, along with similar ones for the lower and middle 80 percentiles as new columns within <code>draws</code>. Then we just wrangle and make a faceted histogram with a conditional <code>fill</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>partion_vector <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"italic(p)&lt;0.5"</span>, <span class="st">"{0.5&lt;italic(p)}&lt;0.75"</span>, <span class="st">"lower~80*'%'"</span>, <span class="st">"middle~80*'%'"</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -412,15 +438,15 @@ convergence, Rhat=1).</code></pre>
 </div>
 <p>Check the model summary.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m3<span class="fl">.2</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m3<span class="fl">.2</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=25500; warmup=500; thin=1; 
 post-warmup draws per chain=25000, total post-warmup draws=1e+05.
 
-      mean se_mean   sd    5% 94.5% n_eff Rhat
-p     0.80    0.00 0.16  0.47  0.99 34839    1
-lp__ -3.09    0.01 0.82 -4.73 -2.50 26387    1
+      mean se_mean   sd  5.5% 94.5% n_eff Rhat
+p     0.80    0.00 0.16  0.48  0.99 34839    1
+lp__ -3.09    0.01 0.82 -4.65 -2.50 26387    1
 
 Samples were drawn using NUTS(diag_e) at Wed Jul 31 17:44:14 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
@@ -481,7 +507,7 @@ $ .draw      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 
 </section>
 <section id="point-estimates." class="level3" data-number="3.2.3">
 <h3 data-number="3.2.3" class="anchored" data-anchor-id="point-estimates."><span class="header-section-number">3.2.3</span> Point estimates.</h3>
-<p>We can compute the mean or medians for a <code>stan()</code>-based posterior with the typical <code>mean()</code> and <code>median()</code> functions. Though there is a base-<strong>R</strong> function called <code>mode()</code>, it returned the ‘storage mode’ of an object, not the kind of mode we often think of in statistics. We do, however, have the <code>tidybayes::Mode()</code> function for that purpose. Here are those three values for <code>p</code> from <code>m3.2</code>.</p>
+<p>We can compute the mean or medians for a <code>stan()</code>-based posterior with the typical <code>mean()</code> and <code>median()</code> functions. Though there is a base-<strong>R</strong> function called <code>mode()</code>, it returns the ‘storage mode’ of an object, which is not the kind of mode we often think of in statistics. We do, however, have the <code>tidybayes::Mode()</code> function for that purpose. Here are those three values for <code>p</code> from <code>m3.2</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>point_estimates <span class="ot">&lt;-</span> draws <span class="sc">|&gt;</span> </span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean =</span> <span class="fu">mean</span>(p),</span>
@@ -535,27 +561,30 @@ $ .draw      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 
 <p>We can make a version of Figure 3.6 using the <code>stan()</code> model <code>m3.1</code>. But it’s going to take a few steps, some of which will include nerdy little side quests.</p>
 <p>To start of with how we might plot an HMC-derived posterior density like McElreath showed at the top of the figure, compare these two histograms for the posterior of <code>p</code> from <code>m3.1</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">as_draws_df</span>(m3<span class="fl">.1</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> p)) <span class="sc">+</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">boundary =</span> <span class="dv">0</span>, <span class="at">binwidth =</span> <span class="fl">0.01</span>)</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the breaks as a vector</span></span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>p_breaks <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">0</span>, <span class="at">to =</span> <span class="dv">1</span>, <span class="at">by =</span> <span class="fl">0.01</span>)</span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">as_draws_df</span>(m3<span class="fl">.1</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">bin =</span> <span class="fu">cut</span>(p, <span class="at">breaks =</span> p_breaks)) <span class="sc">|&gt;</span> </span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bin)) <span class="sc">+</span></span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>() <span class="sc">+</span></span>
-<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>, <span class="at">size =</span> <span class="dv">5</span>))</span>
-<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">|</span> p2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Left</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">as_draws_df</span>(m3<span class="fl">.1</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> p)) <span class="sc">+</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">boundary =</span> <span class="dv">0</span>, <span class="at">binwidth =</span> <span class="fl">0.01</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the breaks as a vector</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>p_breaks <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">0</span>, <span class="at">to =</span> <span class="dv">1</span>, <span class="at">by =</span> <span class="fl">0.01</span>)</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Right</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">as_draws_df</span>(m3<span class="fl">.1</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">bin =</span> <span class="fu">cut</span>(p, <span class="at">breaks =</span> p_breaks)) <span class="sc">|&gt;</span> </span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bin)) <span class="sc">+</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>() <span class="sc">+</span></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>, <span class="at">size =</span> <span class="dv">5</span>))</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine</span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">|</span> p2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="03_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="768"></p>
 </div>
 </div>
-<p>The left histogram is made with the usual <code>geom_histogram()</code> code, with adjustments to the <code>boundary</code> and <code>binwidth</code> arguments. The histogram on the right was made with <code>geom_bar()</code> which we might usually use to make bar charts. In our data-wrangling code, we used the base-<strong>R</strong> <code>cut()</code> function to discretize the HMC draws for <code>p</code> into bins. We defined those bins using the <code>breaks</code> argument, into which we inserted our <code>p_breaks</code> sequence. That sequence of breaks via <code>cut()</code> produced the exact same bins as <code>geom_histogram()</code> with our custom <code>boundary</code> and <code>binwidth</code> settings.</p>
-<p>The reason we’d go through all this extra labor with <code>cut()</code> is because we can use those bins to compute the counts for the ones containing the nine example parameter values McElreath showcased with his vertical lines. Here are those counts.</p>
+<p>The left histogram is made with the usual <code>geom_histogram()</code> code, with adjustments to the <code>boundary</code> and <code>binwidth</code> arguments. The histogram on the right was made with <code>geom_bar()</code>, which we might usually use to make bar charts. In our data-wrangling code, we used the base-<strong>R</strong> <code>cut()</code> function to discretize the HMC draws for <code>p</code> into bins. We defined those bins using the <code>breaks</code> argument, into which we inserted our <code>p_breaks</code> sequence. Note how that sequence of breaks via <code>cut()</code> produced the exact same bins as <code>geom_histogram()</code> with our custom <code>boundary</code> and <code>binwidth</code> settings.</p>
+<p>The reason we’d go through all this extra labor with <code>cut()</code> is because we can use those bins to compute the counts for the bins containing the nine example parameter values McElreath showcased with his vertical lines. Here are those counts.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># To simplify the next line</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>line_seq <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span> <span class="sc">/</span> <span class="dv">10</span></span>
@@ -725,22 +754,22 @@ $ .draw      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 
 <p><img src="03_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>In Figure 3.7, McElreath considered the longest sequence of the sample values. We’ve been using <code>rbinom()</code> with the size parameter set to 9 for our simulations. E.g.,</p>
+<p>In Figure 3.7, McElreath considered the longest sequence of the sample values. We’ve been using <code>rbinom()</code> with the <code>size</code> argument set to 9 for our simulations. E.g.,</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rbinom</span>(<span class="dv">10</span>, <span class="at">size =</span> <span class="dv">9</span>, <span class="at">prob =</span> .<span class="dv">6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rbinom</span>(<span class="dv">10</span>, <span class="at">size =</span> <span class="dv">9</span>, <span class="at">prob =</span> <span class="fl">0.6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code> [1] 5 7 6 4 4 6 4 6 5 6</code></pre>
+<pre><code> [1] 6 5 6 4 5 6 5 8 6 6</code></pre>
 </div>
 </div>
 <p>Notice this collapsed (i.e., aggregated) over the sequences within the individual sets of 9. What we need is to simulate nine individual trials many times over. For example, this</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rbinom</span>(<span class="dv">9</span>, <span class="at">size =</span> <span class="dv">1</span>, <span class="at">prob =</span> .<span class="dv">6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 0 0 1 1 1 1 0 1</code></pre>
+<pre><code>[1] 0 0 0 1 0 1 1 0 1</code></pre>
 </div>
 </div>
 <p>would be the disaggregated version of just one of the numerals returned by <code>rbinom()</code> when <code>size = 9</code>. So let’s try simulating again with un-aggregated samples.</p>
-<p>We can use our <code>m3.1</code> posterior draws of <code>p</code> to simulate disaggregated counts. For each of the draws, well do the <code>n = 9</code> simulations from <code>rbinom()</code> from within the <code>purrr::map()</code> function, saving the results in a nested column called <code>w_draws</code>. Then we’ll un-nest that column with the <code>unnest()</code> function. Since this is a substantial change to the original <code>as_draws_df()</code> output, we’ll save the results as <code>d_w_draws</code>.</p>
+<p>We can use our <code>m3.1</code> posterior draws of <code>p</code> to simulate disaggregated counts. For each of the draws, we’ll do the <code>n = 9</code> simulations from <code>rbinom()</code> from within the <code>purrr::map()</code> function, saving the results in a nested column called <code>w_draws</code>. Then we’ll un-nest that column with the <code>unnest()</code> function. Since this is a substantial change to the original <code>as_draws_df()</code> output, we’ll save the results as <code>d_w_draws</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">3</span>)</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -768,7 +797,7 @@ $ .draw      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 
 </div>
 </div>
 <p>Now each of the original levels of <code>.draw</code> has nine rows, on for each of the nine <code>w_draws</code> values.</p>
-<p>Next we count the longest sequences. The base <strong>R</strong> <a href="https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/rle"><code>rle()</code> function</a> will help with that. Consider McElreath’s sequence of tosses.</p>
+<p>Next we count the longest sequences. The base-<strong>R</strong> <code>rle()</code> function will help with that. Consider McElreath’s sequence of tosses.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>tosses <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"w"</span>, <span class="st">"l"</span>, <span class="st">"w"</span>, <span class="st">"w"</span>, <span class="st">"w"</span>, <span class="st">"l"</span>, <span class="st">"w"</span>, <span class="st">"l"</span>, <span class="st">"w"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -781,7 +810,7 @@ $ .draw      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 
   values : chr [1:7] "w" "l" "w" "l" "w" "l" "w"</code></pre>
 </div>
 </div>
-<p>For our purposes, we’re interested in <code>lengths</code>. That tells us the length of each sequences of the same value. The <code>3</code> corresponds to our run of three <code>w</code>s. The <code>max()</code> function will help us confirm it’s the largest value.</p>
+<p>For our purposes, we’re interested in the <code>lengths</code> portion of the output. That tells us the length of each sequences of the same value. The <code>3</code> corresponds to our run of three <code>w</code> values. The <code>max()</code> function will help us confirm it’s the largest value.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rle</span>(tosses)<span class="sc">$</span>lengths <span class="sc">%&gt;%</span> <span class="fu">max</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -900,6 +929,9 @@ loaded via a namespace (and not attached):
 [61] rstudioapi_0.16.0    jsonlite_1.8.8       R6_2.5.1            </code></pre>
 </div>
 </div>
+</section>
+<section id="comments" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="comments">Comments</h2>
 
 
 </section>

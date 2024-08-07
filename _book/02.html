@@ -54,26 +54,7 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-/* CSS for citations */
-div.csl-bib-body { }
-div.csl-entry {
-  clear: both;
-}
-.hanging-indent div.csl-entry {
-  margin-left:2em;
-  text-indent:-2em;
-}
-div.csl-left-margin {
-  min-width:2em;
-  float:left;
-}
-div.csl-right-inline {
-  margin-left:2em;
-  padding-left:1em;
-}
-div.csl-indent {
-  margin-left: 2em;
-}</style>
+</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -145,6 +126,9 @@ div.csl-indent {
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./"><em>Statistical rethinking</em> 2 with rstan and the tidyverse</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -204,6 +188,12 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./08.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Conditional Manatees</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -219,35 +209,80 @@ div.csl-indent {
    
   <ul>
   <li><a href="#the-garden-of-forking-data" id="toc-the-garden-of-forking-data" class="nav-link active" data-scroll-target="#the-garden-of-forking-data"><span class="header-section-number">2.1</span> The garden of forking data</a>
-  <ul class="collapse">
-  <li><a href="#counting-possibilities." id="toc-counting-possibilities." class="nav-link" data-scroll-target="#counting-possibilities."><span class="header-section-number">2.1.1</span> Counting possibilities.</a></li>
-  <li><a href="#combining-other-information." id="toc-combining-other-information." class="nav-link" data-scroll-target="#combining-other-information."><span class="header-section-number">2.1.2</span> Combining other information.</a></li>
-  <li><a href="#from-counts-to-probability." id="toc-from-counts-to-probability." class="nav-link" data-scroll-target="#from-counts-to-probability."><span class="header-section-number">2.1.3</span> From counts to probability.</a></li>
+  <ul>
+  <li><a href="#counting-possibilities." id="toc-counting-possibilities." class="nav-link" data-scroll-target="#counting-possibilities."><span class="header-section-number">2.1.1</span> Counting possibilities.</a>
+  <ul>
+  <li><a href="#rethinking-justification." id="toc-rethinking-justification." class="nav-link" data-scroll-target="#rethinking-justification."><span class="header-section-number">2.1.1.1</span> Rethinking: Justification.</a></li>
+  </ul></li>
+  <li><a href="#combining-other-information." id="toc-combining-other-information." class="nav-link" data-scroll-target="#combining-other-information."><span class="header-section-number">2.1.2</span> Combining other information.</a>
+  <ul>
+  <li><a href="#rethinking-original-ignorance." id="toc-rethinking-original-ignorance." class="nav-link" data-scroll-target="#rethinking-original-ignorance."><span class="header-section-number">2.1.2.1</span> Rethinking: Original ignorance.</a></li>
+  </ul></li>
+  <li><a href="#from-counts-to-probability." id="toc-from-counts-to-probability." class="nav-link" data-scroll-target="#from-counts-to-probability."><span class="header-section-number">2.1.3</span> From counts to probability.</a>
+  <ul>
+  <li><a href="#rethinking-randomization." id="toc-rethinking-randomization." class="nav-link" data-scroll-target="#rethinking-randomization."><span class="header-section-number">2.1.3.1</span> Rethinking: Randomization.</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#building-a-model" id="toc-building-a-model" class="nav-link" data-scroll-target="#building-a-model"><span class="header-section-number">2.2</span> Building a model</a>
-  <ul class="collapse">
-  <li><a href="#a-data-story." id="toc-a-data-story." class="nav-link" data-scroll-target="#a-data-story."><span class="header-section-number">2.2.1</span> A data story.</a></li>
-  <li><a href="#bayesian-updating." id="toc-bayesian-updating." class="nav-link" data-scroll-target="#bayesian-updating."><span class="header-section-number">2.2.2</span> Bayesian updating.</a></li>
-  <li><a href="#evaluate." id="toc-evaluate." class="nav-link" data-scroll-target="#evaluate."><span class="header-section-number">2.2.3</span> Evaluate.</a></li>
+  <ul>
+  <li><a href="#a-data-story." id="toc-a-data-story." class="nav-link" data-scroll-target="#a-data-story."><span class="header-section-number">2.2.1</span> A data story.</a>
+  <ul>
+  <li><a href="#rethinking-the-value-of-storytelling." id="toc-rethinking-the-value-of-storytelling." class="nav-link" data-scroll-target="#rethinking-the-value-of-storytelling."><span class="header-section-number">2.2.1.1</span> Rethinking: The value of storytelling.</a></li>
+  </ul></li>
+  <li><a href="#bayesian-updating." id="toc-bayesian-updating." class="nav-link" data-scroll-target="#bayesian-updating."><span class="header-section-number">2.2.2</span> Bayesian updating.</a>
+  <ul>
+  <li><a href="#rethinking-sample-size-and-reliable-inference." id="toc-rethinking-sample-size-and-reliable-inference." class="nav-link" data-scroll-target="#rethinking-sample-size-and-reliable-inference."><span class="header-section-number">2.2.2.1</span> Rethinking: Sample size and reliable inference.</a></li>
+  </ul></li>
+  <li><a href="#evaluate." id="toc-evaluate." class="nav-link" data-scroll-target="#evaluate."><span class="header-section-number">2.2.3</span> Evaluate.</a>
+  <ul>
+  <li><a href="#rethinking-deflationary-statistics." id="toc-rethinking-deflationary-statistics." class="nav-link" data-scroll-target="#rethinking-deflationary-statistics."><span class="header-section-number">2.2.3.1</span> Rethinking: Deflationary statistics.</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#components-of-the-model" id="toc-components-of-the-model" class="nav-link" data-scroll-target="#components-of-the-model"><span class="header-section-number">2.3</span> Components of the model</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#variables." id="toc-variables." class="nav-link" data-scroll-target="#variables."><span class="header-section-number">2.3.1</span> Variables.</a></li>
-  <li><a href="#definitions." id="toc-definitions." class="nav-link" data-scroll-target="#definitions."><span class="header-section-number">2.3.2</span> Definitions.</a></li>
+  <li><a href="#definitions." id="toc-definitions." class="nav-link" data-scroll-target="#definitions."><span class="header-section-number">2.3.2</span> Definitions.</a>
+  <ul>
+  <li><a href="#observed-variables." id="toc-observed-variables." class="nav-link" data-scroll-target="#observed-variables."><span class="header-section-number">2.3.2.1</span> Observed variables.</a>
+  <ul class="collapse">
+  <li><a href="#overthinking-names-and-probability-distributions." id="toc-overthinking-names-and-probability-distributions." class="nav-link" data-scroll-target="#overthinking-names-and-probability-distributions."><span class="header-section-number">2.3.2.1.1</span> Overthinking: Names and probability distributions.</a></li>
+  <li><a href="#rethinking-a-central-role-for-likelihood." id="toc-rethinking-a-central-role-for-likelihood." class="nav-link" data-scroll-target="#rethinking-a-central-role-for-likelihood."><span class="header-section-number">2.3.2.1.2</span> Rethinking: A central role for likelihood.</a></li>
+  </ul></li>
+  <li><a href="#unobserved-variables." id="toc-unobserved-variables." class="nav-link" data-scroll-target="#unobserved-variables."><span class="header-section-number">2.3.2.2</span> Unobserved variables.</a>
+  <ul class="collapse">
+  <li><a href="#overthinking-prior-as-a-probability-distribution" id="toc-overthinking-prior-as-a-probability-distribution" class="nav-link" data-scroll-target="#overthinking-prior-as-a-probability-distribution"><span class="header-section-number">2.3.2.2.1</span> Overthinking: Prior as a probability distribution</a></li>
+  <li><a href="#rethinking-datum-or-parameter" id="toc-rethinking-datum-or-parameter" class="nav-link" data-scroll-target="#rethinking-datum-or-parameter"><span class="header-section-number">2.3.2.2.2</span> Rethinking: Datum or parameter?</a></li>
+  <li><a href="#rethinking-prior-prior-pants-on-fire." id="toc-rethinking-prior-prior-pants-on-fire." class="nav-link" data-scroll-target="#rethinking-prior-prior-pants-on-fire."><span class="header-section-number">2.3.2.2.3</span> Rethinking: Prior, prior pants on fire.</a></li>
+  </ul></li>
+  </ul></li>
   <li><a href="#a-model-is-born." id="toc-a-model-is-born." class="nav-link" data-scroll-target="#a-model-is-born."><span class="header-section-number">2.3.3</span> A model is born.</a></li>
   </ul></li>
   <li><a href="#making-the-model-go" id="toc-making-the-model-go" class="nav-link" data-scroll-target="#making-the-model-go"><span class="header-section-number">2.4</span> Making the model go</a>
-  <ul class="collapse">
-  <li><a href="#bayes-theorem." id="toc-bayes-theorem." class="nav-link" data-scroll-target="#bayes-theorem."><span class="header-section-number">2.4.1</span> Bayes’ theorem.</a></li>
+  <ul>
+  <li><a href="#bayes-theorem." id="toc-bayes-theorem." class="nav-link" data-scroll-target="#bayes-theorem."><span class="header-section-number">2.4.1</span> Bayes’ theorem.</a>
+  <ul>
+  <li><a href="#rethinking-bayesian-data-analysis-isnt-about-bayes-theorem." id="toc-rethinking-bayesian-data-analysis-isnt-about-bayes-theorem." class="nav-link" data-scroll-target="#rethinking-bayesian-data-analysis-isnt-about-bayes-theorem."><span class="header-section-number">2.4.1.1</span> Rethinking: Bayesian data analysis isn’t about Bayes’ theorem.</a></li>
+  </ul></li>
   <li><a href="#motors." id="toc-motors." class="nav-link" data-scroll-target="#motors."><span class="header-section-number">2.4.2</span> Motors.</a></li>
-  <li><a href="#grid-approximation." id="toc-grid-approximation." class="nav-link" data-scroll-target="#grid-approximation."><span class="header-section-number">2.4.3</span> Grid approximation.</a></li>
-  <li><a href="#quadratic-approximation." id="toc-quadratic-approximation." class="nav-link" data-scroll-target="#quadratic-approximation."><span class="header-section-number">2.4.4</span> Quadratic approximation.</a></li>
-  <li><a href="#markov-chain-monte-carlo." id="toc-markov-chain-monte-carlo." class="nav-link" data-scroll-target="#markov-chain-monte-carlo."><span class="header-section-number">2.4.5</span> Markov chain Monte Carlo.</a></li>
+  <li><a href="#grid-approximation." id="toc-grid-approximation." class="nav-link" data-scroll-target="#grid-approximation."><span class="header-section-number">2.4.3</span> Grid approximation.</a>
+  <ul>
+  <li><a href="#overthinking-vectorization." id="toc-overthinking-vectorization." class="nav-link" data-scroll-target="#overthinking-vectorization."><span class="header-section-number">2.4.3.1</span> Overthinking: Vectorization.</a></li>
+  </ul></li>
+  <li><a href="#quadratic-approximation." id="toc-quadratic-approximation." class="nav-link" data-scroll-target="#quadratic-approximation."><span class="header-section-number">2.4.4</span> Quadratic approximation.</a>
+  <ul>
+  <li><a href="#rethinking-maximum-likelihood-estimation." id="toc-rethinking-maximum-likelihood-estimation." class="nav-link" data-scroll-target="#rethinking-maximum-likelihood-estimation."><span class="header-section-number">2.4.4.1</span> Rethinking: Maximum likelihood estimation.</a></li>
+  <li><a href="#overthinking-the-hessians-are-coming." id="toc-overthinking-the-hessians-are-coming." class="nav-link" data-scroll-target="#overthinking-the-hessians-are-coming."><span class="header-section-number">2.4.4.2</span> Overthinking: The Hessians are coming.</a></li>
+  </ul></li>
+  <li><a href="#markov-chain-monte-carlo." id="toc-markov-chain-monte-carlo." class="nav-link" data-scroll-target="#markov-chain-monte-carlo."><span class="header-section-number">2.4.5</span> Markov chain Monte Carlo.</a>
+  <ul>
+  <li><a href="#overthinking-monte-carlo-globe-tossing." id="toc-overthinking-monte-carlo-globe-tossing." class="nav-link" data-scroll-target="#overthinking-monte-carlo-globe-tossing."><span class="header-section-number">2.4.5.1</span> Overthinking: Monte Carlo globe tossing.</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">2.5</span> Summary</a></li>
   <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info">Session info</a></li>
+  <li><a href="#comments" id="toc-comments" class="nav-link" data-scroll-target="#comments">Comments</a></li>
   </ul>
-</nav>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -269,12 +304,7 @@ div.csl-indent {
 
 </header>
 
-<p>McElreath described the thrust of this chapter this way:</p>
-<blockquote class="blockquote">
-<p>In this chapter, you will begin to build Bayesian models. The way that Bayesian models learn from evidence is arguably optimal in the small world. When their assumptions approximate reality, they also perform well in the large world. But large world performance has to be demonstrated rather than logically deduced. <span class="citation" data-cites="mcelreathStatisticalRethinkingBayesian2020">(<a href="references.html#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">McElreath, 2020, p. 20</a>)</span></p>
-</blockquote>
-<p>Indeed.</p>
-<p>Load the packages and remove the plot grid lines, by default.</p>
+<p>Load the packages, and remove the default grid lines from the plots.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
@@ -449,7 +479,7 @@ div.csl-indent {
 <h3 data-number="2.3.3" class="anchored" data-anchor-id="a-model-is-born."><span class="header-section-number">2.3.3</span> A model is born.</h3>
 <p>We can now describe our observed variables, <span class="math inline">\(w\)</span> and <span class="math inline">\(l\)</span>, with parameters within the binomial likelihood, our shorthand notation for which is</p>
 <p><span class="math display">\[w \sim \operatorname{Binomial}(n, p),\]</span></p>
-<p>where <span class="math inline">\(n = w + l\)</span>. Our binomial likelihood contains a parameter for an unobserved variable, <span class="math inline">\(p\)</span>. Parameters in Bayesian models are assigned priors and we can report our prior for <span class="math inline">\(p\)</span> as</p>
+<p>where <span class="math inline">\(n = w + l\)</span>. Our binomial likelihood contains a parameter for an unobserved variable, <span class="math inline">\(p\)</span>. Parameters in Bayesian models are assigned priors, and we can report our prior for <span class="math inline">\(p\)</span> as</p>
 <p><span class="math display">\[p \sim \operatorname{Uniform}(0, 1),\]</span></p>
 <p>which expresses the model assumption that the entire range of possible values for <span class="math inline">\(p\)</span>, <span class="math inline">\([0, 1]\)</span>, are equally plausible.</p>
 </section>
@@ -604,7 +634,7 @@ div.csl-indent {
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="fu">precis</span>(globe.qa, <span class="at">digits =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       mean        sd      5.5%     94.5%
-p 0.6666672 0.1571337 0.4155372 0.9177971</code></pre>
+p 0.6666788 0.1571309 0.4155532 0.9178043</code></pre>
 </div>
 </div>
 <p>In preparation for Figure 2.8, here’s the model with <span class="math inline">\(n = 18\)</span> and <span class="math inline">\(n = 36\)</span>.</p>
@@ -631,8 +661,8 @@ p 0.6666662 0.1111104 0.4890902 0.8442421</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">precis</span>(globe.qa<span class="fl">.36</span>, <span class="at">digits =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>      mean         sd     5.5%    94.5%
-p 0.666667 0.07856685 0.541102 0.792232</code></pre>
+<pre><code>       mean        sd      5.5%     94.5%
+p 0.6666666 0.0785669 0.5411015 0.7922317</code></pre>
 </div>
 </div>
 <p>Now make Figure 2.8.</p>
@@ -680,7 +710,7 @@ p 0.666667 0.07856685 0.541102 0.792232</code></pre>
 <blockquote class="blockquote">
 <p>The most popular [alternative to grid approximation and the quadratic approximation] is <strong>Markov chain Monte Carlo</strong> (MCMC), which is a family of conditioning engines capable of handling highly complex models. It is fair to say that MCMC is largely responsible for the insurgence of Bayesian data analysis that began in the 1990s. While MCMC is older than the 1990s, affordable computer power is not, so we must also thank the engineers. <del>Much later in the book (Chapter 9)</del>, you’ll meet simple and precise examples of MCMC model fitting, aimed at helping you understand the technique. (p.&nbsp;45, <strong>emphasis</strong> in the original)</p>
 </blockquote>
-<p>The <strong>rstan</strong> package uses a version of MCMC to fit Bayesian models. Since one of the main goals of this project is to highlight <strong>rstan</strong>, we may as well fit a model. This seems like an appropriately named subsection to do so. If you haven’t already installed <strong>rstan</strong>, you can find instructions <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started">here</a>.</p>
+<p>The <strong>rstan</strong> package uses a version of MCMC to fit Bayesian models. Since one of the main goals of this project is to highlight <strong>rstan</strong>, we may as well fit a model right here. This seems like an appropriately named subsection to do so. If you haven’t already installed <strong>rstan</strong>, you can find instructions <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started">here</a>.</p>
 <p>To avoid issues, we’ll <code>detach()</code> the <strong>rethinking</strong> package and then load <strong>rstan</strong>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">detach</span>(package<span class="sc">:</span>rethinking)</span>
@@ -706,7 +736,7 @@ p 0.666667 0.07856685 0.541102 0.792232</code></pre>
 <span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> <span class="fu">list</span>(<span class="at">w =</span> <span class="dv">24</span>, <span class="at">n =</span> <span class="dv">36</span>),</span>
 <span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>We’ll cover the details of this workflow and syntax later. For now, we can display a summary of the results with <code>print().</code></p>
+<p>We’ll cover the details of this workflow and syntax later. For now, we can display a summary of the results with <code>print()</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m2<span class="fl">.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -725,7 +755,7 @@ convergence, Rhat=1).</code></pre>
 </div>
 </div>
 <p>There’s a lot going on in that output, which we’ll start to clarify in <a href="04.html"><span>Chapter&nbsp;4</span></a>. For now, focus on the ‘p’ line, which is the summary for our focal parameter <code>p</code>.</p>
-<p>To finish up, why not plot the results of our model and compare them with those from <code>rethinking::quap()</code>, above?</p>
+<p>To finish up, why not plot the results of our model and compare them with those from <code>quap()</code>, above?</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_draws_df</span>(m2<span class="fl">.1</span>) <span class="sc">|&gt;</span> </span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> p)) <span class="sc">+</span></span>
@@ -778,6 +808,7 @@ convergence, Rhat=1).</code></pre>
 <p><img src="02_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="264"></p>
 </div>
 </div>
+<p>Hand-made samplers are cool and all, but we’ll rely in <code>stan()</code> from here on out.</p>
 </section>
 </section>
 </section>
@@ -838,13 +869,11 @@ loaded via a namespace (and not attached):
 [64] R6_2.5.1            </code></pre>
 </div>
 </div>
+</section>
+<section id="comments" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="comments">Comments</h2>
 
 
-<div id="refs" class="references csl-bib-body hanging-indent" data-line-spacing="2" role="list" style="display: none">
-<div id="ref-mcelreathStatisticalRethinkingBayesian2020" class="csl-entry" role="listitem">
-McElreath, R. (2020). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em> (Second Edition). CRC Press. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
-</div>
-</div>
 </section>
 
 </main> <!-- /main -->

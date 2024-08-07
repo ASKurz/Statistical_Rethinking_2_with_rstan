@@ -54,7 +54,26 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -126,6 +145,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./"><em>Statistical rethinking</em> 2 with rstan and the tidyverse</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -185,6 +207,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./08.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Conditional Manatees</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -200,40 +228,102 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#why-normal-distributions-are-normal" id="toc-why-normal-distributions-are-normal" class="nav-link active" data-scroll-target="#why-normal-distributions-are-normal"><span class="header-section-number">4.1</span> Why normal distributions are normal</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#normal-by-addition." id="toc-normal-by-addition." class="nav-link" data-scroll-target="#normal-by-addition."><span class="header-section-number">4.1.1</span> Normal by addition.</a></li>
   <li><a href="#normal-by-multiplication." id="toc-normal-by-multiplication." class="nav-link" data-scroll-target="#normal-by-multiplication."><span class="header-section-number">4.1.2</span> Normal by multiplication.</a></li>
   <li><a href="#normal-by-log-multiplication." id="toc-normal-by-log-multiplication." class="nav-link" data-scroll-target="#normal-by-log-multiplication."><span class="header-section-number">4.1.3</span> Normal by log-multiplication.</a></li>
-  <li><a href="#using-gaussian-distributions." id="toc-using-gaussian-distributions." class="nav-link" data-scroll-target="#using-gaussian-distributions."><span class="header-section-number">4.1.4</span> Using Gaussian distributions.</a></li>
+  <li><a href="#using-gaussian-distributions." id="toc-using-gaussian-distributions." class="nav-link" data-scroll-target="#using-gaussian-distributions."><span class="header-section-number">4.1.4</span> Using Gaussian distributions.</a>
+  <ul>
+  <li><a href="#rethinking-heavy-tails." id="toc-rethinking-heavy-tails." class="nav-link" data-scroll-target="#rethinking-heavy-tails."><span class="header-section-number">4.1.4.1</span> Rethinking: Heavy tails.</a></li>
+  <li><a href="#overthinking-gaussian-distribution." id="toc-overthinking-gaussian-distribution." class="nav-link" data-scroll-target="#overthinking-gaussian-distribution."><span class="header-section-number">4.1.4.2</span> Overthinking: Gaussian distribution.</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#a-language-for-describing-models" id="toc-a-language-for-describing-models" class="nav-link" data-scroll-target="#a-language-for-describing-models"><span class="header-section-number">4.2</span> A language for describing models</a>
-  <ul class="collapse">
-  <li><a href="#re-describing-the-globe-tossing-model." id="toc-re-describing-the-globe-tossing-model." class="nav-link" data-scroll-target="#re-describing-the-globe-tossing-model."><span class="header-section-number">4.2.1</span> Re-describing the globe tossing model.</a></li>
+  <ul>
+  <li><a href="#re-describing-the-globe-tossing-model." id="toc-re-describing-the-globe-tossing-model." class="nav-link" data-scroll-target="#re-describing-the-globe-tossing-model."><span class="header-section-number">4.2.1</span> Re-describing the globe tossing model.</a>
+  <ul>
+  <li><a href="#overthinking-from-model-definition-to-bayes-theorem." id="toc-overthinking-from-model-definition-to-bayes-theorem." class="nav-link" data-scroll-target="#overthinking-from-model-definition-to-bayes-theorem."><span class="header-section-number">4.2.1.1</span> Overthinking: From model definition to Bayes’ theorem.</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#a-gaussian-model-of-height" id="toc-a-gaussian-model-of-height" class="nav-link" data-scroll-target="#a-gaussian-model-of-height"><span class="header-section-number">4.3</span> A Gaussian model of height</a>
-  <ul class="collapse">
-  <li><a href="#the-data." id="toc-the-data." class="nav-link" data-scroll-target="#the-data."><span class="header-section-number">4.3.1</span> The data.</a></li>
-  <li><a href="#the-model." id="toc-the-model." class="nav-link" data-scroll-target="#the-model."><span class="header-section-number">4.3.2</span> The model.</a></li>
+  <ul>
+  <li><a href="#the-data." id="toc-the-data." class="nav-link" data-scroll-target="#the-data."><span class="header-section-number">4.3.1</span> The data.</a>
+  <ul>
+  <li><a href="#overthinking-data-frames-and-indexes." id="toc-overthinking-data-frames-and-indexes." class="nav-link" data-scroll-target="#overthinking-data-frames-and-indexes."><span class="header-section-number">4.3.1.1</span> Overthinking: Data frames and indexes.</a></li>
+  </ul></li>
+  <li><a href="#the-model." id="toc-the-model." class="nav-link" data-scroll-target="#the-model."><span class="header-section-number">4.3.2</span> The model.</a>
+  <ul>
+  <li><a href="#rethinking-a-farewell-to-epsilon." id="toc-rethinking-a-farewell-to-epsilon." class="nav-link" data-scroll-target="#rethinking-a-farewell-to-epsilon."><span class="header-section-number">4.3.2.1</span> Rethinking: A farewell to epsilon.</a></li>
+  <li><a href="#overthinking-model-definition-to-bayes-theorem-again." id="toc-overthinking-model-definition-to-bayes-theorem-again." class="nav-link" data-scroll-target="#overthinking-model-definition-to-bayes-theorem-again."><span class="header-section-number">4.3.2.2</span> Overthinking: Model definition to Bayes’ theorem again.</a></li>
+  </ul></li>
   <li><a href="#grid-approximation-of-the-posterior-distribution." id="toc-grid-approximation-of-the-posterior-distribution." class="nav-link" data-scroll-target="#grid-approximation-of-the-posterior-distribution."><span class="header-section-number">4.3.3</span> Grid approximation of the posterior distribution.</a></li>
-  <li><a href="#sampling-from-the-posterior." id="toc-sampling-from-the-posterior." class="nav-link" data-scroll-target="#sampling-from-the-posterior."><span class="header-section-number">4.3.4</span> Sampling from the posterior.</a></li>
-  <li><a href="#finding-the-posterior-distribution-with-quap-stan." id="toc-finding-the-posterior-distribution-with-quap-stan." class="nav-link" data-scroll-target="#finding-the-posterior-distribution-with-quap-stan."><span class="header-section-number">4.3.5</span> Finding the posterior distribution with <del><code>quap()</code></del> <code>stan()</code>.</a></li>
-  <li><a href="#sampling-from-a-quap-stan." id="toc-sampling-from-a-quap-stan." class="nav-link" data-scroll-target="#sampling-from-a-quap-stan."><span class="header-section-number">4.3.6</span> Sampling from a <del><code>quap()</code></del> <code>stan()</code>.</a></li>
+  <li><a href="#sampling-from-the-posterior." id="toc-sampling-from-the-posterior." class="nav-link" data-scroll-target="#sampling-from-the-posterior."><span class="header-section-number">4.3.4</span> Sampling from the posterior.</a>
+  <ul>
+  <li><a href="#overthinking-sample-size-and-the-normality-of-sigmas-posterior." id="toc-overthinking-sample-size-and-the-normality-of-sigmas-posterior." class="nav-link" data-scroll-target="#overthinking-sample-size-and-the-normality-of-sigmas-posterior."><span class="header-section-number">4.3.4.1</span> Overthinking: Sample size and the normality of <span class="math inline">\(\sigma\)</span>’s posterior.</a></li>
+  </ul></li>
+  <li><a href="#finding-the-posterior-distribution-with-quap-stan." id="toc-finding-the-posterior-distribution-with-quap-stan." class="nav-link" data-scroll-target="#finding-the-posterior-distribution-with-quap-stan."><span class="header-section-number">4.3.5</span> Finding the posterior distribution with <del><code>quap()</code></del> <code>stan()</code>.</a>
+  <ul>
+  <li><a href="#overthinking-start-values-for-quap-rstan." id="toc-overthinking-start-values-for-quap-rstan." class="nav-link" data-scroll-target="#overthinking-start-values-for-quap-rstan."><span class="header-section-number">4.3.5.1</span> Overthinking: Start values for <del>quap</del> <code>rstan()</code>.</a></li>
+  </ul></li>
+  <li><a href="#sampling-from-a-quap-stan." id="toc-sampling-from-a-quap-stan." class="nav-link" data-scroll-target="#sampling-from-a-quap-stan."><span class="header-section-number">4.3.6</span> Sampling from a <del><code>quap()</code></del> <code>stan()</code>.</a>
+  <ul>
+  <li><a href="#overthinking-under-the-hood-with-multivariate-sampling." id="toc-overthinking-under-the-hood-with-multivariate-sampling." class="nav-link" data-scroll-target="#overthinking-under-the-hood-with-multivariate-sampling."><span class="header-section-number">4.3.6.1</span> Overthinking: Under the hood with multivariate sampling.</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#linear-prediction" id="toc-linear-prediction" class="nav-link" data-scroll-target="#linear-prediction"><span class="header-section-number">4.4</span> Linear prediction</a>
+  <ul>
+  <li><a href="#rethinking-what-is-regression" id="toc-rethinking-what-is-regression" class="nav-link" data-scroll-target="#rethinking-what-is-regression"><span class="header-section-number">4.4.0.1</span> Rethinking: What is “regression”?</a></li>
+  <li><a href="#the-linear-model-strategy." id="toc-the-linear-model-strategy." class="nav-link" data-scroll-target="#the-linear-model-strategy."><span class="header-section-number">4.4.1</span> The linear model strategy.</a>
+  <ul>
+  <li><a href="#probability-of-the-data." id="toc-probability-of-the-data." class="nav-link" data-scroll-target="#probability-of-the-data."><span class="header-section-number">4.4.1.1</span> Probability of the data.</a></li>
+  <li><a href="#linear-model." id="toc-linear-model." class="nav-link" data-scroll-target="#linear-model."><span class="header-section-number">4.4.1.2</span> Linear model.</a>
   <ul class="collapse">
-  <li><a href="#the-linear-model-strategy." id="toc-the-linear-model-strategy." class="nav-link" data-scroll-target="#the-linear-model-strategy."><span class="header-section-number">4.4.1</span> The linear model strategy.</a></li>
-  <li><a href="#finding-the-posterior-distribution." id="toc-finding-the-posterior-distribution." class="nav-link" data-scroll-target="#finding-the-posterior-distribution."><span class="header-section-number">4.4.2</span> Finding the posterior distribution.</a></li>
-  <li><a href="#interpreting-the-posterior-distribution." id="toc-interpreting-the-posterior-distribution." class="nav-link" data-scroll-target="#interpreting-the-posterior-distribution."><span class="header-section-number">4.4.3</span> Interpreting the posterior distribution.</a></li>
+  <li><a href="#rethinking-nothing-special-or-natural-about-linear-models." id="toc-rethinking-nothing-special-or-natural-about-linear-models." class="nav-link" data-scroll-target="#rethinking-nothing-special-or-natural-about-linear-models."><span class="header-section-number">4.4.1.2.1</span> Rethinking: Nothing special or natural about linear models.</a></li>
+  <li><a href="#overthinking-units-and-regression-models." id="toc-overthinking-units-and-regression-models." class="nav-link" data-scroll-target="#overthinking-units-and-regression-models."><span class="header-section-number">4.4.1.2.2</span> Overthinking: Units and regression models.</a></li>
+  </ul></li>
+  <li><a href="#priors." id="toc-priors." class="nav-link" data-scroll-target="#priors."><span class="header-section-number">4.4.1.3</span> Priors.</a>
+  <ul class="collapse">
+  <li><a href="#rethinking-whats-the-correct-prior" id="toc-rethinking-whats-the-correct-prior" class="nav-link" data-scroll-target="#rethinking-whats-the-correct-prior"><span class="header-section-number">4.4.1.3.1</span> Rethinking: What’s the correct prior?</a></li>
+  <li><a href="#rethinking-prior-predictive-simulation-and-p-hacking." id="toc-rethinking-prior-predictive-simulation-and-p-hacking." class="nav-link" data-scroll-target="#rethinking-prior-predictive-simulation-and-p-hacking."><span class="header-section-number">4.4.1.3.2</span> Rethinking: Prior predictive simulation and <span class="math inline">\(p\)</span>-hacking.</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#finding-the-posterior-distribution." id="toc-finding-the-posterior-distribution." class="nav-link" data-scroll-target="#finding-the-posterior-distribution."><span class="header-section-number">4.4.2</span> Finding the posterior distribution.</a>
+  <ul>
+  <li><a href="#rethinking-everything-that-depends-upon-parameters-has-a-posterior-distribution." id="toc-rethinking-everything-that-depends-upon-parameters-has-a-posterior-distribution." class="nav-link" data-scroll-target="#rethinking-everything-that-depends-upon-parameters-has-a-posterior-distribution."><span class="header-section-number">4.4.2.1</span> Rethinking: Everything that depends upon parameters has a posterior distribution.</a></li>
+  <li><a href="#overthinking-logs-and-exps-oh-my." id="toc-overthinking-logs-and-exps-oh-my." class="nav-link" data-scroll-target="#overthinking-logs-and-exps-oh-my."><span class="header-section-number">4.4.2.2</span> Overthinking: Logs and exps, oh my.</a></li>
+  </ul></li>
+  <li><a href="#interpreting-the-posterior-distribution." id="toc-interpreting-the-posterior-distribution." class="nav-link" data-scroll-target="#interpreting-the-posterior-distribution."><span class="header-section-number">4.4.3</span> Interpreting the posterior distribution.</a>
+  <ul>
+  <li><a href="#rethinking-what-do-parameters-mean" id="toc-rethinking-what-do-parameters-mean" class="nav-link" data-scroll-target="#rethinking-what-do-parameters-mean"><span class="header-section-number">4.4.3.0.1</span> Rethinking: What do parameters mean?</a></li>
+  <li><a href="#tables-of-marginal-distributions." id="toc-tables-of-marginal-distributions." class="nav-link" data-scroll-target="#tables-of-marginal-distributions."><span class="header-section-number">4.4.3.1</span> Tables of marginal distributions.</a></li>
+  <li><a href="#plotting-posterior-inference-against-the-data." id="toc-plotting-posterior-inference-against-the-data." class="nav-link" data-scroll-target="#plotting-posterior-inference-against-the-data."><span class="header-section-number">4.4.3.2</span> Plotting posterior inference against the data.</a></li>
+  <li><a href="#adding-uncertainty-around-the-mean." id="toc-adding-uncertainty-around-the-mean." class="nav-link" data-scroll-target="#adding-uncertainty-around-the-mean."><span class="header-section-number">4.4.3.3</span> Adding uncertainty around the mean.</a></li>
+  <li><a href="#plotting-regression-intervals-and-contours." id="toc-plotting-regression-intervals-and-contours." class="nav-link" data-scroll-target="#plotting-regression-intervals-and-contours."><span class="header-section-number">4.4.3.4</span> Plotting regression intervals and contours.</a>
+  <ul class="collapse">
+  <li><a href="#rethinking-overconfident-intervals." id="toc-rethinking-overconfident-intervals." class="nav-link" data-scroll-target="#rethinking-overconfident-intervals."><span class="header-section-number">4.4.3.4.1</span> Rethinking: Overconfident intervals.</a></li>
+  <li><a href="#overthinking-how-link-works." id="toc-overthinking-how-link-works." class="nav-link" data-scroll-target="#overthinking-how-link-works."><span class="header-section-number">4.4.3.4.2</span> Overthinking: How <code>link</code> works.</a></li>
+  </ul></li>
+  <li><a href="#prediction-intervals." id="toc-prediction-intervals." class="nav-link" data-scroll-target="#prediction-intervals."><span class="header-section-number">4.4.3.5</span> Prediction intervals.</a>
+  <ul class="collapse">
+  <li><a href="#rethinking-two-kinds-of-uncertainty." id="toc-rethinking-two-kinds-of-uncertainty." class="nav-link" data-scroll-target="#rethinking-two-kinds-of-uncertainty."><span class="header-section-number">4.4.3.5.1</span> Rethinking: Two kinds of uncertainty.</a></li>
+  <li><a href="#overthinking-rolling-your-own-sim." id="toc-overthinking-rolling-your-own-sim." class="nav-link" data-scroll-target="#overthinking-rolling-your-own-sim."><span class="header-section-number">4.4.3.5.2</span> Overthinking: Rolling your own <code>sim</code>.</a></li>
+  </ul></li>
+  </ul></li>
   </ul></li>
   <li><a href="#curves-from-lines" id="toc-curves-from-lines" class="nav-link" data-scroll-target="#curves-from-lines"><span class="header-section-number">4.5</span> Curves from lines</a>
-  <ul class="collapse">
-  <li><a href="#polynomial-regression." id="toc-polynomial-regression." class="nav-link" data-scroll-target="#polynomial-regression."><span class="header-section-number">4.5.1</span> Polynomial regression.</a></li>
+  <ul>
+  <li><a href="#polynomial-regression." id="toc-polynomial-regression." class="nav-link" data-scroll-target="#polynomial-regression."><span class="header-section-number">4.5.1</span> Polynomial regression.</a>
+  <ul>
+  <li><a href="#rethinking-linear-additive-funky." id="toc-rethinking-linear-additive-funky." class="nav-link" data-scroll-target="#rethinking-linear-additive-funky."><span class="header-section-number">4.5.1.0.1</span> Rethinking: Linear, additive, funky.</a></li>
+  <li><a href="#overthinking-converting-back-to-natural-scale." id="toc-overthinking-converting-back-to-natural-scale." class="nav-link" data-scroll-target="#overthinking-converting-back-to-natural-scale."><span class="header-section-number">4.5.1.0.2</span> Overthinking: Converting back to natural scale.</a></li>
+  </ul></li>
   <li><a href="#splines." id="toc-splines." class="nav-link" data-scroll-target="#splines."><span class="header-section-number">4.5.2</span> Splines.</a></li>
   <li><a href="#smooth-functions-for-a-rough-world." id="toc-smooth-functions-for-a-rough-world." class="nav-link" data-scroll-target="#smooth-functions-for-a-rough-world."><span class="header-section-number">4.5.3</span> Smooth functions for a rough world.</a></li>
   </ul></li>
   <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info">Session info</a></li>
+  <li><a href="#comments" id="toc-comments" class="nav-link" data-scroll-target="#comments">Comments</a></li>
   </ul>
-</nav>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -297,7 +387,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 data-number="4.2.1" class="anchored" data-anchor-id="re-describing-the-globe-tossing-model."><span class="header-section-number">4.2.1</span> Re-describing the globe tossing model.</h3>
 <section id="overthinking-from-model-definition-to-bayes-theorem." class="level4" data-number="4.2.1.1">
 <h4 data-number="4.2.1.1" class="anchored" data-anchor-id="overthinking-from-model-definition-to-bayes-theorem."><span class="header-section-number">4.2.1.1</span> Overthinking: From model definition to Bayes’ theorem.</h4>
-<p>We can use grid approximation to work through our globe tossing model.</p>
+<p>We can use grid approximation to work through our globe-tossing model.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># How many `p_grid` points would you like?</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>n_points <span class="ot">&lt;-</span> <span class="dv">100</span></span>
@@ -347,7 +437,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 data-number="4.3" class="anchored" data-anchor-id="a-gaussian-model-of-height"><span class="header-section-number">4.3</span> A Gaussian model of height</h2>
 <section id="the-data." class="level3" data-number="4.3.1">
 <h3 data-number="4.3.1" class="anchored" data-anchor-id="the-data."><span class="header-section-number">4.3.1</span> The data.</h3>
-<p>Load the <code>Howell1</code> data.</p>
+<p>Load the <code>Howell1</code> data <span class="citation" data-cites="howell2001demography howell2010life">(<a href="references.html#ref-howell2001demography" role="doc-biblioref">Howell, 2001</a>, <a href="references.html#ref-howell2010life" role="doc-biblioref">2010</a>)</span>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(Howell1, <span class="at">package =</span> <span class="st">"rethinking"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> Howell1</span>
@@ -361,7 +451,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  $ male  : int  1 0 0 1 0 1 0 1 0 1 ...</code></pre>
 </div>
 </div>
-<p>I’m not aware of a <code>precis()</code> function for numeric and graphical summaries of variables outside of McElreath’s <strong>rethinking</strong> package. We can get some of that information with <code>summary()</code>.</p>
+<p>I’m not aware of a <code>precis()</code> function for numeric and graphical summaries of variables outside of McElreath’s <strong>rethinking</strong> package. We can, at least, get some of that information with <code>summary()</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -434,7 +524,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The likelihood for our model is</p>
 <p><span class="math display">\[\text{heights}_i \sim \operatorname{Normal}(\mu, \sigma),\]</span></p>
 <p>where the <span class="math inline">\(i\)</span> subscript indexes the individual cases in the data. Our two parameters are <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma\)</span>, which we will estimate using Bayes’ formula. Our prior for <span class="math inline">\(\mu\)</span> will be</p>
-<p><span class="math display">\[\mu \sim \operatorname{Normal}(178, 20)\]</span></p>
+<p><span class="math display">\[\mu \sim \operatorname{Normal}(178, 20),\]</span></p>
 <p>and our prior for <span class="math inline">\(\sigma\)</span> will be</p>
 <p><span class="math display">\[\sigma \sim \operatorname{Uniform}(0, 50).\]</span></p>
 <p>Here’s the shape of the prior for <span class="math inline">\(\mu\)</span>, <span class="math inline">\(\mathcal N(178, 20)\)</span>.</p>
@@ -452,7 +542,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><img src="04_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="288"></p>
 </div>
 </div>
-<p>And here’s the <strong>ggplot2</strong> code for our prior for <span class="math inline">\(\sigma\)</span>, a uniform distribution with a minimum value of 0 and a maximum value of 50. We don’t really need the <span class="math inline">\(y\)</span>-axis when looking at the shapes of a density, so we’ll just remove it with <code>scale_y_continuous()</code>.</p>
+<p>And here’s the <strong>ggplot2</strong> code for <span class="math inline">\(p(\sigma)\)</span>, a uniform distribution with a minimum value of 0 and a maximum value of 50. We don’t really need the <span class="math inline">\(y\)</span>-axis when looking at the shapes of a density, so we’ll just remove it with <code>scale_y_continuous()</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">x =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="sc">-</span><span class="dv">10</span>, <span class="at">to =</span> <span class="dv">60</span>, <span class="at">by =</span> <span class="fl">0.1</span>)) <span class="sc">|&gt;</span> </span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">density =</span> <span class="fu">dunif</span>(<span class="at">x =</span> x, <span class="at">min =</span> <span class="dv">0</span>, <span class="at">max =</span> <span class="dv">50</span>)) <span class="sc">|&gt;</span> </span>
@@ -601,7 +691,7 @@ $ mu    &lt;dbl&gt; 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 
 $ sigma &lt;dbl&gt; 4.000000, 4.025126, 4.050251, 4.075377, 4.100503, 4.125628, 4.15…</code></pre>
 </div>
 </div>
-<p><code>d_grid</code> contains every combination of <code>mu</code> and <code>sigma</code> across their specified values. Instead of base <strong>R</strong> <code>sapply()</code>, we’ll do the computations by making a custom function which we’ll then plug into <code>purrr::map2()</code>.</p>
+<p><code>d_grid</code> contains every combination of <code>mu</code> and <code>sigma</code> across their specified values. Instead of base-<strong>R</strong> <code>sapply()</code>, we’ll do the computations by making a custom function which we’ll then plug into <code>purrr::map2()</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>grid_function <span class="ot">&lt;-</span> <span class="cf">function</span>(mu, sigma) {</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  </span>
@@ -651,7 +741,7 @@ $ sigma &lt;dbl&gt; 4.000000, 4.025126, 4.050251, 4.075377, 4.100503, 4.125628, 
 <div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>d_grid <span class="sc">|&gt;</span> </span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> mu, <span class="at">y =</span> sigma, <span class="at">fill =</span> probability)) <span class="sc">+</span> </span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_raster</span>(<span class="at">interpolate =</span> T) <span class="sc">+</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_raster</span>(<span class="at">interpolate =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
 <span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_c</span>(<span class="at">option =</span> <span class="st">"B"</span>) <span class="sc">+</span></span>
 <span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="fu">expression</span>(mu),</span>
 <span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="fu">expression</span>(sigma))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -806,7 +896,7 @@ $ sigma &lt;dbl&gt; 4.000000, 4.025126, 4.050251, 4.075377, 4.100503, 4.125628, 
 <span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Next we use the <code>tidybayes::compose_data()</code> function to convert the data to a list in the format expected by <strong>rstan</strong>, which is a list.</p>
+<p>Next we use the <code>tidybayes::compose_data()</code> function to convert the data to a list, which is the format expected by <strong>rstan</strong>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>stan_data <span class="ot">&lt;-</span> d2 <span class="sc">|&gt;</span></span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compose_data</span>()</span>
@@ -822,7 +912,7 @@ $ sigma &lt;dbl&gt; 4.000000, 4.025126, 4.050251, 4.075377, 4.100503, 4.125628, 
  $ n     : int 352</code></pre>
 </div>
 </div>
-<p>Note how by default, <code>compose_data()</code> adds a variable called <code>n</code>, which tells the number of rows in the original data frame. If you look at the <code>model_code</code> above, you’ll see how I used that value when defining the <code>height</code> data.</p>
+<p>Note how the <code>compose_data()</code> function automatically added a variable called <code>n</code>, which tells the number of rows in the original data frame. If you look at the <code>model_code</code> above, you’ll see how I used that value when defining the vector of <code>height</code> values.</p>
 <p>Now we fit the model with the <code>stan()</code> function.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>m4<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
@@ -835,16 +925,16 @@ $ sigma &lt;dbl&gt; 4.000000, 4.025126, 4.050251, 4.075377, 4.100503, 4.125628, 
 </div>
 <p>Here’s the model summary.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.1</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.1</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-         mean se_mean   sd      5%   94.5% n_eff Rhat
-mu     154.59    0.01 0.41  153.91  155.25  2711    1
-sigma    7.78    0.01 0.30    7.30    8.26  3292    1
-lp__  -895.75    0.02 0.99 -897.73 -894.80  1726    1
+         mean se_mean   sd    5.5%   94.5% n_eff Rhat
+mu     154.59    0.01 0.41  153.94  155.25  2711    1
+sigma    7.78    0.01 0.30    7.32    8.26  3292    1
+lp__  -895.75    0.02 0.99 -897.62 -894.80  1726    1
 
 Samples were drawn using NUTS(diag_e) at Wed Jul 31 18:17:42 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
@@ -878,16 +968,16 @@ convergence, Rhat=1).</code></pre>
 </div>
 <p>Here’s the model summary.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.2</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.2</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-          mean se_mean   sd       5%    94.5% n_eff Rhat
+          mean se_mean   sd     5.5%    94.5% n_eff Rhat
 mu      177.86    0.00 0.10   177.69   178.03  3207    1
-sigma    24.60    0.02 0.94    23.10    26.14  3222    1
-lp__  -1301.64    0.03 1.04 -1303.75 -1300.66  1461    1
+sigma    24.60    0.02 0.94    23.13    26.14  3222    1
+lp__  -1301.64    0.03 1.04 -1303.65 -1300.66  1461    1
 
 Samples were drawn using NUTS(diag_e) at Wed Jul 31 18:18:11 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
@@ -1313,17 +1403,17 @@ sigma -0.02089996  1.00000000</code></pre>
 </div>
 <p>Look at the <code>print()</code> summary.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb94"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.3</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb94"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.3</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-         mean se_mean   sd      5%   94.5% n_eff Rhat
-a      154.60    0.00 0.27  154.15  155.02  4510    1
+         mean se_mean   sd    5.5%   94.5% n_eff Rhat
+a      154.60    0.00 0.27  154.17  155.02  4510    1
 b        0.90    0.00 0.04    0.84    0.97  4079    1
-sigma    5.11    0.00 0.19    4.82    5.43  3751    1
-lp__  -749.09    0.03 1.19 -751.46 -747.82  2180    1
+sigma    5.11    0.00 0.19    4.83    5.43  3751    1
+lp__  -749.09    0.03 1.19 -751.34 -747.82  2180    1
 
 Samples were drawn using NUTS(diag_e) at Wed Jul 31 17:55:47 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
@@ -1369,17 +1459,17 @@ convergence, Rhat=1).</code></pre>
 </div>
 <p>Check the summary.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb97"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.3</span>b, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb97"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.3</span>b, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-         mean se_mean   sd      5%   94.5% n_eff Rhat
-a      154.60    0.01 0.27  154.15  155.03  2790    1
+         mean se_mean   sd    5.5%   94.5% n_eff Rhat
+a      154.60    0.01 0.27  154.16  155.03  2790    1
 log_b    0.01    0.00 0.01    0.00    0.04  3334    1
-sigma    5.15    0.00 0.20    4.84    5.49  2865    1
-lp__  -755.86    0.03 1.23 -758.31 -754.50  1692    1
+sigma    5.15    0.00 0.20    4.85    5.49  2865    1
+lp__  -755.86    0.03 1.23 -758.14 -754.50  1692    1
 
 Samples were drawn using NUTS(diag_e) at Wed Jul 31 17:58:15 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
@@ -1648,14 +1738,13 @@ $ .draw      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 
 <span id="cb123-7"><a href="#cb123-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">data =</span> n_df <span class="sc">|&gt;</span> </span>
 <span id="cb123-8"><a href="#cb123-8" aria-hidden="true" tabindex="-1"></a>                <span class="fu">select</span>(n, xbar, as_draws_df) <span class="sc">|&gt;</span> </span>
 <span id="cb123-9"><a href="#cb123-9" aria-hidden="true" tabindex="-1"></a>                <span class="fu">unnest</span>(as_draws_df),</span>
-<span id="cb123-10"><a href="#cb123-10" aria-hidden="true" tabindex="-1"></a>              <span class="fu">aes</span>(<span class="at">intercept =</span> a,</span>
-<span id="cb123-11"><a href="#cb123-11" aria-hidden="true" tabindex="-1"></a>                  <span class="at">slope =</span> b,</span>
-<span id="cb123-12"><a href="#cb123-12" aria-hidden="true" tabindex="-1"></a>                  <span class="at">group =</span> .draw),</span>
-<span id="cb123-13"><a href="#cb123-13" aria-hidden="true" tabindex="-1"></a>              <span class="at">color =</span> <span class="st">"royalblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>) <span class="sc">+</span></span>
-<span id="cb123-14"><a href="#cb123-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="st">"weight"</span>,</span>
-<span id="cb123-15"><a href="#cb123-15" aria-hidden="true" tabindex="-1"></a>                     <span class="at">breaks =</span> <span class="dv">3</span><span class="sc">:</span><span class="dv">6</span> <span class="sc">*</span> <span class="dv">10</span> <span class="sc">-</span> <span class="fu">mean</span>(d2<span class="sc">$</span>weight),</span>
-<span id="cb123-16"><a href="#cb123-16" aria-hidden="true" tabindex="-1"></a>                     <span class="at">labels =</span> <span class="dv">3</span><span class="sc">:</span><span class="dv">6</span> <span class="sc">*</span> <span class="dv">10</span>) <span class="sc">+</span></span>
-<span id="cb123-17"><a href="#cb123-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> n, <span class="at">labeller =</span> label_parsed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb123-10"><a href="#cb123-10" aria-hidden="true" tabindex="-1"></a>              <span class="fu">aes</span>(<span class="at">intercept =</span> a, <span class="at">slope =</span> b,</span>
+<span id="cb123-11"><a href="#cb123-11" aria-hidden="true" tabindex="-1"></a>                  <span class="at">group =</span> .draw),</span>
+<span id="cb123-12"><a href="#cb123-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">color =</span> <span class="st">"royalblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb123-13"><a href="#cb123-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="st">"weight"</span>,</span>
+<span id="cb123-14"><a href="#cb123-14" aria-hidden="true" tabindex="-1"></a>                     <span class="at">breaks =</span> <span class="dv">3</span><span class="sc">:</span><span class="dv">6</span> <span class="sc">*</span> <span class="dv">10</span> <span class="sc">-</span> <span class="fu">mean</span>(d2<span class="sc">$</span>weight),</span>
+<span id="cb123-15"><a href="#cb123-15" aria-hidden="true" tabindex="-1"></a>                     <span class="at">labels =</span> <span class="dv">3</span><span class="sc">:</span><span class="dv">6</span> <span class="sc">*</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb123-16"><a href="#cb123-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> n, <span class="at">labeller =</span> label_parsed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="04_files/figure-html/unnamed-chunk-78-1.png" class="img-fluid" width="576"></p>
 </div>
@@ -1710,7 +1799,7 @@ $ .draw      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 
 <p>We’ll use <code>mean_hdi()</code> to get both 89% and 95% HDIs, along with the mean.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb131"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a>draws <span class="sc">|&gt;</span> </span>
-<span id="cb131-2"><a href="#cb131-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean_hdi</span>(mu_at_50, <span class="at">.width =</span> <span class="fu">c</span>(.<span class="dv">89</span>, .<span class="dv">95</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb131-2"><a href="#cb131-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean_hdi</span>(mu_at_50, <span class="at">.width =</span> <span class="fu">c</span>(<span class="fl">0.89</span>, <span class="fl">0.95</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 2 × 6
   mu_at_50 .lower .upper .width .point .interval
@@ -1920,18 +2009,18 @@ $ male   &lt;int&gt; 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0,
 </div>
 <p>Check the summary.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb147"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb147-1"><a href="#cb147-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.5</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb147"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb147-1"><a href="#cb147-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.5</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-          mean se_mean   sd       5%    94.5% n_eff Rhat
-a       146.05    0.01 0.37   145.43   146.65  2286    1
-b1       21.74    0.01 0.30    21.26    22.22  2707    1
-b2       -7.79    0.01 0.28    -8.25    -7.33  2381    1
-sigma     5.81    0.00 0.18     5.53     6.10  3165    1
-lp__  -1263.66    0.03 1.44 -1266.41 -1262.00  1880    1
+          mean se_mean   sd     5.5%    94.5% n_eff Rhat
+a       146.05    0.01 0.37   145.45   146.65  2286    1
+b1       21.74    0.01 0.30    21.27    22.22  2707    1
+b2       -7.79    0.01 0.28    -8.24    -7.33  2381    1
+sigma     5.81    0.00 0.18     5.54     6.10  3165    1
+lp__  -1263.66    0.03 1.44 -1266.31 -1262.00  1880    1
 
 Samples were drawn using NUTS(diag_e) at Wed Jul 31 18:01:20 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
@@ -2003,19 +2092,19 @@ convergence, Rhat=1).</code></pre>
 </div>
 <p>Check the summary.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb151"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb151-1"><a href="#cb151-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.6</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb151"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb151-1"><a href="#cb151-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m4<span class="fl">.6</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-          mean se_mean   sd       5%    94.5% n_eff Rhat
-a       146.74    0.01 0.33   146.21   147.26  2579    1
-b1       15.01    0.01 0.49    14.21    15.77  2239    1
-b2       -6.54    0.01 0.27    -6.98    -6.11  2404    1
-b3        3.60    0.00 0.23     3.20     3.97  2195    1
-sigma     4.86    0.00 0.15     4.61     5.11  2984    1
-lp__  -1134.88    0.04 1.61 -1137.92 -1132.93  1661    1
+          mean se_mean   sd     5.5%    94.5% n_eff Rhat
+a       146.74    0.01 0.33   146.22   147.26  2579    1
+b1       15.01    0.01 0.49    14.22    15.77  2239    1
+b2       -6.54    0.01 0.27    -6.97    -6.11  2404    1
+b3        3.60    0.00 0.23     3.21     3.97  2195    1
+sigma     4.86    0.00 0.15     4.62     5.11  2984    1
+lp__  -1134.88    0.04 1.61 -1137.82 -1132.93  1661    1
 
 Samples were drawn using NUTS(diag_e) at Wed Jul 31 18:02:32 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
@@ -2177,8 +2266,19 @@ loaded via a namespace (and not attached):
 [67] jsonlite_1.8.8       R6_2.5.1            </code></pre>
 </div>
 </div>
+</section>
+<section id="comments" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="comments">Comments</h2>
 
 
+<div id="refs" class="references csl-bib-body hanging-indent" data-line-spacing="2" role="list" style="display: none">
+<div id="ref-howell2001demography" class="csl-entry" role="listitem">
+Howell, N. (2001). <em>Demography of the dobe! <span>Kung</span></em> (2nd Edition). Routledge. <a href="https://www.routledge.com/Demography-of-the-Dobe-Kung/Howell/p/book/9780202306490">https://www.routledge.com/Demography-of-the-Dobe-Kung/Howell/p/book/9780202306490</a>
+</div>
+<div id="ref-howell2010life" class="csl-entry" role="listitem">
+Howell, N. (2010). <em>Life histories of the <span>Dobe</span>! <span>Kung</span>: <span>Food</span>, fatness, and well-being over the life span</em> (Vol. 4). Univ of California Press. <a href="https://www.ucpress.edu/book/9780520262348/life-histories-of-the-dobe-kung">https://www.ucpress.edu/book/9780520262348/life-histories-of-the-dobe-kung</a>
+</div>
+</div>
 </section>
 
 </main> <!-- /main -->

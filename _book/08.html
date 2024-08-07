@@ -145,6 +145,9 @@ div.csl-indent {
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./"><em>Statistical rethinking</em> 2 with rstan and the tidyverse</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -225,17 +228,30 @@ div.csl-indent {
    
   <ul>
   <li><a href="#building-an-interaction" id="toc-building-an-interaction" class="nav-link active" data-scroll-target="#building-an-interaction"><span class="header-section-number">8.1</span> Building an interaction</a>
-  <ul class="collapse">
-  <li><a href="#making-a-rugged-model." id="toc-making-a-rugged-model." class="nav-link" data-scroll-target="#making-a-rugged-model."><span class="header-section-number">8.1.1</span> Making a rugged model.</a></li>
-  <li><a href="#adding-an-indicator-variable-isnt-enough." id="toc-adding-an-indicator-variable-isnt-enough." class="nav-link" data-scroll-target="#adding-an-indicator-variable-isnt-enough."><span class="header-section-number">8.1.2</span> Adding an indicator variable isn’t enough.</a></li>
+  <ul>
+  <li><a href="#overthinking-not-so-simple-causation." id="toc-overthinking-not-so-simple-causation." class="nav-link" data-scroll-target="#overthinking-not-so-simple-causation."><span class="header-section-number">8.1.0.1</span> Overthinking: Not so simple causation.</a></li>
+  <li><a href="#making-a-rugged-model." id="toc-making-a-rugged-model." class="nav-link" data-scroll-target="#making-a-rugged-model."><span class="header-section-number">8.1.1</span> Making a rugged model.</a>
+  <ul>
+  <li><a href="#rethinking-practicing-for-when-it-matters." id="toc-rethinking-practicing-for-when-it-matters." class="nav-link" data-scroll-target="#rethinking-practicing-for-when-it-matters."><span class="header-section-number">8.1.1.1</span> Rethinking: Practicing for when it matters.</a></li>
+  </ul></li>
+  <li><a href="#adding-an-indicator-variable-isnt-enough." id="toc-adding-an-indicator-variable-isnt-enough." class="nav-link" data-scroll-target="#adding-an-indicator-variable-isnt-enough."><span class="header-section-number">8.1.2</span> Adding an indicator variable isn’t enough.</a>
+  <ul>
+  <li><a href="#rethinking-why-97" id="toc-rethinking-why-97" class="nav-link" data-scroll-target="#rethinking-why-97"><span class="header-section-number">8.1.2.1</span> Rethinking: Why 97%?</a></li>
+  </ul></li>
   <li><a href="#adding-an-interaction-does-work." id="toc-adding-an-interaction-does-work." class="nav-link" data-scroll-target="#adding-an-interaction-does-work."><span class="header-section-number">8.1.3</span> Adding an interaction does work.</a></li>
-  <li><a href="#plotting-the-interaction." id="toc-plotting-the-interaction." class="nav-link" data-scroll-target="#plotting-the-interaction."><span class="header-section-number">8.1.4</span> Plotting the interaction.</a></li>
+  <li><a href="#plotting-the-interaction." id="toc-plotting-the-interaction." class="nav-link" data-scroll-target="#plotting-the-interaction."><span class="header-section-number">8.1.4</span> Plotting the interaction.</a>
+  <ul>
+  <li><a href="#rethinking-all-greek-to-me." id="toc-rethinking-all-greek-to-me." class="nav-link" data-scroll-target="#rethinking-all-greek-to-me."><span class="header-section-number">8.1.4.1</span> Rethinking: All Greek to me.</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#symmetry-of-interactions" id="toc-symmetry-of-interactions" class="nav-link" data-scroll-target="#symmetry-of-interactions"><span class="header-section-number">8.2</span> Symmetry of interactions</a></li>
   <li><a href="#continuous-interactions" id="toc-continuous-interactions" class="nav-link" data-scroll-target="#continuous-interactions"><span class="header-section-number">8.3</span> Continuous interactions</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#a-winter-flower." id="toc-a-winter-flower." class="nav-link" data-scroll-target="#a-winter-flower."><span class="header-section-number">8.3.1</span> A winter flower.</a></li>
-  <li><a href="#the-models." id="toc-the-models." class="nav-link" data-scroll-target="#the-models."><span class="header-section-number">8.3.2</span> The models.</a></li>
+  <li><a href="#the-models." id="toc-the-models." class="nav-link" data-scroll-target="#the-models."><span class="header-section-number">8.3.2</span> The models.</a>
+  <ul>
+  <li><a href="#overthinking-how-is-interaction-formed" id="toc-overthinking-how-is-interaction-formed" class="nav-link" data-scroll-target="#overthinking-how-is-interaction-formed"><span class="header-section-number">8.3.2.1</span> Overthinking: How is interaction formed?</a></li>
+  </ul></li>
   <li><a href="#plotting-posterior-predictions." id="toc-plotting-posterior-predictions." class="nav-link" data-scroll-target="#plotting-posterior-predictions."><span class="header-section-number">8.3.3</span> Plotting posterior predictions.</a></li>
   <li><a href="#plotting-prior-predictions." id="toc-plotting-prior-predictions." class="nav-link" data-scroll-target="#plotting-prior-predictions."><span class="header-section-number">8.3.4</span> Plotting prior predictions.</a></li>
   </ul></li>
@@ -243,7 +259,7 @@ div.csl-indent {
   <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info">Session info</a></li>
   <li><a href="#comments" id="toc-comments" class="nav-link" data-scroll-target="#comments">Comments</a></li>
   </ul>
-</nav>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -497,7 +513,7 @@ div.csl-indent {
 <p><img src="08_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="576"></p>
 </div>
 </div>
-<p>Now define what we’ll just call <code>stan_program_8.1</code>, where the likelihood is now included in the <code>model</code> block. Note how we’re also defining the <code>log_lik</code> vector within the <code>generated quantities</code> block so we can compute information criteria later.</p>
+<p>Now define what we’ll just call <code>stan_program_8.1</code>, where the likelihood is now included in the <code>model</code> block. Note how we’re also defining the <code>log_lik</code> vector within the <code>generated quantities</code> block so we can compute information criteria for model comparisons.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>stan_program_8<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
@@ -528,14 +544,14 @@ div.csl-indent {
 <span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Sample from the posterior.</p>
+<p>This time we’ll sample from the posterior.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>m8<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.1</span>,</span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Check the summary for <code>b8.1</code>.</p>
+<p>Check the summary for <code>m8.1</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.1</span>, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"sigma"</span>), <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -623,7 +639,7 @@ convergence, Rhat=1).</code></pre>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.2</span>,</span>
 <span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Check the summary for <code>b8.2</code>.</p>
+<p>Check the summary for <code>m8.2</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.2</span>, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"sigma"</span>), <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -762,7 +778,7 @@ model2 0.970 </code></pre>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.3</span>,</span>
 <span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Check the summary for <code>b8.2</code>.</p>
+<p>Check the summary for <code>m8.2</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.3</span>, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"sigma"</span>), <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -1354,6 +1370,63 @@ convergence, Rhat=1).</code></pre>
 </section>
 <section id="session-info" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="session-info">Session info</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.4.0 (2024-04-24)
+Platform: aarch64-apple-darwin20
+Running under: macOS Ventura 13.4
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Chicago
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] tidybayes_3.0.6    loo_2.8.0          posterior_1.6.0    rstan_2.32.6      
+ [5] StanHeaders_2.32.7 ggdag_0.2.12       lubridate_1.9.3    forcats_1.0.0     
+ [9] stringr_1.5.1      dplyr_1.1.4        purrr_1.0.2        readr_2.1.5       
+[13] tidyr_1.3.1        tibble_3.2.1       ggplot2_3.5.1      tidyverse_2.0.0   
+
+loaded via a namespace (and not attached):
+ [1] tidyselect_1.2.1     svUnit_1.0.6         viridisLite_0.4.2   
+ [4] farver_2.1.1         viridis_0.6.5        ggraph_2.2.1        
+ [7] fastmap_1.1.1        tensorA_0.36.2.1     tweenr_2.0.3        
+[10] digest_0.6.35        estimability_1.5.1   timechange_0.3.0    
+[13] lifecycle_1.0.4      magrittr_2.0.3       compiler_4.4.0      
+[16] rlang_1.1.4          tools_4.4.0          igraph_2.0.3        
+[19] utf8_1.2.4           yaml_2.3.8           knitr_1.46          
+[22] labeling_0.4.3       graphlayouts_1.1.1   htmlwidgets_1.6.4   
+[25] pkgbuild_1.4.4       curl_5.2.1           dagitty_0.3-4       
+[28] abind_1.4-5          withr_3.0.0          grid_4.4.0          
+[31] polyclip_1.10-6      stats4_4.4.0         fansi_1.0.6         
+[34] xtable_1.8-4         colorspace_2.1-0     inline_0.3.19       
+[37] emmeans_1.10.3       scales_1.3.0         MASS_7.3-60.2       
+[40] mvtnorm_1.2-5        cli_3.6.3            rmarkdown_2.26      
+[43] generics_0.1.3       RcppParallel_5.1.7   rstudioapi_0.16.0   
+[46] tzdb_0.4.0           cachem_1.0.8         ggforce_0.4.2       
+[49] splines_4.4.0        parallel_4.4.0       matrixStats_1.3.0   
+[52] vctrs_0.6.5          Matrix_1.7-0         V8_4.4.2            
+[55] boot_1.3-30          jsonlite_1.8.8       hms_1.1.3           
+[58] arrayhelpers_1.1-0   ggrepel_0.9.5        ggdist_3.3.2        
+[61] glue_1.7.0           codetools_0.2-20     distributional_0.4.0
+[64] stringi_1.8.4        gtable_0.3.5         QuickJSR_1.1.3      
+[67] munsell_0.5.1        pillar_1.9.0         htmltools_0.5.8.1   
+[70] R6_2.5.1             tidygraph_1.3.1      evaluate_0.23       
+[73] lattice_0.22-6       backports_1.5.0      memoise_2.0.1       
+[76] Rcpp_1.0.12          nlme_3.1-164         coda_0.19-4.1       
+[79] gridExtra_2.3        checkmate_2.3.1      mgcv_1.9-1          
+[82] xfun_0.43            pkgconfig_2.0.3     </code></pre>
+</div>
+</div>
 </section>
 <section id="comments" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="comments">Comments</h2>

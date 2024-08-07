@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="A. Solomon Kurz">
-<meta name="dcterms.date" content="2024-08-04">
+<meta name="dcterms.date" content="2024-08-06">
 
 <title>Statistical rethinking 2 with rstan and the tidyverse</title>
 <style>
@@ -144,6 +144,9 @@ div.csl-indent {
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./"><em>Statistical rethinking</em> 2 with rstan and the tidyverse</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -203,6 +206,12 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./08.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Conditional Manatees</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -218,14 +227,18 @@ div.csl-indent {
    
   <ul>
   <li><a href="#preface" id="toc-preface" class="nav-link active" data-scroll-target="#preface">Preface</a>
-  <ul class="collapse">
+  <ul>
   <li><a href="#what-and-why" id="toc-what-and-why" class="nav-link" data-scroll-target="#what-and-why">What and why</a></li>
   <li><a href="#how-this-compares-with-the-brms-translation-and-what-this-means-for-readers" id="toc-how-this-compares-with-the-brms-translation-and-what-this-means-for-readers" class="nav-link" data-scroll-target="#how-this-compares-with-the-brms-translation-and-what-this-means-for-readers">How this compares with the <strong>brms</strong> translation, and what this means for readers</a></li>
+  <li><a href="#r-setup" id="toc-r-setup" class="nav-link" data-scroll-target="#r-setup"><strong>R</strong> setup</a></li>
   <li><a href="#conventions" id="toc-conventions" class="nav-link" data-scroll-target="#conventions">Conventions</a></li>
+  <li><a href="#warning" id="toc-warning" class="nav-link" data-scroll-target="#warning">Warning</a></li>
+  <li><a href="#comments" id="toc-comments" class="nav-link" data-scroll-target="#comments">Comments!</a></li>
   <li><a href="#thank-yous-are-in-order" id="toc-thank-yous-are-in-order" class="nav-link" data-scroll-target="#thank-yous-are-in-order">Thank-you’s are in order</a></li>
+  <li><a href="#license-and-citation" id="toc-license-and-citation" class="nav-link" data-scroll-target="#license-and-citation">License and citation</a></li>
   </ul></li>
   </ul>
-</nav>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -250,7 +263,7 @@ div.csl-indent {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 4, 2024</p>
+      <p class="date">August 6, 2024</p>
     </div>
   </div>
   
@@ -264,22 +277,45 @@ div.csl-indent {
 <h1 class="unnumbered">Preface</h1>
 <section id="what-and-why" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="what-and-why">What and why</h2>
-<p>This ebook is based on the second edition of <a href="https://twitter.com/rlmcelreath">Richard McElreath</a>’s <span class="citation" data-cites="mcelreathStatisticalRethinkingBayesian2020">(<a href="references.html#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>)</span> text, <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical rethinking: A Bayesian course with examples in R and Stan</em></a>. My contributions show how to fit the models he covered with <a href="https://mc-stan.org/rstan/"><strong>rstan</strong></a> <span class="citation" data-cites="R-rstan">(<a href="references.html#ref-R-rstan" role="doc-biblioref">Stan Development Team, 2024</a>)</span>, which allows one to fit Bayesian models in <strong>R</strong> <span class="citation" data-cites="R-base">(<a href="references.html#ref-R-base" role="doc-biblioref">R Core Team, 2022</a>)</span> using Hamiltonian Monte Carlo. I also prefer plotting and data wrangling with the packages from the <a href="https://www.tidyverse.org/"><strong>tidyverse</strong></a> <span class="citation" data-cites="R-tidyverse wickhamWelcomeTidyverse2019">(<a href="references.html#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>; <a href="references.html#ref-R-tidyverse" role="doc-biblioref">Wickham, 2022</a>)</span>, so we’ll be using those methods, too.</p>
+<p>This book is based on the second edition of Richard McElreath’s <span class="citation" data-cites="mcelreathStatisticalRethinkingBayesian2020">(<a href="references.html#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>)</span> text, <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical rethinking: A Bayesian course with examples in R and Stan</em></a>. My contributions show how to fit the models he covered with <a href="https://mc-stan.org/rstan/"><strong>rstan</strong></a> <span class="citation" data-cites="R-rstan">(<a href="references.html#ref-R-rstan" role="doc-biblioref">Stan Development Team, 2024a</a>)</span>, which allows one to fit Bayesian models in <strong>R</strong> <span class="citation" data-cites="R-base">(<a href="references.html#ref-R-base" role="doc-biblioref">R Core Team, 2022</a>)</span> using Hamiltonian Monte Carlo. I also prefer plotting and data wrangling with the packages from the <a href="https://www.tidyverse.org/"><strong>tidyverse</strong></a> <span class="citation" data-cites="R-tidyverse wickhamWelcomeTidyverse2019">(<a href="references.html#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>; <a href="references.html#ref-R-tidyverse" role="doc-biblioref">Wickham, 2022</a>)</span>, so we’ll be using those methods, too.</p>
 <p>This is a sibling book of my translation of McElreath’s second edition into <strong>brms</strong> code <span class="citation" data-cites="kurzStatisticalRethinkingSecondEd2023">(<a href="references.html#ref-kurzStatisticalRethinkingSecondEd2023" role="doc-biblioref">Kurz, 2023</a>)</span>, which you can find by clicking <a href="https://bookdown.org/content/4857/">here</a>.</p>
 </section>
 <section id="how-this-compares-with-the-brms-translation-and-what-this-means-for-readers" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="how-this-compares-with-the-brms-translation-and-what-this-means-for-readers">How this compares with the <strong>brms</strong> translation, and what this means for readers</h2>
-<p>I think <strong>rstan</strong> is harder to use than <strong>brms</strong>. It’s syntax is more technical, and doesn’t follow many of the conventions used by other popular statistics packages, such as <strong>stats</strong> and <strong>lme4</strong>. <strong>rstan</strong> is also more general, allowing for a variety of unconventional and bespoke models. Therefore I’m presuming the readership for this book will be intermediate to advanced in both statistical skills, and general <strong>R</strong> programming skills. I will still take a pedagogical tone in this book, but my pace will be a little faster than in my other ebooks.</p>
+<p>I think <strong>rstan</strong> is harder to use than <strong>brms</strong>. Its syntax is more technical, and it doesn’t follow many of the conventions used by other popular statistics packages, such as <strong>stats</strong> and <strong>lme4</strong>. <strong>rstan</strong> is also more general than <strong>brms</strong>, allowing for a variety of unconventional and bespoke models. Therefore I’m presuming the readership for this book will be intermediate to advanced in both statistical skills, and general <strong>R</strong> programming skills. I will still take a pedagogical tone in this book, but my pace will be a little faster than in my other books.</p>
 <p>Also, because this is sibling book to my <strong>brms</strong> translation, I will not replicate all my previous work. Rather, the code in this book will be more tightly focused on reproducing the models and primary analyses with an <strong>rstan</strong> + <strong>tidyverse</strong> framework. The supporting prose will be sparser, and I will have fewer quotes from the text. If you want a richer engagement with McElreath’s text, you probably want my <strong>brms</strong> translation instead.</p>
+</section>
+<section id="r-setup" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="r-setup"><strong>R</strong> setup</h2>
+<p>To get the full benefit from this ebook, you’ll need some software. Happily, everything will be free (provided you have access to a decent personal computer and an good internet connection).</p>
+<p>First, you’ll need to install <strong>R</strong>, which you can learn about at <a href="https://cran.r-project.org/">https://cran.r-project.org/</a>.</p>
+<p>Though not necessary, your <strong>R</strong> experience might be more enjoyable if done through the free RStudio interface, which you can learn about at <a href="https://posit.co/products/open-source/rstudio/">https://posit.co/products/open-source/rstudio/</a>.</p>
+<p>Once you have installed <strong>R</strong>, execute the following to install the bulk of the add-on packages. This may take a few minutes to finish. Go make yourself a coffee.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"dagitty"</span>, <span class="st">"devtools"</span>, <span class="st">"ggdag"</span>, <span class="st">"patchwork"</span>, <span class="st">"posterior"</span>, <span class="st">"remotes"</span>, <span class="st">"rstan"</span>, <span class="st">"tidybayes"</span>, <span class="st">"tidyverse"</span>, <span class="st">"tigris"</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(packages, <span class="at">dependencies =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>A couple of the other packages are not officially available via the Comprehensive R Archive Network (CRAN; <a href="https://cran.r-project.org/">https://cran.r-project.org/</a>). You can download them directly from GitHub by executing the following.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"stan-dev/cmdstanr"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"rmcelreath/rethinking"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>It’s possible you’ll have problems installing some of these packages. Here are some likely suspects and where you can find help:</p>
+<ul>
+<li>for difficulties installing <strong>cmdstanr</strong>, go to <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html">https://mc-stan.org/cmdstanr/articles/cmdstanr.html</a>;</li>
+<li>for difficulties installing <strong>rethinking</strong>, go to <a href="https://github.com/rmcelreath/rethinking#installation">https://github.com/rmcelreath/rethinking#installation</a>; and</li>
+<li>for difficulties installing <strong>rstan</strong>, go to <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started">https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started</a>.</li>
+</ul>
 </section>
 <section id="conventions" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="conventions">Conventions</h2>
-<p>As in my other ebooks, I use a handful of formatting conventions gleaned from <a href="https://r4ds.had.co.nz/introduction.html#running-r-code"><em>R4DS</em></a>, <a href="https://style.tidyverse.org/"><em>The tidyverse style guide</em></a> <span class="citation" data-cites="wickhamTidyverseStyleGuide2020">(<a href="references.html#ref-wickhamTidyverseStyleGuide2020" role="doc-biblioref">Wickham, 2020</a>)</span>, and <a href="https://bookdown.org/yihui/rmarkdown/software-info.html"><em>R markdown: The definitive guide</em></a> <span class="citation" data-cites="xieMarkdownDefinitiveGuide2020">(<a href="references.html#ref-xieMarkdownDefinitiveGuide2020" role="doc-biblioref">Xie et al., 2020</a>)</span>.</p>
+<p>As in my other books, I use a handful of formatting conventions gleaned from <a href="https://r4ds.had.co.nz/introduction.html#running-r-code"><em>R4DS</em></a>, <a href="https://style.tidyverse.org/"><em>The tidyverse style guide</em></a> <span class="citation" data-cites="wickhamTidyverseStyleGuide2020">(<a href="references.html#ref-wickhamTidyverseStyleGuide2020" role="doc-biblioref">Wickham, 2020</a>)</span>, and <a href="https://bookdown.org/yihui/rmarkdown/software-info.html"><em>R markdown: The definitive guide</em></a> <span class="citation" data-cites="xieMarkdownDefinitiveGuide2020">(<a href="references.html#ref-xieMarkdownDefinitiveGuide2020" role="doc-biblioref">Xie et al., 2020</a>)</span>.</p>
 <ul>
 <li><strong>R</strong> code blocks and their output appear in a gray background. E.g.,</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span> <span class="sc">+</span> <span class="dv">2</span> <span class="sc">==</span> <span class="dv">5</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span> <span class="sc">+</span> <span class="dv">2</span> <span class="sc">==</span> <span class="dv">5</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] FALSE</code></pre>
 </div>
@@ -291,6 +327,15 @@ div.csl-indent {
 <li><strong>R</strong> objects, such as data or function arguments, are in typewriter font atop gray backgrounds (e.g., <code>chimpanzees</code>, <code>.width = 0.89</code>).</li>
 <li>You can detect hyperlinks by their typical <a href="https://solomonkurz.netlify.app/">blue-colored font</a>.</li>
 </ul>
+<p>For the <strong>rstan</strong> code, I’m also taking cues from the <a href="https://mc-stan.org/docs/stan-users-guide/style-guide.html"><em>Stan Program Style Guide</em></a> section of the <em>Stan User’s Guide</em> <span class="citation" data-cites="standevelopmentteamStanUserGuide2024">(<a href="references.html#ref-standevelopmentteamStanUserGuide2024" role="doc-biblioref">Stan Development Team, 2024b</a>)</span>. However, as I’m relatively new to <strong>rstan</strong>, don’t be surprised if you find quirks an inconsistencies.</p>
+</section>
+<section id="warning" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="warning">Warning</h2>
+<p>This book is a side-product of another project for which I needed to learn more about <strong>rstan</strong>. It was also a good opportunity to learn more about making a <a href="https://quarto.org/">Quarto</a>-based ebook <span class="citation" data-cites="quarto2024">(<a href="references.html#ref-quarto2024" role="doc-biblioref">Allaire et al., 2024</a>)</span>. For this first 0.0.1 release, I’m only up through Chapter 8. I will continue to chip away on this as my schedule permits, but I am setting no goals and no deadlines. On the one hand, it would be nice to have another finished book in my portfolio; on the other hand, I really don’t like using <strong>rstan</strong> and I still much prefer a <strong>brms</strong>-based workflow. The remaining chapters in this book may find themselves fleshed out in quick succession, or this whole project may lay fallow. We’ll see…</p>
+</section>
+<section id="comments" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="comments">Comments!</h2>
+<p>This is my first ebook with comments sections! Please play nice. I don’t plan on heavily monitoring the comments, but if needed I reserve the right to delete, block, and so on.</p>
 </section>
 <section id="thank-yous-are-in-order" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="thank-yous-are-in-order">Thank-you’s are in order</h2>
@@ -300,10 +345,27 @@ div.csl-indent {
 <li>Andrew Heiss (<a href="https://github.com/andrewheiss">@andrewheiss</a>), and</li>
 <li>John K. Kruschke (<a href="https://github.com/kruschke">@kruschke</a>).</li>
 </ul>
-<p>Science is better when we work together.</p>
+<p>Each of these folks have shared <strong>rstan</strong> code that a directly helped make this book possible. I especially appreciate and recommend Arel-Bundock’s website <a href="https://vincentarelbundock.github.io/rethinking2/"><em>Statistical Rethinking 2 with Stan and R</em></a>, wherein you can find rendered <code>Rmarkdown</code> files with loads of <strong>rstan</strong> code on many of the same problems I’m tackling in this book. If you compare our works, you’ll see I have been heavily influenced by Arel-Bundock’s <strong>rstan</strong> style.</p>
+</section>
+<section id="license-and-citation" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="license-and-citation">License and citation</h2>
+<p>This book is licensed under the Creative Commons Zero v1.0 Universal license, the details for which you can about <a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/blob/main/LICENSE">here</a>. In short, you can use my work. Just make sure you give me the appropriate credit the same way you would for any other scholarly resource. Here’s the basic citation information:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="sc">@</span>book{kurzStatisticalRethinking2rstan2024,</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  title <span class="ot">=</span> {Statistical rethinking <span class="dv">2</span> with rstan and the tidyverse},</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  author <span class="ot">=</span> {Kurz, A. Solomon},</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  year <span class="ot">=</span> {<span class="dv">2024</span>},</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  month <span class="ot">=</span> {aug},</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  edition <span class="ot">=</span> {version <span class="dv">0</span>.<span class="fl">0.1</span>},</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  url <span class="ot">=</span> {https<span class="sc">:</span><span class="er">//</span>solomon.quarto.pub<span class="sc">/</span>sr2rstan<span class="sc">/</span>}</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 
 
 <div id="refs" class="references csl-bib-body hanging-indent" data-line-spacing="2" role="list" style="display: none">
+<div id="ref-quarto2024" class="csl-entry" role="listitem">
+Allaire, J. J., Teague, C., Scheidegger, C., Xie, Y., &amp; Dervieux, C. (2024). <em>Quarto</em> (version 1.2.0). <a href="https://doi.org/10.5281/zenodo.5960048">https://doi.org/10.5281/zenodo.5960048</a>
+</div>
 <div id="ref-kurzStatisticalRethinkingSecondEd2023" class="csl-entry" role="listitem">
 Kurz, A. S. (2023). <em>Statistical <span>Rethinking</span> with brms, <span class="nocase">ggplot2</span>, and the tidyverse: <span>Second Edition</span></em> (version 0.4.0). <a href="https://bookdown.org/content/4857/">https://bookdown.org/content/4857/</a>
 </div>
@@ -314,7 +376,10 @@ McElreath, R. (2020). <em>Statistical rethinking: <span>A Bayesian</span> course
 R Core Team. (2022). <em>R: <span>A</span> language and environment for statistical computing</em>. R Foundation for Statistical Computing. <a href="https://www.R-project.org/">https://www.R-project.org/</a>
 </div>
 <div id="ref-R-rstan" class="csl-entry" role="listitem">
-Stan Development Team. (2024). <em><span>RStan</span>: The <span>R</span> interface to <span>Stan</span></em>. <a href="https://mc-stan.org/">https://mc-stan.org/</a>
+Stan Development Team. (2024a). <em><span>RStan</span>: The <span>R</span> interface to <span>Stan</span></em>. <a href="https://mc-stan.org/">https://mc-stan.org/</a>
+</div>
+<div id="ref-standevelopmentteamStanUserGuide2024" class="csl-entry" role="listitem">
+Stan Development Team. (2024b). <em>Stan user’s guide, <span>Version</span> 2.35</em>. <a href="https://mc-stan.org/docs/stan-users-guide/">https://mc-stan.org/docs/stan-users-guide/</a>
 </div>
 <div id="ref-wickhamTidyverseStyleGuide2020" class="csl-entry" role="listitem">
 Wickham, H. (2020). <em>The tidyverse style guide</em>. <a href="https://style.tidyverse.org/">https://style.tidyverse.org/</a>
