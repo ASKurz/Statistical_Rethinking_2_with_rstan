@@ -92,7 +92,7 @@ A careful study of McElreath's **R** code 7.3 will show he is modeling `log_sigm
 
 Part of the challenge for this section is we'll be fitting several closely-related models. We could do that one model at a time, but that would require a lot of redundant and inefficient code. Instead, we'll take the opportunity to show an approach that streamlines the process. But since this requires we adopt several steps we haven't often used, we'll spend a lot of time up front describing them one at a time. Then after the exposition, we'll show the code for the fully developed streamlined approach.
 
-To start, define the `stan_data` with the `compose_data()` function.
+To start this all off, define the `stan_data` with the `compose_data()` function.
 
 ```{r}
 stan_data <- d |>
@@ -191,7 +191,7 @@ This matches up closely with the book's value of 0.477 (p. 197).
 
 Since **rstan** models do not work for functions like `fitted()` or `predict()`, I'm not sure about making a general-purpose `R2_is_bad()` function for our models. However, we do want a method that will scale to computing $\widehat{R^2}$ from a variety of models, and the current approach won't work well for that since it will require different equations for `mu` for each model.
 
-One way to solve this is to include a `generated quantities` block in the `model_code`, like we did for `m5.4` in @sec-Predictor-residual-plots.
+One way to solve this is to include a `generated quantities` block in the `model_code`, like we did for `m5.4` in @sec-Predictor-residual-plots. We'll call this version `model_code_7.1gq`.
 
 ```{r}
 model_code_7.1gq <- '
@@ -243,7 +243,7 @@ Check the summary.
 print(m7.1gq, probs = c(0.055, 0.945))
 ```
 
-Now we have a series of `mu[i]` posteriors in addition to the usual model parameters. These are our expected or fitted values, one for each of the 7 cases in the data set. Just to check, we can confirm these are the same as the fitted values we might compute by working pushing the observed predictor values for `mass_std` through the posterior distributions for `b0` and `b1`.
+Now we have a series of `mu[i]` posteriors in addition to the usual model parameters. These are our expected or fitted values, one for each of the 7 cases in the data set. Just to check, we can confirm these are indeed the same as the fitted values we might compute by working pushing the observed predictor values for `mass_std` through the posterior distributions for `b0` and `b1`.
 
 ```{r}
 #| warning: false
@@ -271,7 +271,7 @@ m7.1gq |>
   glimpse()
 ```
 
-Thus we can use a slightly more compact `spread_draws(mu[i])`-based workflow to compute the point estimate for the $R^2$ from the `m7.1` model.
+Thus we can use a slightly more compact `spread_draws(mu[i])`-based workflow to compute the point estimate for the $R^2$ from the `m7.1gq` model.
 
 ```{r}
 m7.1gq |> 
@@ -312,7 +312,7 @@ stan_data <- d |>
 str(stan_data)
 ```
 
-Now update the `model_code` to use the `model.matrix()` approach to for the blocks.
+Now update the `model_code` to use the `model.matrix()` approach in the various blocks. This time we'll call the thing `model_code_7.1mm`.
 
 ```{r}
 model_code_7.1mm <- '
@@ -513,7 +513,7 @@ m7.1gq2 |>
 
 Consistent with my **brms** translation, the models fit with `stan()` consistently show wider 89% intervals than the ones McElreath showed fit with `quap()` in this part of the text. However, the `stan()`-based 67% intervals are pretty close to the intervals displayed in Figure 7.3 in the text, so we'll show both for the plots to come.
 
-Now we have a workflow that supports fitting, summarizing, and plotting the first linear model and it's curvier variants, we're ready to work in bulk.
+Now we have a workflow that supports fitting, summarizing, and plotting the first linear model and its curvier variants, we're ready to work in bulk.
 
 First, we update both the `d` and `d_pred` data frames to include `mass_std1` through `mass_std6`.
 
@@ -538,7 +538,7 @@ glimpse(d)
 glimpse(d_pred)
 ```
 
-We are going to fit and store the models and their output within a nested data frame. As a first step, we'll define the six models by their names in the `name` column, the number of predictors (excluding the intercept) in the `predictors` column, and the formulas for their model matrices in a `formula` column.
+We are going to fit and store the models and their output within a nested data frame. As a first step, we'll define the six models by their names in the `model` column, the number of predictors (excluding the intercept) in the `predictors` column, and the formulas for their model matrices in a `formula` column.
 
 ```{r}
 d_fits <- tibble(model = str_c("m7.", 1:6)) |> 
@@ -583,7 +583,7 @@ d_fits <- d_fits |>
 print(d_fits)
 ```
 
-Define a generic `model_code` for all 6 models. This is the same as the previous one with one last addition: Now we have used the syntax of `b[2:k]` to refer to all non-intercept $\beta$ parameters within the `model` block.
+Define a generic `model_code` for all 6 models. This is the same as the previous one with one last addition: Now we have used the syntax of `b[2:k]` to refer to all non-intercept $\beta$ parameters within the `model` block. Save this glorious monstrosity as `model_code_7.1to6`.
 
 ```{r}
 model_code_7.1to6 <- '
@@ -601,7 +601,8 @@ parameters {
 model {
   brain_std ~ normal(X * b, exp(log_sigma));
   b[1] ~ normal(0.5, 1);
-  b[2:k] ~ normal(0, 10);  // New general-purpose notation for the non-intercept `beta[k]` priors
+  // New general-purpose notation for the non-intercept `beta[k]` priors
+  b[2:k] ~ normal(0, 10);
   log_sigma ~ normal(0, 1);
 }
 generated quantities {
@@ -735,7 +736,7 @@ But McElreath wrote:
 
 > That last model, `m7.6`, has one trick in it. The standard deviation is replaced with a constant value 0.001. (p. 198)
 
-We can do that with `stan()`, too. But here we'll abandon our bulk data frame work flow and fit this version of the model separate. First, define `model_code_7.6b` with $\sigma$ fixed to a constant 0.001.
+We can do that with `stan()`, too. But here we'll abandon our bulk data frame workflow and fit this version of the model separate. First, define `model_code_7.6b` with $\sigma$ fixed to a constant 0.001.
 
 ```{r}
 model_code_7.6b <- '
@@ -850,7 +851,7 @@ Now the results are very close to those McElreath displayed in the text.
 
 ### Too few parameters hurts, too.
 
-To explore the distinctions between overfitting and underfitting, we'll need to refit `b7.1` and `b7.4` several times after serially dropping one of the rows in the data. You can `filter()` by `row_number()` to drop rows. For example, we can drop the second row of `d` like this.
+To explore the distinctions between overfitting and underfitting, we'll need to refit `m7.1` and `m7.4` several times after serially dropping one of the rows in the data. You can `filter()` by `row_number()` to drop rows. For example, we can drop the second row of `d` like this.
 
 ```{r}
 d |>
@@ -936,7 +937,7 @@ d_fits_subset |>
   select(model, sampling, as_draws_df)
 ```
 
-Here's our version of Figure 7.4.
+After all that, here's our version of Figure 7.4.
 
 ```{r}
 #| fig-width: 5.25
@@ -985,22 +986,7 @@ The formula for information entropy is:
 
 $$H(p) = - \text E \log (p_i) = - \sum_{i = 1}^n p_i \log (p_i).$$
 
-McElreath put it in words as: "The uncertainty contained in a probability distribution is the average log-probability of an event." (p. 206). We'll compute the information entropy for weather at the first unnamed location, which we'll call `McElreath's house`, and `Abu Dhabi` at once.
-
-```{r}
-tibble(place  = c("McElreath's house", "Abu Dhabi"),
-       p_rain = c(0.3, 0.01)) |> 
-  mutate(p_shine = 1 - p_rain) |> 
-  group_by(place) |> 
-  mutate(h_p = (p_rain * log(p_rain) + p_shine * log(p_shine)) |> mean() * -1)
-```
-
-If you have sun, rain and snow, the entropy for weather is:
-
-```{r}
-p <- c(0.7, 0.15, 0.15)
--sum(p * log(p))
-```
+McElreath put it in words as: "The uncertainty contained in a probability distribution is the average log-probability of an event." (p. 206).
 
 #### Overthinking: More on entropy.
 
@@ -1013,15 +999,6 @@ p <- c(0.7, 0.15, 0.15)
 #### Rethinking: Divergence depends upon direction.
 
 Here we see $H(p, q) \neq H(q, p)$. That is, direction matters.
-
-```{r}
-tibble(direction = c("Earth to Mars", "Mars to Earth"),
-       p_1       = c(0.01, 0.7),
-       q_1       = c(0.7, 0.01)) |> 
-  mutate(p_2 = 1 - p_1,
-         q_2 = 1 - q_1) |>
-  mutate(d_kl = (p_1 * log(p_1 / q_1)) + (p_2 * log(p_2 / q_2)))
-```
 
 ### Estimating divergence. {#sec-Estimating-divergence}
 
@@ -1109,12 +1086,6 @@ Notice the seven `log_lik[i]` rows in the `print()` output, one for each case in
 print(m7.1ll, probs = c(0.055, 0.945))
 ```
 
-Because we have computed the `log_lik` values in the `generated quantities` block of the model program, we can also use the `rstan::loo()` function, which searchers for a `log_lik` parameter vector in the model fit, by the default setting `pars = "log_lik"`.
-
-```{r}
-l7.1 <- loo(m7.1ll, pars = "log_lik")
-```
-
 We can convert these `log_lik[i]` values into log probability scores like so.
 
 ```{r}
@@ -1145,7 +1116,7 @@ $$\text{lppd}(y, \Theta) = \sum_i \log \frac{1}{S} \sum_s p (y_i | \Theta_s),$$
 
 > where $S$ is the number of samples and $\Theta_s$ is the $s$-th set of sampled parameter values in the posterior distribution. While in principle this is easy--you just need to compute the probability (density) of each observation $i$ for each sample $s$, take the average, and then the logarithm--in practice it is not so easy. The reason is that doing arithmetic in a computer often requires some tricks to retain precision. (p. 210)
 
-Though we computed these values above with the `log_lik[i]` values defined in the `generated quantities` block of the `model_code`, we can also do it by hand with the posterior distribution and the sample data. When we pull the posterior draws with `as_draws_df()`, the HMC draws, what McElreath called $s$, are indexed in the `.draw` column. We'll rename that column `s`. The term $p (y_i | \Theta_s)$ is the probability of the `brain_std` values for each of the rows of the data, which we've indexed by the `i` column, given the samples form the posterior distribution $\Theta_s$. Those $\Theta_s$ values are our `b[1]`, `b[2]` and `log_sigma` columns, seen through the lens of the Gaussian likelihood. Thus we compute $p (y_i | \Theta_s)$ within the `dnorm()` function, which we save as `density[i][s]`.
+Though we computed these values above with the `log_lik[i]` values defined in the `generated quantities` block of the `model_code`, we can also do it by hand with the posterior distribution and the sample data. When we pull the posterior draws with `as_draws_df()`, the HMC draws, what McElreath called $s$, are indexed in the `.draw` column. To play along, we'll rename that `.draw` column `s`. The term $p (y_i | \Theta_s)$ is the probability of the `brain_std` values for each of the rows of the data, which we've indexed by the `i` column, given the samples from the posterior distribution $\Theta_s$. Those $\Theta_s$ values are our `b[1]`, `b[2]` and `log_sigma` columns, seen through the lens of the Gaussian likelihood. Thus we compute $p (y_i | \Theta_s)$ within the `dnorm()` function, which we save as `density[i][s]`.
 
 ```{r}
 log_prob_df <- as_draws_df(m7.1ll) |> 
@@ -1386,7 +1357,7 @@ as_draws_df(m7.7) |>
              alpha = 3/4, color = "blue")
 ```
 
-As the the log likelihood and the WAIC, because of our `generated quantities` block, our `m7.7` object has a vector of `log_lik` values for each case in the data. We'll make explicit use of those in a moment. But since this is such a simple model, we'll first practice by hand. Here we extract the posterior draws just for the model parameters `b0`, `b1` and `sigma` from `m7.7`, use `expand_grid()` to add in the `cars` data, compute the `log_lik` values with `dnorm(log = TRUE)`, exponentiate those values back to the `likelihood` metric with `exp()`, and save the results as a data frame called `d_log_lik`.
+As the log likelihood and the WAIC, because of our `generated quantities` block, our `m7.7` object has a vector of `log_lik` values for each case in the data. We'll make explicit use of those in a moment. But since this is such a simple model, we'll first practice by hand. Here we extract the posterior draws just for the model parameters `b0`, `b1` and `sigma` from `m7.7`, use `expand_grid()` to add in the `cars` data, compute the `log_lik` values with `dnorm(log = TRUE)`, exponentiate those values back to the `likelihood` metric with `exp()`, and save the results as a data frame called `d_log_lik`.
 
 ```{r}
 d_log_lik <- m7.7 |> 
@@ -1446,7 +1417,7 @@ Now we can finally plug our hand-made `lppd` and `pwaic` values into the formula
 -2 * (lppd - pwaic)
 ```
 
-Now we're finally ready to use those `log_lik` vectors from our `generated quantities` block. The **loo** package has a `extract_log_lik()` function that expects a vector named `log_lik`. This will convert them to a matrix with as many rows as posterior draws, and as many columns as cases in the sample data. In our case, That will make for a $4{,}000 \times 50$ matrix.
+We're finally ready to use those `log_lik` vectors from our `generated quantities` block. The **loo** package has a `extract_log_lik()` function that expects a vector named `log_lik`. This will convert them to a matrix with as many rows as posterior draws, and as many columns as cases in the sample data. In our case, That will make for a $4{,}000 \times 50$ matrix.
 
 ```{r}
 extract_log_lik(m7.7) |> 
@@ -1539,7 +1510,7 @@ Hopefully you'll never have to do that, though.
 
 ### Model mis-selection. {#sec-Model-mis-selection}
 
-Once again we return to the plant growth models from back in @sec-Post-treatment-bias, models `m6.6`, `m6.7`, and `m6.8`. If you were following along closely, you may have notices we defined the `log_lik` values in the `generated quantities` block for each, but put off their discussion until now. Here we'll use out `extract_log_lik |> waic()` workflow to compute the WAIC summaries for each, and save them as objects named `w6.6` through `w6.8`.
+Once again we return to the plant-growth models from back in @sec-Post-treatment-bias. These were named `m6.6`, `m6.7`, and `m6.8`. If you were following along closely in that part of the ebook, you may have noticed we defined the `log_lik` values in the `generated quantities` block for each, but put off their discussion until now. It's time for the payoff. Here we'll use our `extract_log_lik |> waic()` workflow to compute the WAIC summaries for each, and save them as objects named `w6.6` through `w6.8`.
 
 ```{r}
 #| echo: false
@@ -1752,7 +1723,7 @@ Alternatively, we could have extracted that value from our `l5.3` object with in
 l5.3$diagnostics$pareto_k[13]
 ```
 
-`r round(pareto_k_values(l5.3)[13], 2)` is a little high, but not high enough to cause `loo()` to return a warning message. Once a Pareto $k$ value crosses the 0.7 threshold, though, the **loo** package will bark. Before we make our version of Figure 7.10, we'll want to compute the WAIC for `m5.3`, which will give us access to the $p_\text{WAIC}$.
+A $k$ value of `r round(pareto_k_values(l5.3)[13], 2)` is a little high, but not high enough to cause `loo()` to return a warning message. Once a Pareto $k$ value crosses the 0.7 threshold, though, the **loo** package will bark. Before we make our version of Figure 7.10, we'll want to compute the WAIC for `m5.3`, which will give us access to the $p_\text{WAIC}$.
 
 ```{r}
 #| warning: false
