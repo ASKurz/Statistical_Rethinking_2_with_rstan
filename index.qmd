@@ -2,13 +2,13 @@
 
 ## What and why {-}
 
-This book is based on the second edition of [Richard McElreath](https://twitter.com/rlmcelreath)'s [-@mcelreathStatisticalRethinkingBayesian2020] text, [*Statistical rethinking: A Bayesian course with examples in R and Stan*](https://xcelab.net/rm/statistical-rethinking/). My contributions show how to fit the models he covered with [**rstan**](https://mc-stan.org/rstan/) [@R-rstan], which allows one to fit Bayesian models in **R** [@R-base] using Hamiltonian Monte Carlo. I also prefer plotting and data wrangling with the packages from the [**tidyverse**](https://www.tidyverse.org/) [@R-tidyverse; @wickhamWelcomeTidyverse2019], so we'll be using those methods, too.
+This book is based on the second edition of Richard McElreath's [-@mcelreathStatisticalRethinkingBayesian2020] text, [*Statistical rethinking: A Bayesian course with examples in R and Stan*](https://xcelab.net/rm/statistical-rethinking/). My contributions show how to fit the models he covered with [**rstan**](https://mc-stan.org/rstan/) [@R-rstan], which allows one to fit Bayesian models in **R** [@R-base] using Hamiltonian Monte Carlo. I also prefer plotting and data wrangling with the packages from the [**tidyverse**](https://www.tidyverse.org/) [@R-tidyverse; @wickhamWelcomeTidyverse2019], so we'll be using those methods, too.
 
 This is a sibling book of my translation of McElreath's second edition into **brms** code [@kurzStatisticalRethinkingSecondEd2023], which you can find by clicking [here](https://bookdown.org/content/4857/).
 
 ## How this compares with the **brms** translation, and what this means for readers {-}
 
-I think **rstan** is harder to use than **brms**. It's syntax is more technical, and doesn't follow many of the conventions used by other popular statistics packages, such as **stats** and **lme4**. **rstan** is also more general than **brms**, allowing for a variety of unconventional and bespoke models. Therefore I'm presuming the readership for this book will be intermediate to advanced in both statistical skills, and general **R** programming skills. I will still take a pedagogical tone in this book, but my pace will be a little faster than in my other books.
+I think **rstan** is harder to use than **brms**. Its syntax is more technical, and it doesn't follow many of the conventions used by other popular statistics packages, such as **stats** and **lme4**. **rstan** is also more general than **brms**, allowing for a variety of unconventional and bespoke models. Therefore I'm presuming the readership for this book will be intermediate to advanced in both statistical skills, and general **R** programming skills. I will still take a pedagogical tone in this book, but my pace will be a little faster than in my other books.
 
 Also, because this is sibling book to my **brms** translation, I will not replicate all my previous work. Rather, the code in this book will be more tightly focused on reproducing the models and primary analyses with an **rstan** + **tidyverse** framework. The supporting prose will be sparser, and I will have fewer quotes from the text. If you want a richer engagement with McElreath's text, you probably want my **brms** translation instead.
 
@@ -30,7 +30,7 @@ packages <- c("dagitty", "devtools", "ggdag", "patchwork", "posterior", "remotes
 install.packages(packages, dependencies = TRUE)
 ```
 
-A few of the other packages are not officially available via the Comprehensive R Archive Network (CRAN; https://cran.r-project.org/). You can download them directly from GitHub by executing the following.
+A couple of the other packages are not officially available via the Comprehensive R Archive Network (CRAN; [https://cran.r-project.org/](https://cran.r-project.org/)). You can download them directly from GitHub by executing the following.
 
 ```{r}
 #| eval: false
@@ -65,11 +65,11 @@ For the **rstan** code, I'm also taking cues from the [*Stan Program Style Guide
 
 ## Warning  {-}
 
-This book is a side-product of another project for which I needed to learn more about **rstan**. It was also a good opportunity to learn more about making a Quarto-based ebook. Fro this first 0.0.1 release, I'm only up through Chapter 8. I will continue to chip away on this as my schedule permits, but I am setting no goals and no deadlines. On the one hand, it would be nice to have another finished book in my portfolio; on the other hand, I really don't like using **rstan** and I still much prefer a **brms**-based workflow. The remaining chapters in this book may find themselves fleshed out in quick succession, or this whole project may lay fallow. We'll see...
+This book is a side-product of another project for which I needed to learn more about **rstan**. It was also a good opportunity to learn more about making a [Quarto](https://quarto.org/)-based ebook [@quarto2024]. For this first 0.0.1 release, I'm only up through Chapter 8. I will continue to chip away on this as my schedule permits, but I am setting no goals and no deadlines. On the one hand, it would be nice to have another finished book in my portfolio; on the other hand, I really don't like using **rstan** and I still much prefer a **brms**-based workflow. The remaining chapters in this book may find themselves fleshed out in quick succession, or this whole project may lay fallow. We'll see...
 
 ## Comments! {-}
 
-This is my first ebook with comments sections. Please play nice. I don't plan on heavily monitoring the comments, but if needed I reserve the right to delete, block, and so on. 
+This is my first ebook with comments sections! Please play nice. I don't plan on heavily monitoring the comments, but if needed I reserve the right to delete, block, and so on. 
 
 ## Thank-you's are in order {-}
 
@@ -79,11 +79,11 @@ I'd like to thank the following for their helpful contributions:
 * Andrew Heiss ([\@andrewheiss](https://github.com/andrewheiss)), and
 * John K. Kruschke ([\@kruschke](https://github.com/kruschke)).
 
-Each of these folks have shared **rstan** code that a directly helped make this book possible. I especially appreciate and recommend Arel-Bundock's website [*Statistical Rethinking 2 with Stan and R*](https://vincentarelbundock.github.io/rethinking2/), wherein you can find rendered `Rmarkdown` files with loads of **rstan** code on many of the same problems I'm tackling in this book. I have been heavily influenced by Arel-Bundock's **rstan** style.
+Each of these folks have shared **rstan** code that a directly helped make this book possible. I especially appreciate and recommend Arel-Bundock's website [*Statistical Rethinking 2 with Stan and R*](https://vincentarelbundock.github.io/rethinking2/), wherein you can find rendered `Rmarkdown` files with loads of **rstan** code on many of the same problems I'm tackling in this book. If you compare our works, you'll see I have been heavily influenced by Arel-Bundock's **rstan** style.
 
 ## License and citation {-}
 
-This book is licensed under the Creative Commons Zero v1.0 Universal license. You can learn the details, [here](https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/blob/main/LICENSE). In short, you can use my work. Just make sure you give me the appropriate credit the same way you would for any other scholarly resource. Here's the basic citation information:
+This book is licensed under the Creative Commons Zero v1.0 Universal license, the details for which you can about [here](https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/blob/main/LICENSE). In short, you can use my work. Just make sure you give me the appropriate credit the same way you would for any other scholarly resource. Here's the basic citation information:
 
 ```{r}
 #| eval: false
