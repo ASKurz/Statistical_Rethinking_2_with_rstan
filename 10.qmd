@@ -1,0 +1,25 @@
+# Big Entropy and the Generalized Linear Model
+
+There are no models for us to code in this chapter. Instead, here are the links to a few of McElreath's lectures on the material on this chapter of the text. Enjoy!
+
+```{r}
+#| echo: false
+
+vembedr::use_align(vembedr::embed_url("https://youtu.be/-4y4X8ELcEM?si=fLl8rCr2pv5xG0Tn"), 
+                   "center")
+
+vembedr::use_align(vembedr::embed_url("https://youtu.be/nPi5yGbfxuo?si=KezmJsOtcz9fENqT&t=1396"), 
+                   "center")
+
+vembedr::use_align(vembedr::embed_url("https://youtu.be/Zi6N3GLUJmw?si=zy76tPuGxZkfDO_L"), 
+                   "center")
+```
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
+## Comments {-}
+
