@@ -1,0 +1,661 @@
+# Markov Chain Monte Carlo
+
+Load the packages.
+
+```{r}
+#| message: false
+#| warning: false
+
+# Load
+library(tidyverse)
+library(patchwork)
+library(rstan)
+library(posterior)
+library(tidybayes)
+library(bayesplot)
+
+# Drop grid lines
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank())
+)
+```
+
+#### Rethinking: Stan was a man.
+
+## Good King Markov and his island kingdom
+
+## Metropolis algorithms
+
+### Gibbs sampling.
+
+### High-dimensional problems.
+
+## Hamiltonian Monte Carlo
+
+### Another parable.
+
+#### Rethinking: Hamiltonians.
+
+### Particles in space.
+
+#### Overthinking: Hamiltonian Monte Carlo in the raw.
+
+### Limitations.
+
+#### Rethinking: The MCMC horizon.
+
+## Easy HMC: ~~ulam~~ `stan()`
+
+Here we load the `rugged` data.
+
+```{r}
+data(rugged, package = "rethinking")
+d <- rugged
+rm(rugged)
+```
+
+Wrangle the data a bit.
+
+```{r}
+d <- d |>
+  mutate(log_gdp = log(rgdppc_2000))
+
+dd <- d |>
+  drop_na(rgdppc_2000) |> 
+  mutate(log_gdp_std = log_gdp / mean(log_gdp),
+         rugged_std  = rugged / max(rugged),
+         cid         = ifelse(cont_africa == 1, "1", "2")) |> 
+  mutate(rugged_std_c = rugged_std - mean(rugged_std))
+```
+
+In the context of this chapter, it doesn't make sense to translate McElreath's `m8.3` `quap()` code to `stan()` code. Below, we'll just go directly to the `stan()` variant of his `m9.1`.
+
+### Preparation.
+
+Wrangle the data into a list with the `compose_data()` function. McElreath called his dat list `dat_slim`. Here we'll follow the conventions from earlier chapters and call the object `stan_data`.
+
+```{r}
+stan_data <- dd |>
+  select(log_gdp_std, rugged_std, cid, rugged_std_c) |>  
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+### Sampling from the posterior.
+
+Here our `stan_program_9.1` is just a different version of `stan_program_8.3` from the last chapter. Since we don't need the log-likelihood for this chapter, we've streamlined this version of the program a bit by removing the `transformed parameters` and `generated quantities`. We've also taken a cue from McElreath's code by hardcoding the value `0.215` into the `model` block, rather than importing the `xbar` scalar from the data list.
+
+```{r}
+stan_program_9.1 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_cid;
+  int cid[n];
+  vector[n] rugged_std;
+  vector[n] log_gdp_std;
+}
+parameters {
+  vector[n_cid] a;
+  vector[n_cid] b;
+  real<lower=0> sigma;
+}
+model {
+  vector[n] mu;
+  mu = a[cid] + b[cid] .* (rugged_std - 0.215);
+  log_gdp_std ~ normal(mu, sigma);
+  
+  a ~ normal(1, 0.1);
+  b ~ normal(0, 0.3);
+  sigma ~ exponential(1);
+}
+'
+```
+
+Sample with `stan()`. Note how we're following McElreath's lead by setting `chains = 1`.
+
+```{r}
+#| echo: false
+
+# save(m9.1, file = "fits/m9.1.rda")
+load(file = "fits/m9.1.rda")
+```
+
+```{r}
+#| eval: false
+
+m9.1 <- stan(
+  data = stan_data,
+  model_code = stan_program_9.1,
+  chains = 1, seed = 9)
+```
+
+Here is a summary of the posterior.
+
+```{r}
+print(m9.1, probs = c(0.055, 0.945))
+```
+
+### Sampling again, in parallel.
+
+Here we sample from four HMC chains in parallel by adding `cores = 4`. Though `chains = 4` is the default setting in `stan()`, here we make it explicit. This time we'll call the object `m9.1b`.
+
+```{r}
+#| echo: false
+
+# save(m9.1b, file = "fits/m9.1b.rda")
+load(file = "fits/m9.1b.rda")
+```
+
+```{r}
+#| eval: false
+
+m9.1b <- stan(
+  data = stan_data,
+  model_code = stan_program_9.1,
+  chains = 4, cores = 4, seed = 9)
+```
+
+Here is a summary of the posterior.
+
+```{r}
+print(m9.1b, probs = c(0.055, 0.945))
+```
+
+The `show()` function does not work for **rstan** models the same way it does with those from **rethinking**. Rather, `show()` returns the same information we'd get from `print()`.
+
+```{r}
+show(m9.1b)
+```
+
+You can get a focused look at the *formula* and prior information from an **rstan** fit object by subsetting the `stanmodel` portion of the object.
+
+```{r}
+m9.1b@stanmodel
+```
+
+You can also extract that information with the `get_stanmodel()` function.
+
+```{r}
+get_stanmodel(m9.1b)
+```
+
+You can use the `get_elapsed_time()` function to extract the duration in seconds each chain took during the warmup and post-warmup sampling phases. I believe McElreath's third column `total` is just the sum of the `warmup` and `sample` columns.
+
+```{r}
+get_elapsed_time(m9.1b)
+```
+
+As to the diagnostic statistics, you can compute the $\widehat R$ and effective-sample-size statistics with the `posterior::summarise_draws()` function, particularly with the nice `default_convergence_measures()` helper.
+
+```{r}
+summarise_draws(m9.1b, default_convergence_measures())
+```
+
+### Visualization.
+
+As with McElreath's **rethinking**, **rstan** allows users to put the fit object directly into the `pairs()` function.
+
+```{r}
+#| fig-width: 5.5
+#| fig-height: 5
+#| warning: false
+
+pairs(m9.1b)
+```
+
+However, `pairs()` also includes the `lp__` and `energy` in the output. These can be suppressed with the `pars` argument.
+
+```{r}
+#| fig-width: 5.5
+#| fig-height: 5
+#| warning: false
+
+pairs(m9.1b, pars = c("a", "b", "sigma"))
+```
+
+Our output is a little different in that we don't get a lower-triangle of Pearson's correlation coefficients. If you'd like those values, use `cor()` after extracting the desired parameter columns with `as_draws_df()` and `select()`.
+
+```{r}
+#| warning: false
+
+as_draws_df(m9.1b) %>% 
+  select(`a[1]`:sigma) %>%
+  cor()
+```
+
+### Checking the chain.
+
+Here we apply the `traceplot()` to `m9.1b`. The default settings are `inc_warmup = FALSE`, which means we need to change that to `TRUE` if we want to see the warmup draws, like in the plots McElreath tends to show in the text.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 3.5
+
+traceplot(m9.1b, inc_warmup = TRUE, pars = c("a", "b"))
+```
+
+We can make similar plots with the `mcmc_trace()` function from the **bayesplot** package. Note that `mcmc_trace()` will accept `stan()` model objects as direct input, but it will also accept input from `as_draws_df()`, as in below. As `mcmc_trace()` returns a ggplot object, you can adjust the plot in the usual way with other functions like `theme()`.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 3.25
+
+as_draws_df(m9.1b) |>  
+  mcmc_trace(pars = vars(`a[1]`:sigma),
+             facet_args = list(ncol = 3, labeller = label_parsed)) +
+  theme(legend.position = c(0.85, 0.25))
+```
+
+Note however that as the `as_draws_df()` function only returns post-warmup draws, this workflow will not produce traceplots like the ones in the text that show the warmup portion.
+
+McElreath pointed out a second way to visualize the chains is by the distribution of the ranked samples, which he called a **trank plot** (short for trace rank plot). I'm not aware that **rstan** has a built-in function for that. We can, however, make them with the `mcmc_rank_overlay()` function from **bayesplot**.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 3.5
+#| message: false
+
+as_draws_df(m9.1b) |>  
+  mcmc_rank_overlay(pars = vars(`a[1]`:`b[2]`),
+                    facet_args = list(labeller = label_parsed)) +
+  scale_color_viridis_d(option = "A", end = 0.8) +
+  coord_cartesian(ylim = c(20, NA))
+```
+
+#### Overthinking: Raw Stan model code.
+
+## Care and feeding of your Markov chain
+
+### How many samples do you need?
+
+#### Rethinking: Warmup is not burn-in.
+
+### How many chains do you need?
+
+#### Rethinking: Convergence diagnostics.
+
+### Taming a wild chain.
+
+Define the new very-small `stan_data`.
+
+```{r}
+stan_data <- tibble(y = c(-1, 1)) |>  
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Make `stan_program_9.2`.
+
+```{r}
+stan_program_9.2 <- '
+data {
+  int<lower=1> n;
+  vector[n] y;
+}
+parameters {
+  real alpha;
+  real<lower=0> sigma;
+}
+model {
+  y ~ normal(alpha, sigma);
+  alpha ~ normal(0, 1000);
+  sigma ~ exponential(0.0001);
+}
+'
+```
+
+Compile and sample with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m9.2, file = "fits/m9.2.rda")
+load(file = "fits/m9.2.rda")
+```
+
+```{r}
+#| eval: false
+
+m9.2 <- stan(
+  data = stan_data,
+  model_code = stan_program_9.2,
+  chains = 3, cores = 3, iter = 1000, seed = 9)
+```
+
+Let's peek at the summary.
+
+```{r}
+print(m9.2, probs = c(0.055, 0.945))
+```
+
+Much like in the text, this summary is a disaster. If you actually fit the model in your computer, note the warning about <span style="color: red;">divergent transitions</span>. The `nuts_params()` function from **bayesplot** allows use to pull a wealth of diagnostic information. The different kinds of diagnostics are listed in the `Parameter` column.
+
+```{r}
+nuts_params(m9.2) |> 
+  distinct(Parameter)
+```
+
+Our interest is for when `Parameter == "divergent__"`.
+
+```{r}
+nuts_params(m9.2) |> 
+  filter(Parameter == "divergent__") |> 
+  count(Value)
+```
+
+This indicates that among the 3,000 post-warmup draws, 214 were classified as divergent transitions.
+
+Here are the trace and rank plots for `m9.2`, which make the top two rows of our version of Figure 9.9.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 3.5
+
+# Trace
+p1 <- as_draws_df(m9.2) |>  
+  mcmc_trace(pars = vars(alpha:sigma),
+             facet_args = list(labeller = label_parsed))
+
+# Trank
+p2 <- as_draws_df(m9.2) |>  
+  mcmc_rank_overlay(pars = vars(alpha:sigma),
+                    facet_args = list(labeller = label_parsed))
+
+# Combine
+(p1 / p2) & 
+  theme(legend.position = "none")
+```
+
+Okay, that's enough disaster. Let's try a model that adds just a little information by way of weakly-regularizing priors:
+
+$$
+\begin{align*}
+y_i & \sim \operatorname{Normal}(\alpha, \sigma) \\
+\alpha & \sim \operatorname{Normal}(1, 10) \\
+\sigma & \sim \operatorname{Exponential}(1).
+\end{align*}
+$$
+
+Watch our new priors save the day.
+
+```{r}
+#| echo: false
+
+# save(m9.3, file = "fits/m9.3.rda")
+load(file = "fits/m9.3.rda")
+```
+
+```{r}
+#| eval: false
+
+stan_program_9.3 <- '
+data {
+  int<lower=1> n;
+  vector[n] y;
+}
+parameters {
+  real alpha;
+  real<lower=0> sigma;
+}
+model {
+  y ~ normal(alpha, sigma);
+  alpha ~ normal(1, 10);
+  sigma ~ exponential(1);
+}
+'
+
+m9.3 <- stan(
+  data = stan_data,
+  model_code = stan_program_9.3,
+  chains = 3, cores = 3, iter = 1000, seed = 9)
+```
+
+Unlike in the text, we still got one divergent transition.
+
+```{r}
+nuts_params(m9.3) |> 
+  filter(Parameter == "divergent__") |> 
+  count(Value)
+```
+
+However, the overall parameter summary looks much better.
+
+```{r}
+print(m9.3, probs = c(0.055, 0.945))
+```
+
+The trace and trank plots look better, too. Though frankly, they're still not great. Don't try to fit models with 2 data points, friends.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 3.5
+
+# Trace
+p1 <- as_draws_df(m9.3) |>  
+  mcmc_trace(pars = vars(alpha:sigma),
+             facet_args = list(labeller = label_parsed))
+
+# Trank
+p2 <- as_draws_df(m9.3) |>  
+  mcmc_rank_overlay(pars = vars(alpha:sigma),
+                    facet_args = list(labeller = label_parsed))
+
+# Combine
+(p1 / p2) & 
+  theme(legend.position = "none")
+```
+
+Now behold our version of Figure 9.10.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2.75
+
+draws <- as_draws_df(m9.3)
+
+# alpha
+p1 <- tibble(alpha = seq(from = -17, to = 17, length.out = 501)) |> 
+  mutate(density = dnorm(x = alpha, mean = 1, sd = 10)) |> 
+  
+  ggplot(aes(x = alpha)) +
+  geom_area(aes(y = density),
+            fill = "gray60") +
+  geom_density(data = draws,
+               adjust = 1/2, alpha = 2/3, fill = "blue", linewidth = 0) +
+  annotate(geom = "text",
+           x = c(9, 2), y = c(0.05, 0.2),
+           label = c("prior", "posterior"),
+           color = c("black", "blue"), hjust = 0) +
+  coord_cartesian(xlim = c(-15, 15))
+
+# sigma
+p2 <- tibble(sigma = seq(from = 0, to = 12, length.out = 501)) |> 
+  mutate(density = dexp(x = sigma, rate = 1)) |> 
+  
+  ggplot(aes(x = sigma)) +
+  geom_area(aes(y = density),
+            fill = "gray60") +
+  geom_density(data = draws,
+               adjust = 1/2, alpha = 2/3, fill = "blue", linewidth = 0) +
+  coord_cartesian(xlim = c(0, 10),
+                  ylim = c(0, 0.75))
+
+# Combine
+(p1 | p2) &
+  scale_y_continuous(NULL, breaks = NULL)
+```
+
+#### Rethinking: The folk theorem of statistical computing.
+
+#### Overthinking: Divergent transitions are your friend.
+
+### Non-identifiable parameters.
+
+Update the `stan_data`.
+
+```{r}
+set.seed(41)
+
+stan_data <- tibble(y = rnorm(n = 100, mean = 0, sd = 1)) |>  
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Make `stan_program_9.4`.
+
+```{r}
+stan_program_9.4 <- '
+data {
+  int<lower=1> n;
+  vector[n] y;
+}
+parameters {
+  real a1;
+  real a2;
+  real<lower=0> sigma;
+}
+model {
+  y ~ normal(a1 + a2, sigma);
+  [a1, a2] ~ normal(0, 1000);
+  sigma ~ exponential(1);
+}
+'
+```
+
+Compile and sample with `stan()`.
+
+```{r}
+#| echo: false
+
+save(m9.4, file = "fits/m9.4.rda")
+load(file = "fits/m9.4.rda")
+```
+
+```{r}
+#| eval: false
+
+m9.4 <- stan(
+  data = stan_data,
+  model_code = stan_program_9.4,
+  chains = 3, cores = 3, iter = 1000, seed = 384)
+```
+
+Our model results don't perfectly mirror McElreath's, but they're right with his in spirit.
+
+```{r}
+print(m9.4, probs = c(0.055, 0.945))
+```
+
+If you're following along on your computer, note the frightening warning messages. You can also check the HMC diagnostic messages of a `stan()` model with the `check_hmc_diagnostics()` function.
+
+```{r}
+check_hmc_diagnostics(m9.4)
+```
+
+Those iterations flagged for tree depth are also often called "transitions" in the red warning messages you'll get at the end of a `stan()` call. You generally want that number to be zero out of the total draws.
+
+Now we try again with tighter priors for the $\mu$ model.
+
+```{r}
+#| echo: false
+
+# save(m9.5, file = "fits/m9.5.rda")
+load(file = "fits/m9.5.rda")
+```
+
+```{r}
+#| eval: false
+
+stan_program_9.5 <- '
+data {
+  int<lower=1> n;
+  vector[n] y;
+}
+parameters {
+  real a1;
+  real a2;
+  real<lower=0> sigma;
+}
+model {
+  y ~ normal(a1 + a2, sigma);
+  [a1, a2] ~ normal(0, 10);  // This is the only change
+  sigma ~ exponential(1);
+}
+'
+
+m9.5 <- stan(
+  data = stan_data,
+  model_code = stan_program_9.5,
+  chains = 3, cores = 3, iter = 1000, seed = 384)
+```
+
+How'd we do?
+
+```{r}
+print(m9.5, probs = c(0.055, 0.945))
+```
+
+This looks better. How about the `check_hmc_diagnostics()` output.
+
+```{r}
+check_hmc_diagnostics(m9.5)
+```
+
+Hooray!
+
+Finish off the chapter with Figure 9.11.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 8
+#| message: false
+
+# m9.4, trace
+p1 <- as_draws_df(m9.4) |>  
+  mcmc_trace(pars = vars(a1:sigma),
+             facet_args = list(ncol = 1)) +
+  labs(subtitle = "m9.4 (wimpy priors)") +
+  theme(legend.position = "none",
+        strip.text = element_blank())
+
+# m9.4, trank
+p2 <- as_draws_df(m9.4) |>  
+  mcmc_rank_overlay(pars = vars(a1:sigma),
+                    facet_args = list(ncol = 1, strip.position = "right")) +
+  theme(legend.position = "none")
+
+# m9.5, trace
+p3 <- as_draws_df(m9.5) |>  
+  mcmc_trace(pars = vars(a1:sigma),
+             facet_args = list(ncol = 1)) +
+  labs(subtitle = "m9.5 (weakly informative priors)") +
+  theme(legend.position = "none",
+        strip.text = element_blank())
+
+# m9.5, trank
+p4 <- as_draws_df(m9.5) |>  
+  mcmc_rank_overlay(pars = vars(a1:sigma),
+                    facet_args = list(ncol = 1, strip.position = "right")) +
+  theme(legend.position = "none")
+
+# Combine, adjust, and display
+((p1 | p2) / (p3 | p4)) &
+  scale_x_continuous(NULL, breaks = NULL) &
+  scale_color_viridis_d(option = "D", end = 0.8)
+```
+
+#### Rethinking: Hamiltonian warnings and Gibbs overconfidence.
+
+## Summary
+
+## Session info {-}
+
+## Comments {-}
+
