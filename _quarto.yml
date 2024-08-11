@@ -19,6 +19,7 @@ book:
     - 06.qmd
     - 07.qmd
     - 08.qmd
+    - 09.qmd
     - references.qmd
 
 toc: true
