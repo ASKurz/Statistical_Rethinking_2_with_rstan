@@ -93,7 +93,7 @@ stan_program_9.1 <- '
 data {
   int<lower=1> n;
   int<lower=1> n_cid;
-  int cid[n];
+  array[n] int cid;
   vector[n] rugged_std;
   vector[n] log_gdp_std;
 }
