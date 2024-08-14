@@ -2187,7 +2187,7 @@ str(stan_data)
 
 Do you see the `n_sex` value there? When you save variables as characters or as factors, the `compose_data()` function will automatically compute a corresponding `n_` value. To learn more, execute `?compose_data` in your console.
 
-Define the two `model_code`s. Notice how we've used the `n_sex` value in the first.
+Here we define the two `model_code`s. I should make a couple comments on the `data` blocks. Notice how we've defined the `n_sex` scalar in the first, and how we later use that value to define the length of the `a` vector in the `parameters` block. When we use values like that, as well as how we've been using `n` in all previous models, those values are always integers, which we declared in the `data` block by stating `int`. Up until this point, we have only been using integers as scalars. All of our primary data values have been placed in vectors. In Stan, vectors an be used for real and complex values, but not integers. If you want to feed in a series of integer values as data, you generally need to use an array, which is what we're doing with the syntax of `array[n] int sex;` in the first `data` block, below. This is important because if you want to use McElreath's index-variable approach, the index variable should be an integer. Note, however, that when you use the dummy-variable approach, you can save the dummy variables as either integers (saved in an array) or as real values (typically saved in a vector, but also possibly in an array). In my experience, this is all easy to mix up, so do spend some time looking through the [*Data Types and Declarations*](https://mc-stan.org/docs/reference-manual/types.html) section of the *Stan Reference Manual* [@standevelopmentteamStanReferenceManual2024].
 
 ```{r}
 # Index variable approach
@@ -2196,7 +2196,7 @@ data {
   int<lower=1> n;
   int<lower=1> n_sex;
   vector[n] height;
-  int sex[n];
+  array[n] int sex;
 }
 parameters {
   vector[n_sex] a;
@@ -2382,7 +2382,7 @@ stan_data <- d |>
 str(stan_data)
 ```
 
-Define the two `model_code`s. Note our use of the `n_clade_id` value in the first.
+Define the two `model_code`s. Note how we've saved the `n_clade_id` variable as an integer in an array, in the first, which allows us to use it as an index in the `model` block.
 
 ```{r}
 # Index variable approach
@@ -2391,7 +2391,7 @@ data {
   int<lower=1> n;
   int<lower=1> n_clade_id;
   vector[n] k;
-  int clade_id[n];
+  array[n] int clade_id;
 }
 parameters {
   vector[n_clade_id] a;
@@ -2594,8 +2594,8 @@ data {
   int<lower=1> n_clade_id;
   int<lower=1> n_house_id;
   vector[n] k;
-  int clade_id[n];
-  int house_id[n];
+  array[n] int clade_id;
+  array[n] int house_id;
 }
 parameters {
   vector[n_clade_id] a;
