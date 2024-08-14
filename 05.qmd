@@ -2088,7 +2088,7 @@ bind_rows(
 
 #### Rethinking: Continuous countries.
 
-### Binary categories.
+### Binary categories. {#sec-Binary-categories}
 
 Reload the `Howell1` data.
 
