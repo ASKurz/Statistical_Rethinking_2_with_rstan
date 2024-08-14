@@ -166,10 +166,10 @@ stan_data <- dd |>
 str(stan_data)
 ```
 
-Define what I'm calling `stan_program_8.1a`. Note that for this first version, we'll be sampling from the prior.
+Define what I'm calling `model_code_8.1a`. Note that for this first version, we'll be sampling from the prior.
 
 ```{r}
-stan_program_8.1a <- '
+model_code_8.1a <- '
 data {
   int<lower=1> n;
   real xbar;
@@ -206,14 +206,14 @@ load(file = "fits/m8.1a.rda")
 
 m8.1a <- stan(
   data = stan_data,
-  model_code = stan_program_8.1a,
+  model_code = model_code_8.1a,
   cores = 4, seed = 8)
 ```
 
-Define `stan_program_8.1b`. We're still sampling from the prior, but this time the priors are tighter.
+Define `model_code_8.1b`. We're still sampling from the prior, but this time the priors are tighter.
 
 ```{r}
-stan_program_8.1b <- '
+model_code_8.1b <- '
 data {
   int<lower=1> n;
   real xbar;
@@ -250,7 +250,7 @@ load(file = "fits/m8.1b.rda")
 
 m8.1b <- stan(
   data = stan_data,
-  model_code = stan_program_8.1b,
+  model_code = model_code_8.1b,
   cores = 4, seed = 8)
 ```
 
@@ -281,10 +281,10 @@ bind_rows(as_draws_df(m8.1a), as_draws_df(m8.1b)) |>
   facet_wrap(~fit)
 ```
 
-Now define what we'll just call `stan_program_8.1`, where the likelihood is now included in the `model` block. Note how we're also defining the `log_lik` vector within the `generated quantities` block so we can compute information criteria for model comparisons.
+Now define what we'll just call `model_code_8.1`, where the likelihood is now included in the `model` block. Note how we're also defining the `log_lik` vector within the `generated quantities` block so we can compute information criteria for model comparisons.
 
 ```{r}
-stan_program_8.1 <- '
+model_code_8.1 <- '
 data {
   int<lower=1> n;
   real xbar;
@@ -328,7 +328,7 @@ load(file = "fits/m8.1.rda")
 
 m8.1 <- stan(
   data = stan_data,
-  model_code = stan_program_8.1,
+  model_code = model_code_8.1,
   cores = 4, seed = 8)
 ```
 
@@ -360,10 +360,10 @@ stan_data <- dd |>
 str(stan_data)
 ```
 
-Make `stan_program_8.2` for the varying-intercepts model.
+Make `model_code_8.2` for the varying-intercepts model.
 
 ```{r}
-stan_program_8.2 <- '
+model_code_8.2 <- '
 data {
   int<lower=1> n;
   int<lower=1> n_cid;
@@ -409,7 +409,7 @@ load(file = "fits/m8.2.rda")
 
 m8.2 <- stan(
   data = stan_data,
-  model_code = stan_program_8.2,
+  model_code = model_code_8.2,
   cores = 4, seed = 8)
 ```
 
@@ -492,10 +492,10 @@ Note our use of the `case_when()` function when defining the linear models for t
 
 ### Adding an interaction does work.
 
-In `stan_program_8.3` we add an interaction to the model via the index-variable approach by setting `vector[n_cid] b` within the `parameters` block, and then by setting `b[cid]` in the `mu` formula within the `transformed parameters` block.
+In `model_code_8.3` we add an interaction to the model via the index-variable approach by setting `vector[n_cid] b` within the `parameters` block, and then by setting `b[cid]` in the `mu` formula within the `transformed parameters` block.
 
 ```{r}
-stan_program_8.3 <- '
+model_code_8.3 <- '
 data {
   int<lower=1> n;
   int<lower=1> n_cid;
@@ -541,7 +541,7 @@ load(file = "fits/m8.3.rda")
 
 m8.3 <- stan(
   data = stan_data,
-  model_code = stan_program_8.3,
+  model_code = model_code_8.3,
   cores = 4, seed = 8)
 ```
 
@@ -829,11 +829,11 @@ stan_data <- d |>
 str(stan_data)
 ```
 
-Make `stan_program_8.4` and `stan_program_8.5`.
+Make `model_code_8.4` and `model_code_8.5`.
 
 ```{r}
 # No interaction
-stan_program_8.4 <- '
+model_code_8.4 <- '
 data {
   int<lower=1> n;
   int<lower=1> n_pred;
@@ -864,7 +864,7 @@ generated quantities {
 '
 
 # Interaction
-stan_program_8.5 <- '
+model_code_8.5 <- '
 data {
   int<lower=1> n;
   int<lower=1> n_pred;
@@ -912,12 +912,12 @@ load(file = "fits/m8.5.rda")
 
 m8.4 <- stan(
   data = stan_data,
-  model_code = stan_program_8.4,
+  model_code = model_code_8.4,
   cores = 4, seed = 8)
 
 m8.5 <- stan(
   data = stan_data,
-  model_code = stan_program_8.5,
+  model_code = model_code_8.5,
   cores = 4, seed = 8)
 ```
 
@@ -974,11 +974,11 @@ bind_rows(
 
 ### Plotting prior predictions.
 
-To plot the prior-predictive expectations, we'll need to first sample from the priors. Toward that end, we define what I'll call `stan_program_8.4p` and `stan_program_8.5p`.
+To plot the prior-predictive expectations, we'll need to first sample from the priors. Toward that end, we define what I'll call `model_code_8.4p` and `model_code_8.5p`.
 
 ```{r}
 # No interaction
-stan_program_8.4p <- '
+model_code_8.4p <- '
 data {
   int<lower=1> n;
   int<lower=1> n_pred;
@@ -1008,7 +1008,7 @@ generated quantities {
 '
 
 # Interaction
-stan_program_8.5p <- '
+model_code_8.5p <- '
 data {
   int<lower=1> n;
   int<lower=1> n_pred;
@@ -1055,12 +1055,12 @@ load(file = "fits/m8.5p.rda")
 
 m8.4p <- stan(
   data = stan_data,
-  model_code = stan_program_8.4p,
+  model_code = model_code_8.4p,
   cores = 4, seed = 8)
 
 m8.5p <- stan(
   data = stan_data,
-  model_code = stan_program_8.5p,
+  model_code = model_code_8.5p,
   cores = 4, seed = 8)
 ```
 
