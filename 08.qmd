@@ -335,7 +335,7 @@ m8.1 <- stan(
 Check the summary for `m8.1`.
 
 ```{r}
-print(m8.1, pars = c("a", "b", "sigma"), probs = c(0.05, 0.945))
+print(m8.1, pars = c("a", "b", "sigma"), probs = c(0.055, 0.945))
 ```
 
 #### Rethinking: Practicing for when it matters.
@@ -368,7 +368,7 @@ data {
   int<lower=1> n;
   int<lower=1> n_cid;
   real xbar;
-  int cid[n];
+  array[n] int cid;
   vector[n] rugged_std;
   vector[n] log_gdp_std;
 }
@@ -416,7 +416,7 @@ m8.2 <- stan(
 Check the summary for `m8.2`.
 
 ```{r}
-print(m8.2, pars = c("a", "b", "sigma"), probs = c(0.05, 0.945))
+print(m8.2, pars = c("a", "b", "sigma"), probs = c(0.055, 0.945))
 ```
 
 Use the `extract_log_lik()` and `waic()` functions to compute the WAIC summaries for the models.
@@ -500,7 +500,7 @@ data {
   int<lower=1> n;
   int<lower=1> n_cid;
   real xbar;
-  int cid[n];
+  array[n] int cid;
   vector[n] rugged_std;
   vector[n] log_gdp_std;
 }
@@ -548,7 +548,7 @@ m8.3 <- stan(
 Check the summary for `m8.2`.
 
 ```{r}
-print(m8.3, pars = c("a", "b", "sigma"), probs = c(0.05, 0.945))
+print(m8.3, pars = c("a", "b", "sigma"), probs = c(0.055, 0.945))
 ```
 
 Compute and save the `waic()` summary for `m8.3`.
@@ -924,8 +924,8 @@ m8.5 <- stan(
 Check the summaries for `m8.4` and `m8.5`.
 
 ```{r}
-print(m8.4, include = FALSE, pars = "mu", probs = c(0.05, 0.945))
-print(m8.5, include = FALSE, pars = "mu", probs = c(0.05, 0.945))
+print(m8.4, include = FALSE, pars = "mu", probs = c(0.055, 0.945))
+print(m8.5, include = FALSE, pars = "mu", probs = c(0.055, 0.945))
 ```
 
 Here's a look at the $\beta_3$ posterior.
