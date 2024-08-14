@@ -1207,7 +1207,7 @@ stan_data <- d2 |>
 str(stan_data)
 ```
 
-Define the two `model_code` objects.
+Define the two `model_code` objects. For `model_code_6.9`, note how since we're using `mid` as an index variable, we have saved it as an integer in an array. We haven't done this in a while, but we covered it in some detail in @sec-Binary-categories if you need a refresher.
 
 ```{r}
 model_code_6.9 <- '
@@ -1215,7 +1215,7 @@ data {
   int<lower=1> n;
   vector[n] happiness;
   vector[n] a;
-  int mid[n];
+  array[n] int mid;
 }
 parameters {
   vector[2] b0;
