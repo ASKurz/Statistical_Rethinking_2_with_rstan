@@ -1,0 +1,1814 @@
+# God Spiked the Integers
+
+Load the packages.
+
+```{r}
+#| message: false
+#| warning: false
+
+# Load
+library(tidyverse)
+library(tidybayes)
+library(rstan)
+library(loo)
+library(patchwork)
+library(posterior)
+
+# Drop grid lines
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank())
+)
+```
+
+## Binomial regression
+
+### Logistic regression: Prosocial chimpanzees.
+
+Load the @silkChimpanzeesAreIndifferent2005 `chimpanzees` data.
+
+```{r}
+data(chimpanzees, package = "rethinking")
+d <- chimpanzees
+rm(chimpanzees)
+```
+
+Make the index variable `treatment`, a variant of which we'll be saving as a factor with labeled levels called `labels`.
+
+```{r}
+d <- d |> 
+  mutate(treatment = factor(1 + prosoc_left + 2 * condition)) |> 
+  # This will come in handy, later
+  mutate(labels = factor(treatment,
+                         levels = 1:4,
+                         labels = c("r/n", "l/n", "r/p", "l/p")))
+```
+
+We can use the `count()` function to get a sense of the distribution of the conditions in the data.
+
+```{r}
+d |> 
+  count(prosoc_left, condition, treatment, labels)
+```
+ 
+We start with the simple intercept-only logistic regression model, which follows the statistical formula
+
+```{r}
+#| eval: false
+#| echo: false
+
+pulled_left
+pulled-left
+```
+
+$$
+\begin{align*}
+\text{pulled-left}_i & \sim \operatorname{Binomial}(1, p_i) \\
+\operatorname{logit}(p_i) & = \alpha \\
+\alpha & \sim \operatorname{Normal}(0, w),
+\end{align*}
+$$
+
+where $w$ is the hyperparameter for $\sigma$ the value for which we have yet to choose.
+
+Make the `stan_data` with the `compose_data()` function.
+
+```{r}
+# Make a data set for predictions
+d_pred <- d |> 
+  distinct(actor, prosoc_left, condition, treatment, labels)
+
+# print(d_pred)
+
+# Make the primary data list
+stan_data <- d |> 
+  select(actor, treatment, pulled_left) |> 
+  compose_data(
+  n_actor = n_distinct(actor),
+  n_treatment = n_distinct(treatment),
+  # For predictions
+  n_pred = nrow(d_pred),
+  pred_actor = d_pred$actor,
+  pred_treatment = d_pred$treatment)
+
+# What?
+str(stan_data)
+```
+
+Define and sample from the initial program for the prior simulations.
+
+```{r}
+#| echo: false
+
+# save(m11.1, file = "fits/m11.1.rda")
+load(file = "fits/m11.1.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_11.1 <- '
+data {
+  int<lower=1> n;                       
+  array[n] int<lower=0, upper=1> pulled_left;
+}
+parameters {
+  real a;
+}
+model {
+  // pulled_left ~ binomial(1, inv_logit(a));
+  a ~ normal(0, 10);
+}
+'
+
+m11.1 <- stan(
+  model_code = model_code_11.1, 
+  data = stan_data,
+  cores = 4, seed = 11)
+```
+
+Here's Figure 11.3.a.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 3.25
+
+set.seed(11)
+
+p1 <- data.frame(a = c(
+  as_draws_df(m11.1) |> pull(a),
+  rnorm(n = 4e3, mean = 0, sd = 1.5))) |> 
+  mutate(p = plogis(a),
+         omega = rep(c(10, 1.5), each = n() / 2) |> 
+           as.character()) |> 
+  
+  ggplot(aes(x = p, color = omega, fill = omega)) +
+  geom_density(adjust = 1/10, alpha = 1/2) +
+  scale_color_discrete(expression(omega)) +
+  scale_fill_discrete(expression(omega)) +
+  labs(x = expression(italic(p)),
+       subtitle = expression("a ~ Normal(0, "*omega*")"))
+
+# What?
+p1
+```
+
+Here we make the `model_code` for `m11.2`, and compile the prior predictive distribution with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m11.2, file = "fits/m11.2.rda")
+load(file = "fits/m11.2.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_11.2 <- '
+data {
+  int<lower=1> n;                       
+  int<lower=1> n_treatment;
+  vector[n] treatment;
+  array[n] int<lower=0, upper=1> pulled_left;
+}
+parameters {
+  real a;
+  vector[n_treatment] b;
+}
+model {
+  // pulled_left ~ binomial(1, inv_logit(a + b[treatment]));
+  a ~ normal(0, 1.5);
+  b ~ normal(0, 10);
+}
+'
+
+m11.2 <- stan(
+  model_code = model_code_11.2, 
+  data = stan_data,
+  cores = 4, seed = 11)
+```
+
+Note that this model would typically have identification issues. But since we're just sampling from the prior, it isn't an issue for now.
+
+Here's `m11.3`, which is also just for prior-predictive draws, but this time using $\beta_{[1:4]} \sim \mathcal N(0, 0.5)$.
+
+```{r}
+#| echo: false
+
+# save(m11.3, file = "fits/m11.3.rda")
+load(file = "fits/m11.3.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_11.3 <- '
+data {
+  int<lower=1> n;                       
+  int<lower=1> n_treatment;
+  vector[n] treatment;
+  array[n] int<lower=0, upper=1> pulled_left;
+}
+parameters {
+  real a;
+  vector[n_treatment] b;
+}
+model {
+  // pulled_left ~ binomial(1, inv_logit(a + b[n_treatment]));
+  a ~ normal(0, 1.5);
+  b ~ normal(0, 0.5);  // This is the only new part
+}
+'
+
+m11.3 <- stan(
+  model_code = model_code_11.3, 
+  data = stan_data,
+  cores = 4, seed = 11)
+```
+
+Here we compute the probability difference estimand $p_1 - p_2$ from the prior predictive distribution of `m11.2` and `m11.3`, and save the results as `prior_m11.2_df` and `prior_m11.3_df`.
+
+```{r}
+prior_m11.2_df <- m11.2 |> 
+  spread_draws(a, b[treatment]) |> 
+  filter(treatment < 3) |> 
+  mutate(p = plogis(a + b)) |> 
+  compare_levels(p, by = treatment)
+
+prior_m11.3_df <- m11.3 |> 
+  spread_draws(a, b[treatment]) |> 
+  filter(treatment < 3) |> 
+  mutate(p = plogis(a + b)) |> 
+  compare_levels(p, by = treatment)
+
+# What?
+head(prior_m11.2_df)
+head(prior_m11.3_df)
+```
+
+Now we combine the two to make Figure 11.3.b.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 3.25
+
+p2 <- bind_rows(prior_m11.2_df, prior_m11.3_df) |> 
+  mutate(psi = rep(c(10, 0.5), each = n() / 2) |> 
+           as.character()) |> 
+  
+  ggplot(aes(x = abs(p), color = psi, fill = psi)) +
+  geom_density(adjust = 1/10, alpha = 1/2) +
+  scale_color_discrete(expression(psi)) +
+  scale_fill_discrete(expression(psi)) +
+  labs(x = expression(abs(italic(p)[1]-italic(p)[2])),
+       subtitle = expression("b ~ Normal(0, "*psi*")"))
+
+# Combine
+p1 | p2
+```
+
+The average *absolute* prior difference is about 0.1, very similar to McElreath's value from R code 11.9.
+
+```{r}
+prior_m11.3_df |> 
+  ungroup() |> 
+  summarise(mean = abs(p) |> mean())
+```
+
+The full model follows the form
+
+```{r}
+#| eval: false
+#| echo: false
+
+pulled_left
+pulled-left
+```
+
+$$
+\begin{align*}
+\text{pulled-left}_i      & \sim \operatorname{Binomial}(1, p_i) \\
+\operatorname{logit}(p_i) & = \alpha_{\text{actor}[i]} + \beta_{\text{treatment}[i]} \\
+\alpha_j & \sim \operatorname{Normal}(0, 1.5) \\
+\beta_k  & \sim \operatorname{Normal}(0, 0.5),
+\end{align*}
+$$
+
+where we now have four levels of $\alpha_j$ and seven levels of $\beta_k$. We'll call this model `m11.4`, and this time we actually sample from the posterior. In the `generated quantities` block, we're defining a vector of predicted values `p`, as well as the `log_lik` values for information criteria.
+
+```{r}
+#| echo: false
+
+# save(m11.4, file = "fits/m11.4.rda")
+load(file = "fits/m11.4.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_11.4 <- '
+data {
+  int<lower=1> n;                       
+  int<lower=1> n_actor;
+  int<lower=1> n_treatment;
+  int<lower=1> n_pred;
+  array[n] int actor;
+  array[n] int treatment;
+  array[n_pred] int pred_actor;
+  array[n_pred] int pred_treatment;
+  array[n] int<lower=0, upper=1> pulled_left;
+}
+parameters {
+  vector[n_actor] a;
+  vector[n_treatment] b;
+}
+model {
+  pulled_left ~ binomial(1, inv_logit(a[actor] + b[treatment]));
+  a ~ normal(0, 1.5);
+  b ~ normal(0, 0.5);
+}
+generated quantities {
+  vector[n_pred] p;
+  vector[n] log_lik;
+  
+  p = inv_logit(a[pred_actor] + b[pred_treatment]);
+  for (i in 1:n) log_lik[i] = binomial_lpmf(pulled_left[i] | 1, inv_logit(a[actor[i]] + b[treatment[i]]));
+}
+'
+
+m11.4 <- stan(
+  model_code = model_code_11.4, 
+  data = stan_data,
+  cores = 4, seed = 11)
+```
+
+Check the model summary.
+
+```{r}
+print(m11.4, pars = c("a", "b"), probs = c(0.055, 0.945))
+```
+
+Here's the coefficient plot for the intercepts, transformed onto the probability scale.
+
+```{r}
+#| fig-width: 4.5
+#| fig-height: 1.75
+
+m11.4 |> 
+  spread_draws(a[j]) |> 
+  mutate(j = factor(j, levels = 7:1)) |> 
+  
+  ggplot(aes(x = plogis(a), y = j)) +
+  stat_pointinterval(point_interval = mean_qi, .width = 0.89, 
+                     linewidth = 1, shape = 1) +
+  xlim(0:1) +
+  ylab(expression(italic(j)))
+```
+
+Here's the coefficient plot for the `treatment` parameters, on the log-odds scale.
+
+```{r}
+#| fig-width: 4.5
+#| fig-height: 1.25
+
+m11.4 |> 
+  spread_draws(b[k]) |> 
+  left_join(d |> 
+              distinct(treatment, labels) |> 
+              mutate(k = as.integer(treatment)),
+            by = join_by(k)) |>
+  mutate(labels = fct_rev(labels)) |> 
+  
+  ggplot(aes(x = b, y = labels)) +
+  stat_pointinterval(point_interval = mean_qi, .width = 0.89, 
+                     linewidth = 1, shape = 1) +
+  ylab(NULL)
+```
+
+Here are the two contrasts.
+
+```{r}
+#| fig-width: 4.5
+#| fig-height: 1.25
+
+m11.4 |> 
+  spread_draws(b[k]) |> 
+  pivot_wider(names_from = k, values_from = b) |> 
+  mutate(db13 = `1` - `3`,
+         db24 = `2` - `4`) |> 
+  pivot_longer(starts_with("db")) |> 
+  mutate(name = fct_rev(name)) |> 
+  
+  ggplot(aes(x = value, y = name)) +
+  stat_pointinterval(point_interval = mean_qi, .width = 0.89, 
+                     linewidth = 1, shape = 1) +
+  ylab(NULL)
+```
+
+Next, we prepare for the posterior predictive check. McElreath showed how to compute empirical proportions by the levels of `actor` and `treatment` with the `by()` function. Our approach will be with a combination of `group_by()` and `summarise()`. Here's what that looks like for `actor == 1`.
+
+```{r}
+#| message: false
+
+d |>
+  group_by(actor, treatment) |>
+  summarise(proportion = mean(pulled_left)) |> 
+  filter(actor == 1)
+```
+
+Now we'll follow that through to make the top panel of Figure 11.4.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2
+#| message: false
+
+# Wrangle
+p1 <- d |>
+  group_by(actor, treatment) |>
+  summarise(p = mean(pulled_left)) |> 
+  left_join(d |> distinct(actor, treatment, labels, condition, prosoc_left),
+            by = c("actor", "treatment")) |> 
+  mutate(actor = str_c("actor ", actor),
+         condition = factor(condition)) |> 
+  
+  # Plot
+  ggplot(aes(x = labels, y = p)) +
+  geom_hline(yintercept = 0.5, color = "white") +
+  geom_line(aes(group = prosoc_left),
+            linewidth = 1/4) +
+  geom_point(aes(color = condition),
+             size = 2.5, show.legend = F) + 
+  scale_x_discrete(NULL, breaks = NULL) +
+  facet_grid("observed proportions" ~ actor)
+  
+# Display
+p1
+```
+
+Make the bottom panel of Figure 11.4. Note how we're using our `p` parameters for this plow, which we defined in the `generated quantities` block, above.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2
+
+# Wrangle
+p2 <- m11.4 |> 
+  spread_draws(p[i]) |> 
+  left_join(d_pred |> 
+              mutate(i = 1:n()),
+            by = join_by(i)) |> 
+  mutate(actor = str_c("actor ", actor),
+         condition = factor(condition)) |> 
+  group_by(actor, prosoc_left, condition, treatment, labels) |> 
+  mean_qi(p, .width = 0.89) |> 
+  
+  # Plot
+  ggplot(aes(x = labels, y = p)) +
+  geom_hline(yintercept = .5, color = "white") +
+  geom_line(aes(group = prosoc_left),
+            linewidth = 1/4) +
+  geom_pointinterval(aes(ymin = .lower, ymax = .upper, fill = condition),
+                     linewidth = 1, shape = 21) +
+  scale_fill_discrete(breaks = NULL) +
+  facet_grid("posterior predictions" ~ actor) +
+  theme(strip.text.x = element_blank())
+
+# Display
+p2
+```
+
+Combine the two panels to make the full Figure 11.4.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+
+(p1 / p2) &
+  scale_y_continuous("proportion left lever", 
+                     breaks = 0:2 / 2, limits = 0:1)
+```
+
+Let's make two more index variables.
+
+```{r}
+d <- d |> 
+  mutate(side = prosoc_left + 1,  # right 1, left 2
+         cond = condition + 1)    # no partner 1, partner 2
+
+# What?
+d |> 
+  distinct(prosoc_left, condition, side, cond)
+```
+
+Update the `stan_data`.
+
+```{r}
+stan_data <- d |> 
+  select(actor, side, cond, pulled_left) |> 
+  compose_data(
+  n_actor = n_distinct(actor),
+  n_side = n_distinct(side),
+  n_cond = n_distinct(cond))
+
+# What?
+str(stan_data)
+```
+
+Define the new `model_code` and fit `m11.5`. Note how this time we're defining the log likelihood values in the `generated quantities` block with `binomial_lpmf()`.
+
+```{r}
+#| echo: false
+
+# save(m11.5, file = "fits/m11.5.rda")
+load(file = "fits/m11.5.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_11.5 <- '
+data {
+  int<lower=1> n;                       
+  int<lower=1> n_actor;
+  int<lower=1> n_side;
+  int<lower=1> n_cond;
+  array[n] int actor;
+  array[n] int side;
+  array[n] int cond;
+  array[n] int<lower=0, upper=1> pulled_left;
+}
+parameters {
+  vector[n_actor] a;
+  vector[n_side] b1;
+  vector[n_cond] b2;
+}
+model {
+  pulled_left ~ binomial(1, inv_logit(a[actor] + b1[side] + b2[cond]));
+  a ~ normal(0, 1.5);
+  b1 ~ normal(0, 0.5);
+  b2 ~ normal(0, 0.5);
+}
+generated quantities {
+  vector[n] eta;  // To simplify the `log_lik` code
+  vector[n] log_lik;
+  
+  eta = a[actor] + b1[side] + b2[cond];
+  for (i in 1:n) log_lik[i] = binomial_lpmf(pulled_left[i] | 1, inv_logit(eta[i]));
+  
+  // This also works for the `log_lik`, and it negates the need for `eta` from above
+  // for (i in 1:n) log_lik[i] = binomial_lpmf(pulled_left[i] | 1, inv_logit(a[actor[i]] + b1[side[i]] + b2[cond[i]]));
+}
+'
+
+m11.5 <- stan(
+  model_code = model_code_11.5, 
+  data = stan_data,
+  cores = 4, seed = 11)
+```
+
+Check the model summary.
+
+```{r}
+print(m11.5, pars = c("a", "b1", "b2"), probs = c(0.055, 0.945))
+```
+
+Compare the two models by the LOO with the `extract_log_lik()` and `loo_compare()` functions.
+
+```{r}
+loo_compare(
+  extract_log_lik(m11.4) |> loo(),
+  extract_log_lik(m11.5) |> loo()
+) |> 
+  print(simplify = FALSE)
+```
+
+#### Overthinking: Adding log-probability calculations to a Stan model.
+
+We did this with `m11.5`, above.
+
+### Relative shark and absolute deer.
+
+Based on the full model, `m11.4`, here's how you might compute the posterior mean and 89% intervals for the proportional odds of switching from `treatment == 2` to `treatment == 4`.
+
+```{r}
+#| warning: false
+
+as_draws_df(m11.4) |> 
+  mutate(proportional_odds = exp(`b[4]` - `b[2]`)) |> 
+  mean_qi(proportional_odds, .width = 0.89)
+```
+
+A limitation of relative measures measures like proportional odds is they ignore what you might think of as the reference or the baseline.
+
+#### Overthinking: Proportional odds and relative risk.
+
+### Aggregated binomial: Chimpanzees again, condensed.
+
+With the **tidyverse**, we can use `group_by()` and `summarise()` to achieve what McElreath did with `aggregate()`.
+
+```{r}
+#| message: false
+
+d_aggregated <- d |>
+  group_by(treatment, actor, side, cond) |>
+  summarise(left_pulls = sum(pulled_left)) |> 
+  ungroup()
+
+# What?
+d_aggregated |>
+  head(n = 10)
+```
+
+Update the `stan_data` for the new `d_aggregated` format.
+
+```{r}
+stan_data <- d_aggregated |> 
+  compose_data(n_actor = n_distinct(d_aggregated$actor))
+
+# What?
+str(stan_data)
+```
+
+Define `model_code_11.6` and fit the model.
+
+```{r}
+#| echo: false
+
+# save(m11.6, file = "fits/m11.6.rda")
+load(file = "fits/m11.6.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_11.6 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_actor;
+  int<lower=1> n_treatment;
+  array[n] int treatment;
+  array[n] int actor;
+  array[n] int<lower=0, upper=18> left_pulls;
+}
+parameters {
+  vector[n_actor] a;
+  vector[n_treatment] b;
+}
+model {
+  left_pulls ~ binomial(18, inv_logit(a[actor] + b[treatment]));
+  a ~ normal(0, 1.5);
+  b ~ normal(0, 0.5);
+}
+generated quantities {
+  vector[n] eta;
+  vector[n] log_lik;
+  eta = a[actor] + b[treatment];
+  for (i in 1:n) log_lik[i] = binomial_lpmf(left_pulls[i] | 18, inv_logit(eta[i]));
+}
+'
+
+m11.6 <- stan(
+  model_code = model_code_11.6, 
+  data = stan_data,
+  cores = 4, seed = 11)
+```
+
+Rather than the typical `print()` summary, here we'll compare the `a` and `b` parameters in this aggregated binomial model `m11.6` with its disaggregated version `m11.4` in a coefficient plot.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 2.5
+#| warning: false
+
+bind_rows(
+  as_draws_df(m11.4) |> 
+    select(.draw, `a[1]`:`b[4]`) ,
+  as_draws_df(m11.6) |> 
+    select(.draw, `a[1]`:`b[4]`) 
+) |> 
+  mutate(type = rep(c("disaggregated", "aggregated"), each = n() / 2)) |> 
+  pivot_longer(`a[1]`:`b[4]`) |> 
+  mutate(class = str_extract(name, "\\w")) |> 
+  
+  ggplot(aes(x = value, y = name,
+             color = type)) +
+  stat_pointinterval(.width = 0.89, linewidth = 1, shape = 1,
+                     position = position_dodge(width = -0.5)) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  xlab("posterior") +
+  facet_wrap(~ class, scales = "free")
+```
+
+Different version of the likelihood, same model. Feed the `extract_log_lik()` results into `loo()`, and save output as `loo_m11.6`.
+
+```{r}
+loo_m11.6 <- extract_log_lik(m11.6) |>
+  loo()
+
+# What?
+print(loo_m11.6)
+```
+
+Unlike with McElreath's `compare()` code in the text, the `loo::loo_compare()` will not let us directly compare the two versions of the model. I'm going to supress the output, but if you execute this code on your computer, you'll see it returns a warning.
+
+```{r}
+#| eval: false
+
+loo_compare(
+  extract_log_lik(m11.4) |> loo(),
+  loo_m11.6
+) |> 
+  print(simplify = FALSE)
+```
+
+To understand what's going on, consider how you might describe six 1's out of nine trials in the aggregated form,
+
+$$\Pr(6|9, p) = \frac{6!}{6!(9 - 6)!} p^6 (1 - p)^{9 - 6}.$$
+
+If we still stick with the same data, but this time re-express those as nine dichotomous data points, we now describe their joint probability as
+
+$$\Pr(1, 1, 1, 1, 1, 1, 0, 0, 0 \mid p) = p^6 (1 - p)^{9 - 6}.$$
+
+Let's work this out in code.
+
+```{r}
+# deviance of aggregated 6-in-9 
+-2 * dbinom(6, size = 9, prob = 0.2, log = TRUE)
+
+# deviance of dis-aggregated 
+-2 * sum(dbinom(c(1, 1, 1, 1, 1, 1, 0, 0, 0), size = 1, prob = 0.2, log = TRUE))
+```
+
+> But this difference is entirely meaningless. It is just a side effect of how we organized the data. The posterior distribution for the probability of success on each trial will end up the same, either way. (p. 339)
+
+This is what our coefficient plot showed us, above. The posterior distribution was the same within simulation variance for `m11.4` and `m11.6`. Just like McElreath reported in the text, we also got a warning about high Pareto $k$ values from the aggregated binomial model, `m11.6`. To access the message and its associated table directly, we can feed our `loo_m11.6` object into the `loo::pareto_k_table` function.
+
+```{r}
+loo_m11.6 |> 
+  loo::pareto_k_table()
+```
+
+### Aggregated binomial: Graduate school admissions.
+
+Load the infamous `UCBadmit` data.
+
+```{r}
+data(UCBadmit, package = "rethinking")
+d <- UCBadmit
+rm(UCBadmit)
+
+# What?
+print(d)
+```
+
+Now compute our new index variable, `gid`. Notice that if we save `gid` as a factor, the `compose_data()` a couple blocks below will automatically compute `n_gid`. We'll also slip in a `case` variable that saves the row numbers as a factor, which will come in handy later when we plot.
+
+```{r}
+d <- d |>  
+  mutate(gid  = ifelse(applicant.gender == "male", 1, 2) |> factor(),
+         case = 1:n() |> factor())
+
+# What?
+d |> 
+  distinct(applicant.gender, gid)
+```
+
+The univariable logistic model with `male` as the sole predictor of `admit` follows the form
+
+$$
+\begin{align*}
+\text{admit}_i    & \sim \operatorname{Binomial}(n_i, p_i) \\
+\text{logit}(p_i) & = \alpha_{\text{gid}[i]} \\
+\alpha_j          & \sim \operatorname{Normal}(0, 1.5),
+\end{align*}
+$$
+
+where $n_i = \text{applications}_i$, the rows are indexed by $i$, and the two levels of $\text{gid}$ are indexed by $j$.
+
+Make the `stan_data` with the `compose_data()` function.
+
+```{r}
+stan_data <- d |> 
+  select(dept, gid, admit, applications) |>
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Make the `model_code` and fit `m11.7` with `stan()`. Note the `generated quantities` block for the posterior-predictive check to come.
+
+````{r}
+#| echo: false
+
+# save(m11.7, file = "fits/m11.7.rda")
+load(file = "fits/m11.7.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_11.7 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_gid;
+  array[n] int gid;
+  array[n] int<lower=1> applications;
+  array[n] int<lower=0> admit;
+}
+parameters {
+  vector[n_gid] a;
+}
+model {
+  admit ~ binomial(applications, inv_logit(a[gid]));
+  a ~ normal(0, 1.5);
+}
+generated quantities {
+  // For the pp check
+  array[n] int<lower=0> pp_admit = binomial_rng(applications, inv_logit(a[gid]));
+}
+'
+
+m11.7 <- stan(
+  model_code = model_code_11.7, 
+  data = stan_data,
+  cores = 4, iter = 4000, seed = 11)
+```
+
+Check the model summary.
+
+```{r}
+print(m11.7, pars = "a", probs = c(0.055, 0.945))
+```
+
+We'll hold off on computing `diff_a` and `diff_p`, for a moment, and jump straight to Figure 11.5. Note how we're using the `pp_admit` values we computed with the `generated quantities` block.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3
+
+m11.7 |> 
+  spread_draws(pp_admit[i]) |> 
+  left_join(d |> 
+              mutate(i = as.integer(case)),
+            by = join_by(i)) |> 
+  
+  ggplot(aes(x = gid)) +
+  stat_pointinterval(aes(y = pp_admit / applications),
+                     .width = 0.89, linewidth = 1, shape = 1) +
+  geom_point(data = d,
+             aes(y = admit / applications),
+             color = "blue") +
+  geom_path(data = d,
+             aes(y = admit / applications, group = dept),
+             color = "blue") +
+  scale_x_discrete(NULL, labels = c("male", "female")) +
+  scale_y_continuous("admit", limits = 0:1) +
+  facet_wrap(~ dept, nrow = 1)
+```
+
+I should acknowledge I got the idea to reformat the plot this way from Arel-Bundock's [work](https://vincentarelbundock.github.io/rethinking2/11.html).
+
+Now we fit the model
+
+$$
+\begin{align*}
+\text{admit}_i    & \sim \operatorname{Binomial} (n_i, p_i) \\
+\text{logit}(p_i) & = \alpha_{\text{gid}[i]} + \delta_{\text{dept}[i]} \\
+\alpha_j          & \sim \operatorname{Normal} (0, 1.5) \\
+\delta_k          & \sim \operatorname{Normal} (0, 1.5),
+\end{align*}
+$$
+
+where departments are indexed by $k$. Make the `model_code` and fit `m11.8` with `stan()`. Note the increase in the `iter` argument.
+
+````{r}
+#| echo: false
+
+# save(m11.8, file = "fits/m11.8.rda")
+load(file = "fits/m11.8.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_11.8 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_gid;
+  int<lower=1> n_dept;
+  array[n] int gid;
+  array[n] int dept;
+  array[n] int applications;
+  array[n] int<lower=0> admit;
+}
+parameters {
+  vector[n_gid] a;
+  vector[n_dept] d;
+}
+model {
+  admit ~ binomial(applications, inv_logit(a[gid] + d[dept]));
+  a ~ normal(0, 1.5);
+  d ~ normal(0, 1.5);
+}
+generated quantities {
+  // For the pp check
+  array[n] int<lower=0> pp_admit = binomial_rng(applications, inv_logit(a[gid] + d[dept]));
+}
+'
+
+m11.8 <- stan(
+  model_code = model_code_11.8, 
+  data = stan_data,
+  cores = 4, iter = 4000, seed = 11)
+```
+
+Check the model summary.
+
+```{r}
+print(m11.8, pars = c("a", "d"), probs = c(0.055, 0.945))
+```
+
+Here we'll show the contrasts for the two models in a coefficient plot.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 1.75
+#| warning: false
+
+bind_rows(
+  as_draws_df(m11.7) |> select(.draw, `a[1]`:`a[2]`),
+  as_draws_df(m11.8) |> select(.draw, `a[1]`:`a[2]`)
+) |> 
+  mutate(fit = rep(c("m11.7", "m11.8"), each = n() / 2),
+         diff_a = `a[1]` - `a[2]`,
+         diff_p = plogis(`a[1]`) - plogis(`a[2]`)) |> 
+  pivot_longer(contains("diff")) |> 
+  
+  ggplot(aes(x = value, y = name,
+             color = fit)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_pointinterval(.width = 0.89, linewidth = 1, shape = 1,
+                     position = position_dodge(width = -0.5)) +
+  labs(x = "contrast",
+       y = NULL)
+```
+
+Here's our **tidyverse**-style tabulation of the proportions of applicants in each department by `gid`.
+
+```{r}
+#| message: false
+#| warning: false
+
+d |> 
+  group_by(dept) |> 
+  mutate(proportion = applications / sum(applications)) |> 
+  select(dept, gid, proportion) |> 
+  pivot_wider(names_from = dept,
+              values_from = proportion) |> 
+  mutate_if(is.double, round, digits = 2)
+```
+
+If we make another version of Figure 11.5 with `m11.8`, we'll see conditioning on both substantially improved the posterior predictive distribution.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3
+
+m11.8 |> 
+  spread_draws(pp_admit[i]) |> 
+  left_join(d |> 
+              mutate(i = as.integer(case)),
+            by = join_by(i)) |> 
+  
+  ggplot(aes(x = gid)) +
+  stat_pointinterval(aes(y = pp_admit / applications),
+                     .width = 0.89, linewidth = 1, shape = 1) +
+  geom_point(data = d,
+             aes(y = admit / applications),
+             color = "blue") +
+  geom_path(data = d,
+             aes(y = admit / applications, group = dept),
+             color = "blue") +
+  scale_x_discrete(NULL, labels = c("male", "female")) +
+  scale_y_continuous("admit", limits = 0:1) +
+  facet_wrap(~ dept, nrow = 1)
+```
+
+McElreath recommended we look at the `pairs()` plot to get a sense of how highly correlated the parameters in our `m11.8` model are. Here's the plot.
+
+```{r}
+#| fig-width: 5.5
+#| fig-height: 5
+#| warning: false
+
+pairs(m11.8, pars = c("a", "d"), gap = 0.25)
+```
+
+#### Rethinking: Simpson's paradox is not a paradox.
+
+## Poisson regression
+
+### Example: Oceanic tool complexity.
+
+Load the `Kline` data [see @klinePopulationSizePredicts2010].
+
+```{r}
+data(Kline, package = "rethinking")
+d <- Kline
+rm(Kline)
+
+# What?
+print(d)
+```
+
+Here are our new columns.
+
+```{r}
+d <- d |>
+  mutate(log_pop_std = (log(population) - mean(log(population))) / sd(log(population)),
+         cid         = ifelse(contact == "high", "2", "1"))
+```
+
+Our statistical model will follow the form
+
+```{r}
+#| eval: false
+#| echo: false
+
+log_pop_std
+log-pop-std
+```
+
+$$
+\begin{align*}
+\text{total_tools}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\log(\lambda_i)      & = \alpha_{\text{cid}[i]} + \beta_{\text{cid}[i]} \text{log-pop-std}_i \\
+\alpha_j             & \sim \; ? \\
+\beta_j              & \sim \; ?, 
+\end{align*}
+$$
+
+where the priors for $\alpha_j$ and $\beta_j$ have yet be defined. If we continue our convention of using a Normal prior on the $\alpha$ parameters, we should recognize those will be log-Normal distributed on the outcome scale. Why? Because we're modeling $\lambda$ with the log link. Here's our version of Figure 11.7, depicting the two log-Normal priors considered in the text.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 2.75
+
+d_plot <- tibble(
+  x       = c(3, 22),
+  y       = c(0.055, 0.04),
+  meanlog = c(0, 3),
+  sdlog   = c(10, 0.5)) |> 
+  expand_grid(number = seq(from = 0, to = 100, length.out = 200)) |> 
+  mutate(density = dlnorm(number, meanlog, sdlog),
+         group   = str_c("alpha%~%Normal(", meanlog, ", ", sdlog, ")"))
+
+d_plot |> 
+  ggplot(aes(fill = group, color = group)) +
+  geom_area(aes(x = number, y = density),
+            alpha = 3/4, linewidth = 0, position = "identity") +
+  geom_text(data = d_plot |> 
+              group_by(group) |> 
+              slice(1),
+            aes(x = x, y = y, label = group),
+            hjust = 0, parse = TRUE) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("mean number of tools") +
+  theme(legend.position = "none")
+```
+
+In this context, $\alpha \sim \operatorname{Normal}(0, 10)$ has a very long tail on the outcome scale. The mean of the log-Normal distribution, recall, is $\exp (\mu + \sigma^2/2)$. Here that is in code.
+
+```{r}
+exp(0 + 10^2 / 2)
+```
+
+That is very large. Here's the same thing in a simulation.
+
+```{r}
+set.seed(11)
+
+rnorm(1e4, 0, 10) |> 
+  exp() |> 
+  mean()
+```
+
+Now compute the mean for the other prior under consideration, $\alpha \sim \operatorname{Normal}(3, 0.5)$.
+
+```{r}
+exp(3 + 0.5^2 / 2)
+```
+
+This is much smaller and more reasonable.
+
+Now let's prepare to make the top row of Figure 11.8. In this portion of the figure, we consider the implications of two competing priors for $\beta$ while holding the prior for $\alpha$ at $\operatorname{Normal}(3, 0.5)$. The two $\beta$ priors under consideration are $\operatorname{Normal}(0, 10)$ and $\operatorname{Normal}(0, 0.2)$.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3
+
+set.seed(11)
+
+# How many lines would you like?
+n <- 100
+
+# Simulate and wrangle
+tibble(i = 1:n,
+       a = rnorm(n, mean = 3, sd = 0.5)) |> 
+  mutate(`beta%~%Normal(0*', '*10)`  = rnorm(n, mean = 0 , sd = 10),
+         `beta%~%Normal(0*', '*0.2)` = rnorm(n, mean = 0 , sd = 0.2)) |> 
+  pivot_longer(contains("beta"),
+               values_to = "b",
+               names_to = "prior") |> 
+  expand_grid(x = seq(from = -2, to = 2, length.out = 100)) |> 
+  mutate(prior = fct_rev(prior)) |> 
+  
+  # Plot
+  ggplot(aes(x = x, y = exp(a + b * x), group = i)) +
+  geom_line(alpha = 2/3, linewidth = 1/4) +
+  labs(x = "log population (std)",
+       y = "total tools") +
+  coord_cartesian(ylim = c(0, 100)) +
+  facet_wrap(~ prior, labeller = label_parsed)
+```
+
+It turns out that many of the lines considered plausible under $\operatorname{Normal}(0, 10)$ are disturbingly extreme. Here is what $\alpha \sim \operatorname{Normal}(3, 0.5)$ and $\beta \sim \operatorname{Normal}(0, 0.2)$ would mean when the $x$-axis is on the log population scale and the population scale.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3.2
+
+set.seed(11)
+
+prior <- tibble(
+  i = 1:n,
+  a = rnorm(n, mean = 3, sd = 0.5),
+  b = rnorm(n, mean = 0, sd = 0.2)) |> 
+  expand_grid(x = seq(from = log(100), to = log(200000), length.out = 100))
+
+# Left
+p1 <- prior |> 
+  ggplot(aes(x = x, y = exp(a + b * x), group = i)) +
+  geom_line(alpha = 2/3, linewidth = 1/4) +
+  labs(x = "log population",
+       y = "total tools") +
+  coord_cartesian(xlim = c(log(100), log(200000)),
+                  ylim = c(0, 500))
+# Right
+p2 <- prior |> 
+  ggplot(aes(x = exp(x), y = exp(a + b * x), group = i)) +
+  geom_line(alpha = 2/3, linewidth = 1/4) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("population") +
+  coord_cartesian(xlim = c(100, 200000),
+                  ylim = c(0, 500))
+
+# Combine, add facet strips, and display
+(p1 | p2) &
+  facet_wrap(~ "atop(alpha%~%Normal(3*', '*0.5), beta%~%Normal(0*', '*0.2))", 
+             labeller = label_parsed)
+```
+
+Okay, after settling on our two priors, the updated model formula is
+
+$$
+\begin{align*}
+y_i             & \sim \operatorname{Poisson}(\lambda_i) \\
+\log(\lambda_i) & = \alpha + \beta (x_i - \bar x) \\
+\alpha          & \sim \operatorname{Normal}(3, 0.5) \\
+\beta           & \sim \operatorname{Normal}(0, 0.2).
+\end{align*}
+$$
+
+We're finally ready to start fitting the models. First, define the `stan_data`.
+
+```{r}
+stan_data <- d |> 
+  select(total_tools, log_pop_std, cid) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Define `model_code_11.9` and `model_code_11.10`.
+
+````{r}
+#| echo: false
+
+# save(m11.9, file = "fits/m11.9.rda")
+# save(m11.10, file = "fits/m11.10.rda")
+
+load(file = "fits/m11.9.rda")
+load(file = "fits/m11.10.rda")
+```
+
+```{r}
+#| eval: false
+
+# Intercept only
+model_code_11.9 <- '
+data {
+  int<lower=1> n;
+  array[n] int<lower=0> total_tools;
+}
+parameters {
+  real a;  
+}
+model {
+  total_tools ~ poisson(exp(a));
+  a ~ normal(3, 0.5);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = poisson_lpmf(total_tools[i] | exp(a));
+}
+'
+
+# Interaction model
+model_code_11.10 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_cid;
+  array[n] int cid;
+  vector[n] log_pop_std;
+  array[n] int<lower=0> total_tools;
+}
+parameters {
+  vector[n_cid] a;
+  vector[n_cid] b;
+}
+model {
+  vector[n] lambda;
+  lambda = exp(a[cid] + b[cid] .* log_pop_std);
+  
+  total_tools ~ poisson(lambda);
+  a ~ normal(3, 0.5);
+  b ~ normal(0, 0.2);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = poisson_lpmf(total_tools[i] | exp(a[cid[i]] + b[cid[i]] .* log_pop_std[i]));
+}
+'
+```
+
+Sample from the two posteriors with `stan()`.
+
+```{r}
+m11.9 <- stan(
+  data = stan_data,
+  model_code = model_code_11.9,
+  cores = 4, seed = 11)
+
+m11.10 <- stan(
+  data = stan_data,
+  model_code = model_code_11.10,
+  cores = 4, seed = 11)
+```
+
+Compare the two models by the LOO.
+
+```{r}
+l11.9 <- extract_log_lik(m11.9) |> loo()
+l11.10 <- extract_log_lik(m11.10) |> loo()
+
+loo_compare(l11.9, l11.10) |> 
+  print(simplify = FALSE)
+```
+
+Like McElreath reported in the text, we have a Pareto-$k$ warning. We can inspect the $k$ values with `loo::pareto_k_table()`.
+
+```{r}
+pareto_k_table(l11.10)
+```
+
+Let's take a closer look.
+
+```{r}
+d |> 
+  select(culture) |> 
+  mutate(k = l11.10$diagnostics$pareto_k) |> 
+  arrange(desc(k)) |> 
+  mutate_if(is.double, round, digits = 2)
+```
+
+It turns out Hawaii is very influential. Figure 11.9 will clarify why. For a little practice while computing the trajectories, we'll use an `as_draws_df()`-based workflow for the panel on the left, and use a  `spread_draws()`-based workflow for the panel on the right.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 3.25
+#| warning: false
+
+# For subsetting the labels in the left panel
+culture_vec <- c("Hawaii", "Tonga", "Trobriand", "Yap")
+
+# Left
+p1 <- as_draws_df(m11.10) |> 
+  select(.draw, `a[1]`:`b[2]`) |> 
+  pivot_longer(-.draw) |> 
+  mutate(parameter = str_extract(name, "[a-z]"),
+         cid = str_extract(name, "\\d")) |> 
+  select(-name) |> 
+  pivot_wider(names_from = parameter, values_from = value) |> 
+  expand_grid(log_pop_std = seq(from = -4.5, to = 2.5, length.out = 100)) |> 
+  mutate(total_tools = exp(a + b * log_pop_std)) |> 
+  
+  ggplot(aes(x = log_pop_std, y = total_tools,
+             group = cid, color = cid, fill = cid)) +
+  stat_lineribbon(.width = 0.89, alpha = 1/4) +
+  geom_point(data = d |> 
+               mutate(k = l11.10$diagnostics$pareto_k),
+             aes(size = k)) +
+  geom_text(data = d |> 
+              mutate(k = l11.10$diagnostics$pareto_k) |> 
+              mutate(label = str_c(culture, " (", round(k, digits = 2), ")"),
+                     vjust = ifelse(total_tools > 30, -0.3, 1.3)) |> 
+              filter(culture %in% culture_vec),
+            aes(label = label, vjust = vjust),
+            hjust = 1.1, size = 3) +
+  labs(x = "log population (std)",
+       y = "total tools") +
+  coord_cartesian(xlim = range(d$log_pop_std),
+                  ylim = c(0, 80))
+
+# Right
+p2 <- spread_draws(m11.10, a[cid], b[cid]) |> 
+  mutate(cid = as.character(cid)) |> 
+  expand_grid(log_pop_std = seq(from = -4.5, to = 2.5, length.out = 100)) |> 
+  mutate(total_tools = exp(a + b * log_pop_std)) |>
+  mutate(population = exp((log_pop_std * sd(log(d$population))) + mean(log(d$population)))) |> 
+  
+  ggplot(aes(x = population, y = total_tools,
+             group = cid, color = cid, fill = cid)) +
+  stat_lineribbon(.width = 0.89, alpha = 1/4) +
+  geom_point(data = d |> 
+               mutate(k = l11.10$diagnostics$pareto_k),
+             aes(size = k)) +
+  scale_x_continuous("population", breaks = c(0, 50000, 150000, 250000),
+                     labels = scales::comma(c(0, 50000, 150000, 250000))) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  coord_cartesian(xlim = range(d$population),
+                  ylim = c(0, 80))
+
+# Combine, adjust, and display
+(p1 | p2) &
+  scale_color_viridis_d(option = "A", end = 0.6) &
+  scale_fill_viridis_d(option = "A", end = 0.6) &
+  scale_size_continuous(range = c(0.1, 5), limits = c(0.1, 1.1)) &
+  theme(legend.position = "none")
+```
+
+Hawaii is influential in that it has a very large population relative to the other islands.
+
+#### Overthinking: Modeling tool innovation.
+
+McElreath's theoretical, or scientific, model for `total_tools` is
+
+$$\widehat{\text{total_tools}} = \frac{\alpha_{\text{cid}[i]} \: \text{population}^{\beta_{\text{cid}[i]}}}{\gamma}.$$
+
+We can use the Poisson likelihood to express this in a Bayesian model as
+
+$$
+\begin{align*}
+\text{total_tools} & \sim \operatorname{Poisson}(\lambda_i) \\
+\lambda_i & = \left[ \exp (\alpha_{\text{cid}[i]}) \text{population}_i^{\beta_{\text{cid}[i]}} \right] / \gamma \\
+\alpha_j  & \sim \operatorname{Normal}(1, 1) \\
+\beta_j   & \sim \operatorname{Exponential}(1) \\
+\gamma    & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+where we exponentiate $\alpha_{\text{cid}[i]}$ to restrict the posterior to zero and above. Here's how we might fit that model with **rstan**.
+
+First we make some data `d_pred` for the predictions we'll display in the plot.
+
+```{r}
+d_pred <- tibble(
+  population = seq(from = 0, to = 3e5, length.out = 101) |> 
+    as.integer()) |> 
+  expand_grid(cid = 1:2) |> 
+  mutate(i = 1:n())
+
+# What?
+glimpse(d_pred)
+```
+
+Now make the `stan_data`.
+
+```{r}
+stan_data <- d |> 
+  mutate(population = as.double(population)) |>
+  select(total_tools, population, cid) |>
+  compose_data(population_pred = d_pred$population,
+               cid_pred = d_pred$cid,
+               n_pred = nrow(d_pred))
+
+# What?
+str(stan_data)
+```
+
+Define `model_code_11.11`.
+
+
+```{r}
+#| eval: false
+model_code_11.11 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_cid;
+  array[n] int cid;
+  vector[n] population;
+  array[n] int<lower=0> total_tools;
+  // For predictions
+  int<lower=1> n_pred;
+  array[n_pred] int cid_pred;
+  vector[n_pred] population_pred;
+}
+parameters {
+  vector[n_cid] a;
+  vector<lower=0>[n_cid] b;
+  real<lower=0> g;
+}
+transformed parameters {
+  vector[n] lambda;
+  lambda = exp(a[cid]) .* population^b[cid] / g;
+}
+model {
+  total_tools ~ poisson(lambda);
+  a ~ normal(1, 1);
+  b ~ exponential(1);
+  g ~ exponential(1);
+}
+generated quantities {
+  vector[n] log_lik;
+  vector[n_pred] lambda_pred;
+  
+  for (i in 1:n) log_lik[i] = poisson_lpmf(total_tools[i] | lambda[i]);
+  lambda_pred = exp(a[cid_pred]) .* population_pred^b[cid_pred] / g;
+}
+'
+```
+
+Sample from the posterior.
+
+````{r}
+#| echo: false
+
+# save(m11.11, file = "fits/m11.11.rda")
+load(file = "fits/m11.11.rda")
+```
+
+```{r}
+#| eval: false
+
+m11.11 <- stan(
+  data = stan_data,
+  model_code = model_code_11.11,
+  cores = 4, seed = 11)
+```
+
+Check the model summary.
+
+```{r}
+print(m11.11, pars = c("a", "b", "g"), probs = c(0.055, 0.945))
+```
+
+Compute and check the PSIS-LOO estimates along with their diagnostic Pareto-$k$ values.
+
+```{r}
+l11.11 <- extract_log_lik(m11.11) |> loo()
+
+print(l11.11)
+```
+
+We still have one high Pareto-$k$ value. Recall that due to the very small sample size, this isn't entirely surprising. If you're curious, here's a scatter plot of the Pareto-$k$ values for this model and the last.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 3
+
+tibble(m11.10 = l11.10$diagnostics$pareto_k,
+       m11.11 = l11.11$diagnostics$pareto_k) |> 
+  
+  ggplot(aes(x = m11.10, y = m11.11)) +
+  geom_abline(color = "white") +
+  geom_point() +
+  scale_x_continuous(breaks = 0:5 / 5 + 0.1, limits = c(0.1, 1.1)) +
+  scale_y_continuous(breaks = 0:5 / 5 + 0.1, limits = c(0.1, 1.1)) +
+  labs(subtitle = expression(Pareto~italic(k)))
+```
+
+Okay, it's time to make Figure 11.10. In the first line in the `Wrangle` section, note how we're using `spread_draws()` to extract the `lambda_pred` values we defined in the `generated quantities`, above.
+
+```{r}
+#| fig-width: 3.5
+#| fig-height: 3.25
+
+# For the annotation
+d_text <- distinct(d, cid, contact) |> 
+  mutate(population  = c(210000, 72500),
+         total_tools = c(59, 68),
+         label       = str_c(contact, " contact"))
+
+# Wrangle
+spread_draws(m11.11, lambda_pred[i]) |> 
+  left_join(d_pred, by = join_by(i)) |> 
+  mutate(cid = as.character(cid)) |> 
+  rename(total_tools = lambda_pred) |> 
+  
+  # Plot!
+  ggplot(aes(x = population, y = total_tools,
+             group = cid, color = cid, fill = cid)) +
+  stat_lineribbon(.width = 0.89, alpha = 1/4) +
+  geom_point(data = d |> 
+               mutate(k = l11.11$diagnostics$pareto_k),
+             aes(size = k)) +
+  geom_text(data = d_text,
+            aes(label = label)) +
+  scale_x_continuous("population", breaks = c(0, 50000, 150000, 250000),
+                     labels = scales::comma(c(0, 50000, 150000, 250000))) +
+  scale_color_viridis_d(option = "A", end = 0.6) +
+  scale_fill_viridis_d(option = "A", end = 0.6) +
+  scale_size_continuous(range = c(0.1, 5), limits = c(0.1, 1)) +
+  ylab("total tools") +
+  coord_cartesian(xlim = range(d$population),
+                  ylim = c(0, 80)) +
+  theme(legend.position = "none")
+```
+
+In case you were curious, here are the results if we compare `m11.10` and `m11.11` by the PSIS-LOO.
+
+```{r}
+loo_compare(l11.10, l11.11) |> 
+  print(simplify = FALSE)
+```
+
+### Negative binomial (gamma-Poisson) models.
+
+### Example: Exposure and the offset.
+
+Here we simulate our data.
+
+```{r}
+set.seed(11)
+
+num_days <- 30
+y        <- rpois(num_days, lambda = 1.5)
+
+num_weeks <- 4
+y_new     <- rpois(num_weeks, lambda = 0.5 * 7)
+```
+
+Now tidy the data and add `log_days`.
+
+```{r}
+d <- tibble(
+  y         = c(y, y_new), 
+  days      = rep(c(1, 7), times = c(num_days, num_weeks)),  # this is the exposure
+  monastery = rep(0:1, times = c(num_days, num_weeks))) |>
+  mutate(log_days = log(days))
+
+# What?
+glimpse(d)
+```
+
+Within the context of the Poisson likelihood, we can decompose $\lambda$ into two parts, $\mu$ (mean) and $\tau$ (exposure), like this:
+
+$$
+y_i \sim \operatorname{Poisson}(\lambda_i) \\
+\log \lambda_i = \log \frac{\mu_i}{\tau_i} = \log \mu_i - \log \tau_i.
+$$
+
+Therefore, you can rewrite the equation if the exposure ($\tau$) varies in your data and you still want to model the mean ($\mu$). Using the model we're about to fit as an example, here's what that might look like:
+
+$$
+\begin{align*}
+y_i & \sim \operatorname{Poisson}(\mu_i) \\
+\log \mu_i & = \color{blue}{\log \tau_i} + \alpha + \beta \text{monastery}_i \\
+\alpha     & \sim \operatorname{Normal}(0, 1) \\
+\beta      & \sim \operatorname{Normal}(0, 1),
+\end{align*}
+$$
+
+where the offset $\log \tau_i$ does not get a prior. In this context, its value is added directly to the right side of the formula. With the **rstan** package, we do this directly in the `model` block. First, though, let's make the `stan_data`.
+
+```{r}
+stan_data <- d |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Define `model_code_11.12`. Note how `log_days` does not get a coefficient in the `lambda` formula. It stands on its own.
+
+```{r}
+model_code_11.12 <- '
+data {
+  int<lower=1> n;
+  vector[n] log_days;
+  vector[n] monastery;
+  array[n] int<lower=0> y;
+}
+parameters {
+  real a;
+  real b;
+}
+model {
+  y ~ poisson(exp(log_days + a + b * monastery));
+  a ~ normal(0, 1);
+  b ~ normal(0, 1);
+}
+'
+```
+
+Sample from the posterior.
+
+````{r}
+#| echo: false
+
+# save(m11.12, file = "fits/m11.12.rda")
+load(file = "fits/m11.12.rda")
+```
+
+```{r}
+#| eval: false
+
+m11.12 <- stan(
+  data = stan_data,
+  model_code = model_code_11.12,
+  cores = 4, seed = 11)
+```
+
+As we look at the model summary, keep in mind that the parameters are on the per-one-unit-of-time scale. Since we simulated the data based on summary information from two units of time--one day and seven days--, this means the parameters are in the scale of $\log (\lambda)$ per *one* day.
+
+```{r}
+print(m11.12, probs = c(0.055, 0.945))
+```
+
+To get the posterior distributions for average daily outputs for the old and new monasteries, respectively, we'll use use the formulas
+
+$$
+\begin{align*}
+\lambda_\text{old} & = \exp (\alpha) \;\;\; \text{and} \\
+\lambda_\text{new} & = \exp (\alpha + \beta_\text{monastery}).
+\end{align*}
+$$
+
+Following those transformations, we'll summarize the $\lambda$ distributions with medians and 89% HDIs with help from the `tidybayes::mean_hdi()` function.
+
+```{r}
+#| warning: false
+
+as_draws_df(m11.12) |>
+  mutate(lambda_old = exp(a),
+         lambda_new = exp(a + b)) |>
+  pivot_longer(contains("lambda")) |> 
+  mutate(name = factor(name, levels = c("lambda_old", "lambda_new"))) |>
+  group_by(name) |>
+  mean_hdi(value, .width = .89) |> 
+  mutate_if(is.double, round, digits = 2)
+```
+
+Because we don't know what seed McElreath used to simulate his data, our simulated data differed a little from his and, as a consequence, our results differ a little, too.
+
+## Multinomial and categorical models
+
+### Predictors matched to outcomes.
+
+I will flesh this section out later.
+
+### Predictors matched to observations.
+
+I will flesh this section out later.
+
+#### Multinomial in disguise as Poisson.
+
+Here we fit a multinomial likelihood by refactoring it to a series of Poisson models. Let's retrieve the Berkeley data.
+
+```{r}
+data(UCBadmit, package = "rethinking")
+d <- UCBadmit
+rm(UCBadmit)
+```
+
+Set up the `stan_data`.
+
+```{r}
+stan_data <- d |> 
+  # `reject` is a reserved word in Stan, cannot use as variable name
+  mutate(rej = reject) |> 
+  select(admit, rej, applications) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Define the `model_code` objects for the two complimentary models.
+
+```{r}
+# Binomial model of overall admission probability
+model_code_11.binom <- '
+data {
+  int<lower=1> n;
+  array[n] int<lower=1> applications;
+  array[n] int<lower=0> admit;
+}
+parameters {
+  real a;
+}
+model {
+  admit ~ binomial(applications, inv_logit(a));
+  a ~ normal(0, 1.5);
+}
+'
+
+# Poisson model of overall admission rate and rejection rate
+model_code_11.pois <- '
+data {
+  int<lower=1> n;
+  array[n] int<lower=1> applications;
+  array[n] int<lower=0> admit;
+  array[n] int<lower=0> rej;
+}
+parameters {
+  real a1;
+  real a2;
+}
+model {
+  admit ~ poisson(exp(a1));
+  rej ~ poisson(exp(a2));
+  [a1, a2] ~ normal(0, 1.5);
+}
+'
+```
+
+Compile and extract the posterior draws for both, with `stan()`.
+
+````{r}
+#| echo: false
+
+# save(m11.binom, file = "fits/m11.binom.rda")
+# save(m11.pois, file = "fits/m11.pois.rda")
+
+load(file = "fits/m11.binom.rda")
+load(file = "fits/m11.pois.rda")
+```
+
+```{r}
+#| eval: false
+
+m11.binom <- stan(
+  model_code = model_code_11.binom, 
+  data = stan_data,
+  chains = 3, cores = 3, seed = 11)
+
+m11.pois <- stan(
+  model_code = model_code_11.pois,
+  data = stan_data,
+  chains = 3, cores = 3, seed = 11)
+```
+
+Compare the two model summaries.
+
+```{r}
+print(m11.binom, pars = "a", probs = c(0.055, 0.945))
+print(m11.pois, pars = c("a1", "a2"), probs = c(0.055, 0.945))
+```
+
+Though the model summaries look very different for the two models, they give the same answer, within MCMC simulation error, for the focal estimand $p_\text{admit}$. We might explore that in a plot.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 2.5
+#| warning: false
+
+bind_rows(
+  # Binomial
+  as_draws_df(m11.binom) |> 
+    transmute(p_admit = plogis(a)),
+  # Poisson
+  as_draws_df(m11.pois) |> 
+    transmute(p_admit = exp(a1) / (exp(a1) + exp(a2)))
+) |> 
+  mutate(fit = rep(c("m11.binom", "m11.pois"), each = n() / 2)) |> 
+  
+  ggplot(aes(x = p_admit, y = fit)) +
+  stat_halfeye(.width = 0.89) +
+  scale_y_discrete(NULL, expand = expansion(mult = 0.1)) +
+  xlab(expression(italic(p)[admit]))
+```
+
+#### Overthinking: Multinomial-Poisson transformation.
+
+## Summary
+
+## Session info {-}
+
+## Comments {-}
+
