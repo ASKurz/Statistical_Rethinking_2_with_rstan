@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="A. Solomon Kurz">
-<meta name="dcterms.date" content="2024-08-06">
+<meta name="dcterms.date" content="2024-08-18">
 
 <title>Statistical rethinking 2 with rstan and the tidyverse</title>
 <style>
@@ -212,6 +212,30 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./09.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Markov Chain Monte Carlo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Big Entropy and the Generalized Linear Model</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">God Spiked the Integers</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Monsters and Mixtures</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -246,7 +270,7 @@ div.csl-indent {
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title"><em>Statistical rethinking</em> 2 with rstan and the tidyverse</h1>
-<p class="subtitle lead">version 0.0.1</p>
+<p class="subtitle lead">version 0.0.2</p>
 </div>
 
 
@@ -263,7 +287,7 @@ div.csl-indent {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 6, 2024</p>
+      <p class="date">August 18, 2024</p>
     </div>
   </div>
   
@@ -292,7 +316,7 @@ div.csl-indent {
 <p>Though not necessary, your <strong>R</strong> experience might be more enjoyable if done through the free RStudio interface, which you can learn about at <a href="https://posit.co/products/open-source/rstudio/">https://posit.co/products/open-source/rstudio/</a>.</p>
 <p>Once you have installed <strong>R</strong>, execute the following to install the bulk of the add-on packages. This may take a few minutes to finish. Go make yourself a coffee.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"dagitty"</span>, <span class="st">"devtools"</span>, <span class="st">"ggdag"</span>, <span class="st">"patchwork"</span>, <span class="st">"posterior"</span>, <span class="st">"remotes"</span>, <span class="st">"rstan"</span>, <span class="st">"tidybayes"</span>, <span class="st">"tidyverse"</span>, <span class="st">"tigris"</span>)</span>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"dagitty"</span>, <span class="st">"devtools"</span>, <span class="st">"GGally"</span>, <span class="st">"ggdag"</span>, <span class="st">"patchwork"</span>, <span class="st">"posterior"</span>, <span class="st">"remotes"</span>, <span class="st">"rstan"</span>, <span class="st">"tidybayes"</span>, <span class="st">"tidyverse"</span>, <span class="st">"tigris"</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(packages, <span class="at">dependencies =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -331,7 +355,7 @@ div.csl-indent {
 </section>
 <section id="warning" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="warning">Warning</h2>
-<p>This book is a side-product of another project for which I needed to learn more about <strong>rstan</strong>. It was also a good opportunity to learn more about making a <a href="https://quarto.org/">Quarto</a>-based ebook <span class="citation" data-cites="quarto2024">(<a href="references.html#ref-quarto2024" role="doc-biblioref">Allaire et al., 2024</a>)</span>. For this first 0.0.1 release, I’m only up through Chapter 8. I will continue to chip away on this as my schedule permits, but I am setting no goals and no deadlines. On the one hand, it would be nice to have another finished book in my portfolio; on the other hand, I really don’t like using <strong>rstan</strong> and I still much prefer a <strong>brms</strong>-based workflow. The remaining chapters in this book may find themselves fleshed out in quick succession, or this whole project may lay fallow. We’ll see…</p>
+<p>This book is a side-product of another project for which I needed to learn more about <strong>rstan</strong>. It was also a good opportunity to learn more about making a <a href="https://quarto.org/">Quarto</a>-based ebook <span class="citation" data-cites="quarto2024">(<a href="references.html#ref-quarto2024" role="doc-biblioref">Allaire et al., 2024</a>)</span>. For this second 0.0.2 release, I’m only up through Chapter 12. I will continue to chip away on this as my schedule permits, but I am setting no goals and no deadlines. On the one hand, it would be nice to have another finished book in my portfolio; on the other hand, I really don’t like using <strong>rstan</strong> and I still much prefer a <strong>brms</strong>-based workflow. The remaining chapters in this book may find themselves fleshed out in quick succession, or this whole project may lay fallow. We’ll see…</p>
 </section>
 <section id="comments" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="comments">Comments!</h2>
@@ -342,7 +366,8 @@ div.csl-indent {
 <p>I’d like to thank the following for their helpful contributions:</p>
 <ul>
 <li>Vincent Arel-Bundock (<a href="https://github.com/vincentarelbundock">@vincentarelbundock</a>),</li>
-<li>Andrew Heiss (<a href="https://github.com/andrewheiss">@andrewheiss</a>), and</li>
+<li>Andrew Heiss (<a href="https://github.com/andrewheiss">@andrewheiss</a>),</li>
+<li>Andrew Johnson (<a href="https://github.com/andrjohns">@andrjohns</a>), and</li>
 <li>John K. Kruschke (<a href="https://github.com/kruschke">@kruschke</a>).</li>
 </ul>
 <p>Each of these folks have shared <strong>rstan</strong> code that a directly helped make this book possible. I especially appreciate and recommend Arel-Bundock’s website <a href="https://vincentarelbundock.github.io/rethinking2/"><em>Statistical Rethinking 2 with Stan and R</em></a>, wherein you can find rendered <code>Rmarkdown</code> files with loads of <strong>rstan</strong> code on many of the same problems I’m tackling in this book. If you compare our works, you’ll see I have been heavily influenced by Arel-Bundock’s <strong>rstan</strong> style.</p>
@@ -356,7 +381,7 @@ div.csl-indent {
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  author <span class="ot">=</span> {Kurz, A. Solomon},</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  year <span class="ot">=</span> {<span class="dv">2024</span>},</span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  month <span class="ot">=</span> {aug},</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  edition <span class="ot">=</span> {version <span class="dv">0</span>.<span class="fl">0.1</span>},</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  edition <span class="ot">=</span> {version <span class="dv">0</span>.<span class="fl">0.2</span>},</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  url <span class="ot">=</span> {https<span class="sc">:</span><span class="er">//</span>solomon.quarto.pub<span class="sc">/</span>sr2rstan<span class="sc">/</span>}</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
