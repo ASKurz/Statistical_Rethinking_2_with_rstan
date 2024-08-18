@@ -800,7 +800,7 @@ str(stan_data)
 
 Make the `model_code` and fit `m11.7` with `stan()`. Note the `generated quantities` block for the posterior-predictive check to come.
 
-````{r}
+```{r}
 #| echo: false
 
 # save(m11.7, file = "fits/m11.7.rda")
@@ -884,7 +884,7 @@ $$
 
 where departments are indexed by $k$. Make the `model_code` and fit `m11.8` with `stan()`. Note the increase in the `iter` argument.
 
-````{r}
+```{r}
 #| echo: false
 
 # save(m11.8, file = "fits/m11.8.rda")
@@ -1000,8 +1000,8 @@ m11.8 |>
 McElreath recommended we look at the `pairs()` plot to get a sense of how highly correlated the parameters in our `m11.8` model are. Here's the plot.
 
 ```{r}
-#| fig-width: 5.5
-#| fig-height: 5
+#| fig-width: 5.25
+#| fig-height: 5.5
 #| warning: false
 
 pairs(m11.8, pars = c("a", "d"), gap = 0.25)
@@ -1038,13 +1038,16 @@ Our statistical model will follow the form
 #| eval: false
 #| echo: false
 
+total_tools
+total-tools
+
 log_pop_std
 log-pop-std
 ```
 
 $$
 \begin{align*}
-\text{total_tools}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\text{total-tools}_i & \sim \operatorname{Poisson}(\lambda_i) \\
 \log(\lambda_i)      & = \alpha_{\text{cid}[i]} + \beta_{\text{cid}[i]} \text{log-pop-std}_i \\
 \alpha_j             & \sim \; ? \\
 \beta_j              & \sim \; ?, 
@@ -1196,19 +1199,7 @@ str(stan_data)
 
 Define `model_code_11.9` and `model_code_11.10`.
 
-````{r}
-#| echo: false
-
-# save(m11.9, file = "fits/m11.9.rda")
-# save(m11.10, file = "fits/m11.10.rda")
-
-load(file = "fits/m11.9.rda")
-load(file = "fits/m11.10.rda")
-```
-
 ```{r}
-#| eval: false
-
 # Intercept only
 model_code_11.9 <- '
 data {
@@ -1259,6 +1250,18 @@ generated quantities {
 Sample from the two posteriors with `stan()`.
 
 ```{r}
+#| echo: false
+
+# save(m11.9, file = "fits/m11.9.rda")
+# save(m11.10, file = "fits/m11.10.rda")
+
+load(file = "fits/m11.9.rda")
+load(file = "fits/m11.10.rda")
+```
+
+```{r}
+#| eval: false
+
 m11.9 <- stan(
   data = stan_data,
   model_code = model_code_11.9,
@@ -1299,7 +1302,7 @@ d |>
 It turns out Hawaii is very influential. Figure 11.9 will clarify why. For a little practice while computing the trajectories, we'll use an `as_draws_df()`-based workflow for the panel on the left, and use a  `spread_draws()`-based workflow for the panel on the right.
 
 ```{r}
-#| fig-width: 7
+#| fig-width: 6.5
 #| fig-height: 3.25
 #| warning: false
 
@@ -1368,13 +1371,29 @@ Hawaii is influential in that it has a very large population relative to the oth
 
 McElreath's theoretical, or scientific, model for `total_tools` is
 
-$$\widehat{\text{total_tools}} = \frac{\alpha_{\text{cid}[i]} \: \text{population}^{\beta_{\text{cid}[i]}}}{\gamma}.$$
+```{r}
+#| eval: false
+#| echo: false
+
+total_tools
+total-tools
+```
+
+$$\widehat{\text{total-tools}} = \frac{\alpha_{\text{cid}[i]} \: \text{population}^{\beta_{\text{cid}[i]}}}{\gamma}.$$
 
 We can use the Poisson likelihood to express this in a Bayesian model as
 
+```{r}
+#| eval: false
+#| echo: false
+
+total_tools
+total-tools
+```
+
 $$
 \begin{align*}
-\text{total_tools} & \sim \operatorname{Poisson}(\lambda_i) \\
+\text{total-tools} & \sim \operatorname{Poisson}(\lambda_i) \\
 \lambda_i & = \left[ \exp (\alpha_{\text{cid}[i]}) \text{population}_i^{\beta_{\text{cid}[i]}} \right] / \gamma \\
 \alpha_j  & \sim \operatorname{Normal}(1, 1) \\
 \beta_j   & \sim \operatorname{Exponential}(1) \\
@@ -1455,7 +1474,7 @@ generated quantities {
 
 Sample from the posterior.
 
-````{r}
+```{r}
 #| echo: false
 
 # save(m11.11, file = "fits/m11.11.rda")
@@ -1628,7 +1647,7 @@ model {
 
 Sample from the posterior.
 
-````{r}
+```{r}
 #| echo: false
 
 # save(m11.12, file = "fits/m11.12.rda")
@@ -1750,7 +1769,7 @@ model {
 
 Compile and extract the posterior draws for both, with `stan()`.
 
-````{r}
+```{r}
 #| echo: false
 
 # save(m11.binom, file = "fits/m11.binom.rda")
@@ -1809,6 +1828,10 @@ bind_rows(
 ## Summary
 
 ## Session info {-}
+
+```{r}
+sessionInfo()
+```
 
 ## Comments {-}
 
