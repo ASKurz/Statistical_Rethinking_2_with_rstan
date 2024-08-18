@@ -83,7 +83,7 @@ div.csl-indent {
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<link href="./references.html" rel="next">
+<link href="./09.html" rel="next">
 <link href="./07.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
@@ -213,6 +213,30 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./09.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Markov Chain Monte Carlo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Big Entropy and the Generalized Linear Model</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">God Spiked the Integers</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Monsters and Mixtures</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -266,7 +290,7 @@ div.csl-indent {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Conditional Manatees</span></h1>
+<h1 class="title"><span id="sec-Conditional-Manatees" class="quarto-section-identifier"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Conditional Manatees</span></span></h1>
 </div>
 
 
@@ -426,9 +450,9 @@ div.csl-indent {
  $ xbar       : num 0.215</code></pre>
 </div>
 </div>
-<p>Define what I’m calling <code>stan_program_8.1a</code>. Note that for this first version, we’ll be sampling from the prior.</p>
+<p>Define what I’m calling <code>model_code_8.1a</code>. Note that for this first version, we’ll be sampling from the prior.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>stan_program_8<span class="fl">.1</span>a <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.1</span>a <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="st">  real xbar;</span></span>
@@ -454,12 +478,12 @@ div.csl-indent {
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m8<span class="fl">.1</span>a <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.1</span>a,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code_8<span class="fl">.1</span>a,</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Define <code>stan_program_8.1b</code>. We’re still sampling from the prior, but this time the priors are tighter.</p>
+<p>Define <code>model_code_8.1b</code>. We’re still sampling from the prior, but this time the priors are tighter.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>stan_program_8<span class="fl">.1</span>b <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.1</span>b <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="st">  real xbar;</span></span>
@@ -485,7 +509,7 @@ div.csl-indent {
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>m8<span class="fl">.1</span>b <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.1</span>b,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code_8<span class="fl">.1</span>b,</span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Display the two prior-predictive distributions with Figure 8.3.</p>
@@ -513,9 +537,9 @@ div.csl-indent {
 <p><img src="08_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="576"></p>
 </div>
 </div>
-<p>Now define what we’ll just call <code>stan_program_8.1</code>, where the likelihood is now included in the <code>model</code> block. Note how we’re also defining the <code>log_lik</code> vector within the <code>generated quantities</code> block so we can compute information criteria for model comparisons.</p>
+<p>Now define what we’ll just call <code>model_code_8.1</code>, where the likelihood is now included in the <code>model</code> block. Note how we’re also defining the <code>log_lik</code> vector within the <code>generated quantities</code> block so we can compute information criteria for model comparisons.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>stan_program_8<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="st">  real xbar;</span></span>
@@ -548,20 +572,20 @@ div.csl-indent {
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>m8<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.1</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code_8<span class="fl">.1</span>,</span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Check the summary for <code>m8.1</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.1</span>, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"sigma"</span>), <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.1</span>, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"sigma"</span>), <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-      mean se_mean   sd    5% 94.5% n_eff Rhat
+      mean se_mean   sd  5.5% 94.5% n_eff Rhat
 a     1.00       0 0.01  0.98  1.02  3775    1
-b     0.00       0 0.06 -0.09  0.09  3533    1
+b     0.00       0 0.06 -0.08  0.09  3533    1
 sigma 0.14       0 0.01  0.13  0.15  3726    1
 
 Samples were drawn using NUTS(diag_e) at Mon Aug  5 21:07:01 2024.
@@ -599,14 +623,14 @@ convergence, Rhat=1).</code></pre>
  $ xbar       : num 0.215</code></pre>
 </div>
 </div>
-<p>Make <code>stan_program_8.2</code> for the varying-intercepts model.</p>
+<p>Make <code>model_code_8.2</code> for the varying-intercepts model.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>stan_program_8<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_cid;</span></span>
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="st">  real xbar;</span></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="st">  int cid[n];</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="st">  array[n] int cid;</span></span>
 <span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] rugged_std;</span></span>
 <span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] log_gdp_std;</span></span>
 <span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
@@ -636,24 +660,24 @@ convergence, Rhat=1).</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>m8<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.2</span>,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code_8<span class="fl">.2</span>,</span>
 <span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Check the summary for <code>m8.2</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.2</span>, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"sigma"</span>), <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.2</span>, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"sigma"</span>), <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-       mean se_mean   sd    5% 94.5% n_eff Rhat
-a[1]   0.88       0 0.02  0.85  0.91  4035    1
+       mean se_mean   sd  5.5% 94.5% n_eff Rhat
+a[1]   0.88       0 0.02  0.86  0.91  4035    1
 a[2]   1.05       0 0.01  1.03  1.07  4227    1
 b     -0.05       0 0.05 -0.12  0.03  4267    1
 sigma  0.11       0 0.01  0.10  0.13  4134    1
 
-Samples were drawn using NUTS(diag_e) at Mon Aug  5 21:10:09 2024.
+Samples were drawn using NUTS(diag_e) at Wed Aug 14 10:43:50 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -738,14 +762,14 @@ model2 0.970 </code></pre>
 </section>
 <section id="adding-an-interaction-does-work." class="level3" data-number="8.1.3">
 <h3 data-number="8.1.3" class="anchored" data-anchor-id="adding-an-interaction-does-work."><span class="header-section-number">8.1.3</span> Adding an interaction does work.</h3>
-<p>In <code>stan_program_8.3</code> we add an interaction to the model via the index-variable approach by setting <code>vector[n_cid] b</code> within the <code>parameters</code> block, and then by setting <code>b[cid]</code> in the <code>mu</code> formula within the <code>transformed parameters</code> block.</p>
+<p>In <code>model_code_8.3</code> we add an interaction to the model via the index-variable approach by setting <code>vector[n_cid] b</code> within the <code>parameters</code> block, and then by setting <code>b[cid]</code> in the <code>mu</code> formula within the <code>transformed parameters</code> block.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>stan_program_8<span class="fl">.3</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.3</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_cid;</span></span>
 <span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="st">  real xbar;</span></span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="st">  int cid[n];</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="st">  array[n] int cid;</span></span>
 <span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] rugged_std;</span></span>
 <span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] log_gdp_std;</span></span>
 <span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
@@ -775,25 +799,25 @@ model2 0.970 </code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>m8<span class="fl">.3</span> <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.3</span>,</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code_8<span class="fl">.3</span>,</span>
 <span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Check the summary for <code>m8.2</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.3</span>, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"sigma"</span>), <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.3</span>, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"sigma"</span>), <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-       mean se_mean   sd    5% 94.5% n_eff Rhat
+       mean se_mean   sd  5.5% 94.5% n_eff Rhat
 a[1]   0.89       0 0.02  0.86  0.91  4523    1
-a[2]   1.05       0 0.01  1.03  1.07  4717    1
+a[2]   1.05       0 0.01  1.04  1.07  4717    1
 b[1]   0.13       0 0.08  0.01  0.26  4369    1
 b[2]  -0.14       0 0.05 -0.23 -0.05  4278    1
 sigma  0.11       0 0.01  0.10  0.12  4404    1
 
-Samples were drawn using NUTS(diag_e) at Mon Aug  5 21:17:51 2024.
+Samples were drawn using NUTS(diag_e) at Wed Aug 14 10:46:03 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -1104,10 +1128,10 @@ B_i &amp; \sim \operatorname{Normal}(\mu_i, \sigma) \\
  $ n_pred: int 9</code></pre>
 </div>
 </div>
-<p>Make <code>stan_program_8.4</code> and <code>stan_program_8.5</code>.</p>
+<p>Make <code>model_code_8.4</code> and <code>model_code_8.5</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="co"># No interaction</span></span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>stan_program_8<span class="fl">.4</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.4</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
 <span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_pred;</span></span>
@@ -1138,7 +1162,7 @@ B_i &amp; \sim \operatorname{Normal}(\mu_i, \sigma) \\
 <span id="cb71-30"><a href="#cb71-30" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span>
 <span id="cb71-31"><a href="#cb71-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb71-32"><a href="#cb71-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Interaction</span></span>
-<span id="cb71-33"><a href="#cb71-33" aria-hidden="true" tabindex="-1"></a>stan_program_8<span class="fl">.5</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<span id="cb71-33"><a href="#cb71-33" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.5</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb71-34"><a href="#cb71-34" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
 <span id="cb71-35"><a href="#cb71-35" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb71-36"><a href="#cb71-36" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_pred;</span></span>
@@ -1172,47 +1196,47 @@ B_i &amp; \sim \operatorname{Normal}(\mu_i, \sigma) \\
 <div class="cell">
 <div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>m8<span class="fl">.4</span> <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
-<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.4</span>,</span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code_8<span class="fl">.4</span>,</span>
 <span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span>
 <span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>m8<span class="fl">.5</span> <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
-<span id="cb72-8"><a href="#cb72-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.5</span>,</span>
+<span id="cb72-8"><a href="#cb72-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code_8<span class="fl">.5</span>,</span>
 <span id="cb72-9"><a href="#cb72-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Check the summaries for <code>m8.4</code> and <code>m8.5</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.4</span>, <span class="at">include =</span> <span class="cn">FALSE</span>, <span class="at">pars =</span> <span class="st">"mu"</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.4</span>, <span class="at">include =</span> <span class="cn">FALSE</span>, <span class="at">pars =</span> <span class="st">"mu"</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-       mean se_mean   sd    5% 94.5% n_eff Rhat
+       mean se_mean   sd  5.5% 94.5% n_eff Rhat
 a      0.36    0.00 0.04  0.30  0.42  4370    1
 b1     0.20    0.00 0.04  0.14  0.27  4269    1
 b2    -0.11    0.00 0.04 -0.18 -0.05  4965    1
 sigma  0.18    0.00 0.03  0.14  0.22  3297    1
-lp__  31.41    0.04 1.55 28.36 33.23  1468    1
+lp__  31.41    0.04 1.55 28.49 33.23  1468    1
 
 Samples were drawn using NUTS(diag_e) at Mon Aug  5 21:26:39 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.5</span>, <span class="at">include =</span> <span class="cn">FALSE</span>, <span class="at">pars =</span> <span class="st">"mu"</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m8<span class="fl">.5</span>, <span class="at">include =</span> <span class="cn">FALSE</span>, <span class="at">pars =</span> <span class="st">"mu"</span>, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.055</span>, <span class="fl">0.945</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-       mean se_mean   sd    5% 94.5% n_eff Rhat
+       mean se_mean   sd  5.5% 94.5% n_eff Rhat
 a      0.36    0.00 0.03  0.31  0.40  4937    1
 b1     0.20    0.00 0.03  0.15  0.26  4643    1
 b2    -0.11    0.00 0.03 -0.17 -0.06  5296    1
 b3    -0.14    0.00 0.04 -0.21 -0.08  4498    1
 sigma  0.14    0.00 0.02  0.11  0.18  3684    1
-lp__  36.87    0.04 1.75 33.57 39.01  1728    1
+lp__  36.87    0.04 1.75 33.72 39.01  1728    1
 
 Samples were drawn using NUTS(diag_e) at Mon Aug  5 21:27:06 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
@@ -1265,10 +1289,10 @@ convergence, Rhat=1).</code></pre>
 </section>
 <section id="plotting-prior-predictions." class="level3" data-number="8.3.4">
 <h3 data-number="8.3.4" class="anchored" data-anchor-id="plotting-prior-predictions."><span class="header-section-number">8.3.4</span> Plotting prior predictions.</h3>
-<p>To plot the prior-predictive expectations, we’ll need to first sample from the priors. Toward that end, we define what I’ll call <code>stan_program_8.4p</code> and <code>stan_program_8.5p</code>.</p>
+<p>To plot the prior-predictive expectations, we’ll need to first sample from the priors. Toward that end, we define what I’ll call <code>model_code_8.4p</code> and <code>model_code_8.5p</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="co"># No interaction</span></span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>stan_program_8<span class="fl">.4</span>p <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.4</span>p <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
 <span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_pred;</span></span>
@@ -1298,7 +1322,7 @@ convergence, Rhat=1).</code></pre>
 <span id="cb79-29"><a href="#cb79-29" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span>
 <span id="cb79-30"><a href="#cb79-30" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb79-31"><a href="#cb79-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Interaction</span></span>
-<span id="cb79-32"><a href="#cb79-32" aria-hidden="true" tabindex="-1"></a>stan_program_8<span class="fl">.5</span>p <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<span id="cb79-32"><a href="#cb79-32" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.5</span>p <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb79-33"><a href="#cb79-33" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
 <span id="cb79-34"><a href="#cb79-34" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb79-35"><a href="#cb79-35" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_pred;</span></span>
@@ -1331,12 +1355,12 @@ convergence, Rhat=1).</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>m8<span class="fl">.4</span>p <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
-<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.4</span>p,</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code_8<span class="fl">.4</span>p,</span>
 <span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span>
 <span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>m8<span class="fl">.5</span>p <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
-<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> stan_program_8<span class="fl">.5</span>p,</span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code_8<span class="fl">.5</span>p,</span>
 <span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now make Figure 8.8.</p>
@@ -1685,8 +1709,8 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./references.html" class="pagination-link">
-        <span class="nav-page-text">References</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="./09.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Markov Chain Monte Carlo</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
