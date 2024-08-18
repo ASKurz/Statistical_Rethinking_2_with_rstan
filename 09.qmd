@@ -242,6 +242,7 @@ We can make similar plots with the `mcmc_trace()` function from the **bayesplot*
 ```{r}
 #| fig-width: 7
 #| fig-height: 3.25
+#| warning: false
 
 as_draws_df(m9.1b) |>  
   mcmc_trace(pars = vars(`a[1]`:sigma),
@@ -534,7 +535,7 @@ Compile and sample with `stan()`.
 ```{r}
 #| echo: false
 
-save(m9.4, file = "fits/m9.4.rda")
+# save(m9.4, file = "fits/m9.4.rda")
 load(file = "fits/m9.4.rda")
 ```
 
@@ -656,6 +657,10 @@ p4 <- as_draws_df(m9.5) |>
 ## Summary
 
 ## Session info {-}
+
+```{r}
+sessionInfo()
+```
 
 ## Comments {-}
 
