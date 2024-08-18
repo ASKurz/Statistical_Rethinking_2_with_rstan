@@ -1,0 +1,1380 @@
+# Monsters and Mixtures
+
+Load the packages.
+
+```{r}
+#| message: false
+#| warning: false
+
+# Load
+library(tidyverse)
+library(tidybayes)
+library(rstan)
+library(loo)
+library(patchwork)
+library(posterior)
+library(GGally)  # for `ggpairs()`
+
+# Drop grid lines
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank())
+)
+```
+
+## Over-dispersed counts
+
+### Beta-binomial. {#sec-Beta-binomial}
+
+Here's how we might plot the beta distribution, as discussed in McElreath's **R** code 12.1. Note our use of the `rethinking::dbeta2()` function, which is parameterized in terms of `prob` (i.e., the mean, $\alpha / (\alpha + \beta)$) and `theta` (i.e., the concentration, $\alpha + \beta$).
+
+```{r}
+#| fig-width: 3.5
+#| fig-height: 2.75
+
+pbar  <- 0.5
+theta <- 5
+
+tibble(x = seq(from = 0, to = 1, by = 0.01)) |> 
+  mutate(y = rethinking::dbeta2(x = x, prob = pbar, theta = theta)) |> 
+  
+  ggplot(aes(x = x, y = y)) +
+  geom_area() +
+  scale_x_continuous("probability space", breaks = 0:2 / 2) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  ggtitle(expression(The~beta~distribution),
+          subtitle = expression("Defined in terms of "*mu*" (i.e., pbar) and "*kappa*" (i.e., theta)"))
+```
+
+In his [-@kruschkeDoingBayesianData2015] text, [*Doing Bayesian data analysis*](https://sites.google.com/site/doingbayesiandataanalysis/), Kruschke provided code for a convenience function that takes `pbar` and `theta` as inputs and returns the corresponding $\alpha$ and $\beta$ values. Here's the function:
+
+```{r}
+beta_a_b_from_mean_kappa <- function(mean, kappa) {
+  
+  if (mean <= 0 | mean >= 1) stop("Must have 0 < `mean` < 1.")
+  if (kappa <= 0) stop("`kappa` must be > 0.")
+  
+  a <- mean * kappa
+  b <- (1.0 - mean) * kappa
+  
+  list(a = a, b = b)
+  
+}
+```
+
+Now we can use Kruschke's `beta_a_b_from_mean_kappa()` to find the $\alpha$ and $\beta$ values corresponding to McElreath's `pbar` and `theta`.
+
+```{r}
+beta_a_b_from_mean_kappa(mean = pbar, kappa = theta)
+```
+
+And finally, we can double check that all of this works. Here's the same distribution but defined in terms of $\alpha$ and $\beta$.
+
+```{r}
+#| fig-width: 3.5
+#| fig-height: 2.75
+
+tibble(x = seq(from = 0, to = 1, by = 0.01)) |> 
+  mutate(y = dbeta(x = x, shape1 = 2.5, shape2 = 2.5)) |> 
+  
+  ggplot(aes(x = x, y = y)) +
+  geom_area() +
+  scale_x_continuous("probability space", breaks = 0:2 / 2) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  ggtitle(expression(The~beta~distribution),
+          subtitle = expression("This time defined in terms of "*alpha*" and "*beta))
+```
+
+McElreath encouraged us to "explore different values for `pbar` and `theta`" (p. 371). Here's a grid of plots with $\bar p \in \{0.25, 0.5, 0.75 \}$ and $\theta \in \{5, 15, 30 \}$.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 4
+
+# Data
+crossing(pbar  = c(0.25, 0.5, 0.75),
+         theta = c(5, 15, 30)) |> 
+  expand_grid(x = seq(from = 0, to = 1, length.out = 301)) |> 
+  mutate(density = rethinking::dbeta2(x = x, prob = pbar, theta = theta),
+         mu      = str_c("mu==", pbar),
+         kappa   = factor(str_c("kappa==", theta),
+                          levels = str_c("kappa==", c(30, 15, 5)))) |> 
+  
+  # plot
+  ggplot(aes(x = x, y = density)) +
+  geom_area() +
+  scale_x_continuous("probability space", 
+                     breaks = 0:2 / 2, labels = c(0, 0.5, 1)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  facet_grid(kappa ~ mu, labeller = label_parsed)
+```
+
+The statistical model we'll be fitting follows the form
+
+$$
+\begin{align*}
+\text{admit}_i & \sim \operatorname{BetaBinomial}(n_i, \bar p_i, \theta) \\
+\operatorname{logit}(\bar p_i) & = \alpha_{\text{gid}[i]} \\
+\alpha_j & \sim \operatorname{Normal}(0, 1.5) \\
+\theta & = \phi + 2 \\
+\phi     & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+where $n$ is defined in the `applications` column in the data, and $\alpha_\text{gid}$ means we'll be fitting separate intercepts by the two levels of our gender index `gid`. On page 317 of the text, McElreath explained why we'd work with $\phi$, and from whence came its relation with $\theta$.
+
+Here we load the `UCBadmit` data and then make our `stan_data`.
+
+```{r}
+data(UCBadmit, package = "rethinking") 
+d <- UCBadmit |> 
+  rownames_to_column("i") |> 
+  mutate(gid = ifelse(applicant.gender == "male", "1", "2"))
+rm(UCBadmit)
+
+stan_data <- d |>
+  mutate(gid = ifelse(applicant.gender == "male", "1", "2")) |>
+  select(admit, applications, gid) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Our `model_code_12.1` shows some complications McElreath glossed over in the text. Before we get into the bigger complications, first note how we defined `phi` in the `parameters` block, and then defined `theta` in terms of `phi` in the `transformed parameters` below. We also defined a vector of `pbar` values, which are just $\operatorname{logit}(\alpha_{\text{gid}[i]})^{-1}$. These will come in handy for the posterior-predictive check in Figure 12.1. But they'll also come in handy for another reason we'll describe next.
+
+The larger complications in our `model_code_12.1` come into play when we get to the likelihood within the `model` block. In the statistical formula above, which is based on McElreath's statistical formula on page 371 in the text, we defined the beta-binomial likelihood in terms of $\bar p$ and $\theta$. This is also how McElreath parameterized the `dbetabinom()` function in the **rethinking** package. Stan, however, parameterizes the `beta_binomial()` likelihood in terms of the canonical $\alpha$ and $\beta$ parameters. See the [Beta-binomial distribution](https://mc-stan.org/docs/functions-reference/bounded_discrete_distributions.html#beta-binomial-distribution) section in the *Stan Functions Reference* for the technical details. This means we need to transform our $\bar p$ and $\theta$ parameters into $\alpha$ and $\beta$. We defined that vector of `pbar` values as a preliminary step. We can then define `alpha` and `beta` in terms of `pbar` and `theta`, which are
+
+$$
+\begin{align}
+\alpha & = \bar p \theta, \\
+\beta  & = (1 - \bar p) \theta.
+\end{align}
+$$
+
+Then after all that, we can define the beta-binomial likelihood for `admit`  with the `beta_binomial()` function in terms of `alpha` and `beta`.
+
+```{r}
+#| echo: false
+
+# save(m12.1, file = "fits/m12.1.rda")
+load(file = "fits/m12.1.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_12.1 <- '
+data {
+  int<lower=1> n;                       
+  int<lower=1> n_gid;                       
+  array[n] int applications;
+  array[n] int gid;
+  array[n] int admit;
+}
+parameters {
+  vector[n_gid] a;
+  real<lower=0> phi;
+}
+transformed parameters {
+  real theta;
+  theta = phi + 2;
+  
+  vector[n] pbar;
+  pbar = inv_logit(a[gid]);
+}
+model {
+  vector[n] alpha;
+  vector[n] beta;
+  alpha = pbar * theta;
+  beta = (1 - pbar) * theta;
+  
+  admit ~ beta_binomial(applications, alpha, beta);
+  a ~ normal(0, 1.5);
+  phi ~ exponential(1);
+}
+'
+
+m12.1 <- stan(
+  model_code = model_code_12.1, 
+  data = stan_data,
+  cores = 4, seed = 12)
+```
+
+Check the model summary.
+
+```{r}
+print(m12.1, pars = c("a", "phi", "theta"), probs = c(0.055, 0.945))
+```
+
+Here's the summary for the $\alpha_1 - \alpha_2$ contrast, what McElreath called `da`.
+
+```{r}
+#| warning: false
+
+# Extract the posterior draws
+post <- as_draws_df(m12.1)
+
+post |> 
+  mean_qi(`a[1]` - `a[2]`, .width = 0.89) |> 
+  mutate_if(is.double, round, digits = 3)
+```
+
+Much like in the text, the difference between genders on admission rates is near zero with wide uncertainty intervals spanning in either direction.
+
+Here's the left panel of Figure 12.1.
+
+```{r}
+#| fig-width: 3.25
+#| fig-height: 3
+#| warning: false
+
+set.seed(12)
+
+# For the 100 lines
+p1 <- post |> 
+  mutate(p_bar = plogis(`a[2]`)) |> 
+  slice_sample(n = 100) |> 
+  select(.draw, p_bar, theta) |> 
+  expand_grid(x = seq(from = 0, to = 1, length.out = 201)) |> 
+  mutate(density = rethinking::dbeta2(x = x, prob = p_bar, theta = theta)) |> 
+  
+  ggplot(aes(x = x, y = density)) +
+  geom_line(aes(group = .draw),
+            alpha = 0.2, linewidth = 0.25) +
+  # For the line of the mean parameters
+  stat_function(fun = rethinking::dbeta2,
+                args = list(prob = mean(plogis(post$`a[2]`)),
+                            theta = mean(post$theta)),
+                linewidth = 1.5, n = 201) +
+  labs(subtitle = "Distribution of female admission rates",
+       x = "probability admit") +
+  coord_cartesian(ylim = c(0, 3))
+
+p1
+```
+
+Here's one way to make the right panel of Figure 12.1, and then combine it with the left panel, above, to display the full figure. Note our use of the `pbar[i]` vector in `spread_draws()`.
+
+```{r}
+#| fig-width: 6.75
+#| fig-height: 3.5
+
+p2 <- spread_draws(m12.1, pbar[i], theta) |> 
+  left_join(d |> 
+              mutate(i = as.integer(i)),
+            by = join_by(i)) |> 
+  mutate(admit = rethinking::rbetabinom(n = n(), size = applications, prob = pbar, theta = theta)) |> 
+  
+  ggplot(aes(x = gid)) +
+  stat_pointinterval(aes(y = admit / applications),
+                     point_interval = mean_qi, .width = 0.89,
+                     linewidth = 1, shape = 1) +
+  geom_point(data = d,
+             aes(y = admit / applications),
+             color = "blue", size = 2.5) +
+  scale_x_discrete("case", labels = c("m", "f")) +
+  scale_y_continuous("admit", limits = 0:1) +
+  labs(subtitle = "Posterior validation check") +
+  facet_wrap(~ dept, nrow = 1)
+
+# Combine
+p1 | p2
+```
+
+As in the text, the raw data are consistent with the prediction intervals. But those intervals are so incredibly wide, they're hardly an endorsement of the model. Once we learn about hierarchical models, we'll be able to do much better.
+
+### Negative-binomial or gamma-Poisson.
+
+We might express the gamma-Poisson (negative binomial) as
+
+$$y_i \sim \operatorname{Gamma-Poisson}(\lambda, \phi),$$
+
+where $\lambda$ is the mean or rate, and $\alpha$ is the dispersion or scale.
+
+Let's load the `Kline` data to help get a sense of how this works.
+
+```{r}
+data(Kline, package = "rethinking")
+d <- Kline |> 
+  mutate(i = 1:n(),
+         cid = ifelse(contact == "high", "2", "1")) 
+rm(Kline)
+
+# What?
+print(d)
+```
+
+If you take a look of McElreath's `m12.2`, you'll see it's a gamma-Poisson version of the non-linear model he fit in last chapter, `m11.11`. The model is
+
+```{r}
+#| eval: false
+#| echo: false
+
+total_tools
+total_tools
+```
+
+$$
+\begin{align*}
+\text{total-tools}_i & \sim \operatorname{Gamma-Poisson} (\lambda_i, \phi) \\
+\lambda_i & = \exp (\alpha_{\text{cid}[i]}) \text{population}_i^{\beta_\text{cid}[i]} / \gamma \\
+\alpha_j & \sim \operatorname{Normal}(1, 1) \\
+\beta_j  & \sim \operatorname{Exponential}(1) \\
+\gamma & \sim \operatorname{Exponential}(1) \\
+\phi   & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+which is a gamma-Poisson version of the theory-based Poisson model `m11.11` from the last chapter.
+
+Make the `d_pred` data for the predictions we'll display in the plot.
+
+```{r}
+d_pred <- tibble(
+  population = seq(from = 0, to = 3e5, length.out = 101) |> 
+    as.integer()) |> 
+  expand_grid(cid = 1:2) |> 
+  mutate(i = 1:n())
+
+# What?
+glimpse(d_pred)
+```
+
+Make the `stan_data`.
+
+```{r}
+stan_data <- d |> 
+  mutate(population = as.double(population)) |>
+  select(total_tools, population, cid) |>
+  compose_data(population_pred = d_pred$population,
+               cid_pred = d_pred$cid,
+               n_pred = nrow(d_pred))
+
+# What?
+str(stan_data)
+```
+
+Define `model_code_12.2`. Note that in Stan, the gamma-Poisson likelihood is called `neg_binomial_2()`.
+
+```{r}
+model_code_12.2 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_cid;
+  array[n] int cid;
+  vector[n] population;
+  array[n] int<lower=0> total_tools;
+  // For predictions
+  int<lower=1> n_pred;
+  array[n_pred] int cid_pred;
+  vector[n_pred] population_pred;
+}
+parameters {
+  vector[n_cid] a;
+  vector<lower=0>[n_cid] b;
+  real<lower=0> g;
+  real<lower=0> phi;
+}
+transformed parameters {
+  vector[n] lambda;
+  lambda = exp(a[cid]) .* population^b[cid] / g;
+}
+model {
+  total_tools ~ neg_binomial_2(lambda, phi);
+  a ~ normal(1, 1);
+  b ~ exponential(1);
+  g ~ exponential(1);
+  phi ~ exponential(1);
+}
+generated quantities {
+  vector[n] log_lik;
+  vector[n_pred] lambda_pred;
+  
+  for (i in 1:n) log_lik[i] = neg_binomial_2_lpmf(total_tools[i] | lambda[i], phi);
+  lambda_pred = exp(a[cid_pred]) .* population_pred^b[cid_pred] / g;
+}
+'
+```
+
+Sample from the posteriors.
+
+```{r}
+#| echo: false
+
+# save(m12.2, file = "fits/m12.2.rda")
+load(file = "fits/m12.2.rda")
+```
+
+```{r}
+#| eval: false
+
+m12.2 <- stan(
+  data = stan_data,
+  model_code = model_code_12.2,
+  cores = 4, seed = 12)
+```
+
+Here is the model summary.
+
+```{r}
+print(m12.2, pars = c("a", "b", "g", "phi"), probs = c(0.055, 0.945))
+```
+
+Compute and check the PSIS-LOO estimates along with their diagnostic $k$ values.
+
+```{r}
+l12.2 <- extract_log_lik(m12.2) |> loo()
+
+print(l12.2)
+```
+
+"All Pareto k estimates are good!"
+
+```{r}
+#| echo: false
+#| warning: false
+
+load(file = "fits/m11.11.rda")
+l11.11 <- extract_log_lik(m11.11) |> loo()
+```
+
+Here's the LOO comparison between the original Poisson model, and our new gamma-Poisson.
+
+```{r}
+loo_compare(l11.11, l12.2) |> 
+  print(simplify = FALSE)
+```
+
+Not much difference in this case. Here's how we might make Figure 12.2.
+
+```{r}
+#| fig-width: 6.25
+#| fig-height: 3.25
+
+# For the `k`-sized points
+d_k <- d |> 
+  mutate(p = l11.11$diagnostics$pareto_k,
+         gp = l12.2$diagnostics$pareto_k) |> 
+  pivot_longer(p:gp, values_to = "k") |> 
+  mutate(likelihood = factor(name, levels = c("p", "gp"), 
+                             labels = c("Poisson", "Gamma-Poisson")))
+
+# Wrangle the posterior draws
+bind_rows(
+  spread_draws(m11.11, lambda_pred[i]),
+  spread_draws(m12.2, lambda_pred[i])
+  ) |> 
+  left_join(d_pred, by = join_by(i)) |> 
+  mutate(likelihood = rep(c("p", "gp"), each = n() / 2) |> 
+           factor(levels = c("p", "gp"), labels = c("Poisson", "Gamma-Poisson")),
+         cid = as.character(cid)) |> 
+  rename(total_tools = lambda_pred)  |> 
+  
+  # Plot!
+  ggplot(aes(x = population, y = total_tools,
+             group = cid, color = cid, fill = cid)) +
+  stat_lineribbon(.width = 0.89, point_interval = mean_qi,
+                  alpha = 1/4) +
+  geom_point(data = d_k,
+             aes(size = k)) +
+  scale_x_continuous("population", breaks = c(0, 50000, 150000, 250000),
+                     labels = scales::comma(c(0, 50000, 150000, 250000))) +
+  scale_color_viridis_d(option = "A", end = 0.6) +
+  scale_fill_viridis_d(option = "A", end = 0.6) +
+  scale_size_continuous(range = c(0.1, 5)) +
+  ylab("total tools") +
+  coord_cartesian(xlim = range(d$population),
+                  ylim = c(0, 80)) +
+  facet_wrap(~ likelihood) +
+  theme(legend.position = "none")
+```
+
+### Over-dispersion, entropy, and information criteria.
+
+#### Overthinking: Continuous mixtures.
+
+## Zero-inflated outcomes
+
+#### Rethinking: Breaking the law.
+
+### Example: Zero-inflated Poisson.
+
+Do you remember the monk data from back in [Chapter 11][Example: Exposure and the offset.]? Here we simulate some more. This time we'll work in a little alcohol.
+
+```{r}
+# Define parameters
+prob_drink <- 0.2  # 20% of days
+rate_work  <- 1    # Average 1 manuscript per day
+
+# Sample one year of production
+n <- 365
+
+# Simulate days monks drink
+set.seed(365)
+d <- tibble(drink = rbinom(n = n, size = 1, prob = prob_drink)) |> 
+  # Simulate manuscripts completed
+  mutate(y = (1 - drink) * rpois(n = n, lambda = rate_work))
+
+# What?
+glimpse(d)
+```
+
+Here's a version of Figure 12.3, right.
+
+```{r}
+#| fig-width: 4
+#| fig-height: 2.75
+
+d |> 
+  ggplot(aes(x = y, fill = factor(drink, levels = 1:0))) +
+  geom_bar() +
+  scale_fill_viridis_d(end = 0.6, breaks = NULL) +
+  xlab("Manuscripts completed")
+```
+
+With these data, the likelihood of observing zero on `y`, (i.e., the likelihood zero manuscripts were completed on a given occasion) is
+
+$$
+\begin{align*}
+\Pr (0 \mid p, \lambda) & = \Pr(\text{drink} \mid p) + \Pr(\text{work} \mid p) \times \Pr(0 \mid \lambda) \\
+                        & = p + (1 - p) \exp (- \lambda).
+\end{align*}
+$$
+
+And
+
+> since the Poisson likelihood of $y$ is $\Pr (y \mid \lambda) = \lambda^y \exp (- \lambda) / y!$, the likelihood of $y = 0$ is just $\exp (- \lambda)$. The above is just the mathematics for:
+>
+>> *The probability of observing a zero is the probability that the monks didn't drink OR ($+$) the probability that the monks worked AND ($\times$) failed to finish anything*. 
+>
+> And the likelihood of a non-zero value $y$ is:
+>
+> $$\Pr (y \mid y > 0, p, \lambda) = \Pr (\text{drink} \mid p) (0) + \Pr (\text{work} \mid p) \Pr (y \mid \lambda) = (1 - p) \frac {\lambda^y \exp (- \lambda)}{y!}$$
+>
+> Since drinking monks never produce $y > 0$, the expression above is just the chance the monks both work $1 - p$, and finish $y$ manuscripts. (pp. 377--378, *emphasis* in the original)
+
+So letting $p$ be the probability $y$ is zero and $\lambda$ be the shape of the distribution, the zero-inflated Poisson ($\operatorname{ZIPoisson}$) regression model might take the basic form
+
+$$
+\begin{align*}
+y_i & \sim \operatorname{ZIPoisson}(p_i, \lambda_i) \\
+\operatorname{logit}(p_i) & = \alpha_p + \beta_p x_i \\
+\log (\lambda_i) & = \alpha_\lambda + \beta_\lambda x_i,
+\end{align*}
+$$
+
+where both parameters in the likelihood, $p_i$ and $\lambda_i$ might get their own statistical model, making this a special case of what Bürkner [-@Bürkner2022Distributional] calls distributional models. One last thing to note is that in **brms**, $p_i$ is denoted `zi`. To fit a zero-inflated Poisson model with **brms**, make sure to specify the correct likelihood with `family = zero_inflated_poisson`. To use a non-default prior for `zi`, make sure to indicate `class = zi` within the `prior()` function.
+
+Make the `stan_data`.
+
+```{r}
+stan_data <- d |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Now we make `model_code_12.3`. Based on the [Vectorizing mixtures](https://mc-stan.org/docs/stan-users-guide/finite-mixtures.html#vectorizing-mixtures) section of the *Stan User's Guide*, it looks like there is no way to express a zero-inflated model (or any other mixture model) with the vectorized notation. You must use a `for` loop of some kind.
+
+```{r}
+model_code_12.3 <- '
+data {
+  int<lower=1> n;
+  array[n] int y;
+}
+parameters {
+  real ap;
+  real al;
+}
+model {
+  // Convert the parameters to their natural scales, 
+  // for notational convenience
+  real p;
+  real lambda;
+  p = inv_logit(ap);
+  lambda = exp(al);
+  
+  // Here is the likelihood
+  for (i in 1:n) {
+    if (y[i] == 0)
+      target += log_mix(p, 0, poisson_lpmf(0 | lambda));
+    if (y[i] > 0)
+      target += log1m(p) + poisson_lpmf(y[i] | lambda);
+    }
+  
+  ap ~ normal(-1.5, 1);
+  al ~ normal(1, 0.5);
+} 
+'
+```
+
+For proper attribution, this `model_code` is a thinly-veiled version of Arel-Bundock's [work](https://vincentarelbundock.github.io/rethinking2/12.html). Now sample from the posterior with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m12.3, file = "fits/m12.3.rda")
+load(file = "fits/m12.3.rda")
+```
+
+```{r}
+#| eval: false
+
+m12.3 <- stan(
+  data = stan_data,
+  model_code = model_code_12.3,
+  cores = 4, seed = 12)
+```
+
+Check the model summary.
+
+```{r}
+print(m12.3, probs = c(0.055, 0.945))
+```
+
+Here are the posterior means and CIs for $\lambda$ and $p$, on their natural scales.
+
+```{r}
+#| warning: false
+
+as_draws_df(m12.3) |> 
+  transmute(p = plogis(ap),
+            lambda = exp(al)) |> 
+  pivot_longer(everything(), names_to = "parameter") |> 
+  group_by(parameter) |> 
+  mean_qi(.width = 0.89)
+```
+
+#### Overthinking: Zero-inflated Poisson calculations in Stan.
+
+We just did that!
+
+## Ordered categorical outcomes
+
+### Example: Moral intuition.
+
+Let's get the `Trolley` data [see @cushmanRoleConsciousReasoning2006].
+
+```{r}
+data(Trolley, package = "rethinking")
+d <- Trolley
+rm(Trolley)
+```
+
+Use `glimpse()` to get a sense of the dimensions of the data.
+
+```{r}
+glimpse(d)
+```
+
+Though we have 9,930 rows, we only have 331 unique individuals.
+
+```{r}
+d |> 
+  summarise(n = n_distinct(id))
+```
+
+### Describing an ordered distribution with intercepts.
+
+Make our version of the simple Figure 12.4 histogram of our primary variable, `response`.
+
+```{r}
+#| fig-width: 2.5
+#| fig-height: 3
+
+p1 <- d |> 
+  ggplot(aes(x = response)) +
+  geom_bar(width = 1/4) +
+  scale_x_continuous(breaks = 1:7)
+        
+p1
+```
+
+Our cumulative proportion plot, Figure 12.4.b, will require some pre-plot wrangling.
+
+```{r}
+#| fig-width: 2.5
+#| fig-height: 3
+
+p2 <- d |>
+  count(response) |>
+  mutate(pr_k     = n / nrow(d),
+         cum_pr_k = cumsum(pr_k)) |> 
+  
+  ggplot(aes(x = response, y = cum_pr_k)) +
+  geom_line() +
+  geom_point(fill = "grey92", shape = 21, size = 2) +
+  scale_x_continuous(breaks = 1:7) +
+  scale_y_continuous("cumulative proportion", breaks = 0:2 / 2) +
+  coord_cartesian(ylim = 0:1)
+
+p2
+```
+
+> Then to re-describe the histogram as log-cumulative odds, we'll need a series of intercept parameters. Each intercept will be on the log-cumulative-odds scale and stand in for the cumulative probability of each outcome. So this is just the application of the link function. The log-cumulative-odds that a response value $y_i$ is equal-to-or-less-than some possible outcome value $k$ is:
+>
+> $$\log \frac{\operatorname{Pr}(y_i \leq k)}{1 - \operatorname{Pr}(y_i \leq k)} = \alpha_k$$
+>
+> where $\alpha_k$ is an "intercept" unique to each possible outcome value $k$. (p. 383)
+
+For Figure 12.4., we can compute the $\alpha_k$ estimates with the base-**R** `qlogis()` function, rather than using McElreath's custom `logit()` function.
+
+```{r}
+#| fig-width: 2.5
+#| fig-height: 3
+
+#| warning: false
+
+p3 <- d |>
+  count(response) |>
+  mutate(cum_pr_k = cumsum(n / nrow(d))) |> 
+  mutate(alpha = qlogis(cum_pr_k)) |> 
+  filter(response < 7) |> 
+  
+  ggplot(aes(x = response, y = alpha)) +
+  geom_line() +
+  geom_point(fill = "grey92", shape = 21, size = 2) +
+  scale_x_continuous(breaks = 1:7, limits = c(1, 7)) +
+  ylab("log-cumulative-odds")
+p3
+```
+
+Why not combine the three subplots with patchwork?
+
+```{r}
+#| fig-width: 7
+#| fig-height: 3
+
+(p1 | p2 | p3) + 
+  plot_annotation(title = "Re-describing a discrete distribution using log-cumulative-odds.")
+```
+
+The code for Figure 12.5 is itself something of a monster.
+
+```{r}
+#| fig-width: 3.5
+#| fig-height: 3.25
+
+d |>
+  count(response) |>
+  mutate(pr_k     = n / nrow(d),
+         cum_pr_k = cumsum(n / nrow(d))) |> 
+  mutate(discrete_probability = ifelse(response == 1, cum_pr_k, cum_pr_k - pr_k)) |>
+  
+  ggplot(aes(x = response, y = cum_pr_k)) +
+  geom_line() +
+  geom_point(fill = "grey92", shape = 21, size = 2) +
+  geom_linerange(aes(ymin = 0, ymax = cum_pr_k),
+                 color = "gray40") +
+  geom_linerange(aes(ymin = ifelse(response == 1, 0, discrete_probability), 
+                     ymax = cum_pr_k),
+                 color = "blue", position = position_nudge(x = 0.1)) +
+  annotate(geom = "text",
+           x = 4.3, y = 0.565,
+           label = "discrete probability",
+           angle = 270, color = "blue", hjust = 0, size = 3) +
+  annotate(geom = "text",
+           x = 3.8, y = 0,
+           label = "cumulative probability",
+           angle = 90, color = "gray40", hjust = 0, size = 3) +
+  scale_x_continuous(breaks = 1:7) +
+  scale_y_continuous("cumulative proportion", breaks = 0:2 / 2)
+```
+
+A compact way to express the formula for this first type of statistical model is
+
+$$
+\begin{align*} 
+\text{response}_i & \sim \operatorname{Categorical} (\mathbf p) \\
+\operatorname{logit}(p_k) & = \alpha_k - \phi \\
+\phi              & = 0 \\
+\alpha_k          & \sim \operatorname{Normal}(0, 1.5),
+\end{align*}
+$$
+
+where the $\alpha_k$ term denotes the $K - 1$ intercepts (cut points or thresholds) we use to describe each possible outcome value $k$ and. The mysterious looking $\phi$ term is a stand-in for the potential terms of the linear model. In the case where we have no predictors, it's just 0. Just hold on to your hats; this will make more sense in the next section.
+
+> An ordered-logit distribution is really just a categorical distribution that takes a vector $\mathbf p = \{p_1, p_2, p_3, p_4, p_5, p_6\}$ of probabilities of each response value below the maximum response (7 in this example). Each response value $k$ in this vector is defined by its link to an intercept parameter, $\alpha_k$. Finally, some weakly regularizing priors are placed on these intercepts. (p. 385)
+
+Make the `stan_data`.
+
+```{r}
+stan_data <- d |> 
+  select(response, action, intention, contact) |> 
+  compose_data(n_response = n_distinct(response))
+
+# What?
+str(stan_data)
+```
+
+Define `model_code_12.4`. I learned the syntax for this kind of model from [this post](https://discourse.mc-stan.org/t/vectorized-ordered-logistic-compiles-but-then-does-not-sample-correctly/10843) on the Stan forums.
+
+```{r}
+model_code_12.4 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_response;  // This is k
+  array[n] int<lower=1, upper=n_response> response;
+}
+parameters {
+  ordered[n_response - 1] cutpoint;
+}
+model {
+  vector[n] phi = rep_vector(0, n);
+  response ~ ordered_logistic(phi, cutpoint);
+  cutpoint ~ normal(0, 1.5);
+}
+'
+```
+
+Sample with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m12.4, file = "fits/m12.4.rda")
+load(file = "fits/m12.4.rda")
+```
+
+```{r}
+#| eval: false
+
+m12.4 <- stan(
+  data = stan_data,
+  model_code = model_code_12.4,
+  cores = 4, seed = 12)
+```
+
+Check the model summary.
+
+```{r}
+print(m12.4, pars = "cutpoint", probs = c(0.055, 0.945))
+```
+
+We can convert the `cutpoint` posteriors to cumulative probabilities with `plogis()`.
+
+```{r}
+m12.4 |> 
+  spread_draws(cutpoint[k]) |> 
+  mutate(cum_p = plogis(cutpoint)) |> 
+  mean_qi(cum_p, .width = 0.89)
+```
+
+### Adding predictor variables.
+
+Now we define the generic linear model as $\phi_i = \beta x_i$. Accordingly, the formula for our cumulative logit model becomes
+
+$$
+\begin{align*}
+\log \frac{\Pr(y_i \leq k)}{1 - \Pr(y_i \leq k)} & = \alpha_k - \phi_i \\
+\phi_i & = \beta x_i.
+\end{align*}
+$$
+
+> This form automatically ensures the correct ordering of the outcome values, while still morphing the likelihood of each individual value as the predictor  $x_i$ changes value. Why is the linear model $\phi$ subtracted from each intercept? Because if we decrease the log-cumulative-odds of every outcome value $k$ below the maximum, this necessarily shifts probability mass upwards towards higher outcome values. So then positive values of $\beta$ mean increasing $x$ also increases the mean $y$. You could add $\phi$ instead like $\alpha_k + \phi_i$. But then $\beta > 0$ would indicate increasing $x$ decreases the mean. (p. 386)
+
+Here's a version of McElreath's `rethinking::dordlogit()` function. You can find the original code for `dordlogit()` from McElreath's [GitHub repo for **rethinking**](https://github.com/rmcelreath/rethinking/blob/a309712d904d1db7af1e08a76c521ab994006fd5/R/distributions.r). We'll call our version `d_ord_logit()`.
+
+```{r}
+d_ord_logit <- function(x, phi, a, log = FALSE) {
+  
+  a  <- c(as.numeric(a), Inf)
+  p  <- plogis(a[x] - phi)
+  na <- c(-Inf, a)
+  np <- plogis(na[x] - phi)
+  p  <- p - np
+  if (log == TRUE) p <- log(p)
+  p
+  
+}
+```
+
+Our `d_ord_logit()` function works like this.
+
+```{r}
+p_k <- m12.4 |> 
+  spread_draws(cutpoint[k]) |> 
+  summarise(cutpoint = mean(cutpoint)) |> 
+  pull() |> 
+  d_ord_logit(x = 1:7, phi = 0)
+
+# What?
+print(p_k)
+```
+
+Next, as McElreath further noted on page 338, "these probabilities imply an average outcome of:"
+
+```{r}
+tibble(k = 1:7,
+       p_k = p_k) |> 
+  summarise(average_outcome = sum(p_k * k))
+```
+
+Now we'll try it by subtracting .5 from each.
+
+```{r}
+p_k <- m12.4 |> 
+  spread_draws(cutpoint[k]) |> 
+  # Here's the change
+  summarise(cutpoint = mean(cutpoint - 0.5)) |> 
+  pull() |> 
+  d_ord_logit(x = 1:7, phi = 0)
+
+# What?
+print(p_k)
+
+# The average
+tibble(k = 1:7,
+       p_k = p_k) |> 
+  summarise(average_outcome = sum(p_k * k))
+```
+
+So the rule is we *subtract the linear model from each intercept*. "This way, a positive $\beta$ value indicates that an increase in the predictor variable $x$ results in an increase in the average response" (p. 387). Happily, even though this makes for a somewhat confusing statistical formula, we still enter our predictor terms into the `brm()` `formula` argument much the same way we always have. As to our upcoming model, we might express the statistical formula as
+
+$$
+\begin{align*} 
+\text{response}_i & \sim \operatorname{Categorical} (\mathbf p) \\
+\text{logit}(p_k) & = \alpha_k - \phi_i \\
+\phi_i            & = \beta_1 \text{action}_i + \beta_2 \text{contact}_i +  (\beta_3 + \beta_4 \text{action}_i + \beta_5 \text{contact}_i) \text{intention}_i \\
+\alpha_k          & \sim \operatorname{Normal}(0, 1.5) \\
+\beta_1, \dots, \beta_5 & \sim \operatorname{Normal}(0, 0.5),
+\end{align*}
+$$
+
+where, because we have included predictors, $\phi$ is no longer set to 0. Using our skills from back in @sec-Conditional-Manatees, we might also rewrite the linear model for $\phi$ as
+
+$$\phi_i = \beta_1 \text{action}_i + \beta_2 \text{contact}_i + \beta_3 \text{intention}_i + \beta_4 (\text{action}_i \times \text{intention}_i) + \beta_5 (\text{contact}_i \times \text{intention}_i).$$
+
+Before we fit the model, we'll want to make a data frame with predictor values for the pp-check in Figure 12.6.
+
+```{r}
+d_pred <- d |> 
+  distinct(action, contact, intention) |> 
+  mutate(i = 1:n())
+
+# What?
+glimpse(d_pred)
+```
+
+Update the `stan_data` to include the elements from `d_pred`.
+
+```{r}
+stan_data <- d |> 
+  select(response, action, intention, contact) |> 
+  compose_data(n_response = n_distinct(response),
+               # For the predictions
+               n_pred = nrow(d_pred),
+               action_pred = d_pred$action,
+               contact_pred = d_pred$contact,
+               intention_pred = d_pred$intention)
+
+# What?
+str(stan_data)
+```
+
+Now we define `model_code_12.4`. I learned the basic syntax for this kind of model from [this post](https://discourse.mc-stan.org/t/vectorized-ordered-logistic-compiles-but-then-does-not-sample-correctly/10843) on the Stan forums. Note how we're adding a `generated quantities` block for the pp-check.
+
+```{r}
+model_code_12.5 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_response;  // This is k
+  vector[n] action;
+  vector[n] contact;
+  vector[n] intention;
+  array[n] int<lower=1, upper=n_response> response;
+  // For predictions
+  int<lower=1> n_pred;
+  vector[n_pred] action_pred;
+  vector[n_pred] contact_pred;
+  vector[n_pred] intention_pred;
+  
+}
+parameters {
+  ordered[n_response - 1] cutpoint;
+  real bA;
+  real bI;
+  real bC;
+  real bIA;
+  real bIC;
+}
+model {
+  vector[n] BI;
+  vector[n] phi;
+  BI = bI + bIA * action + bIC * contact;
+  phi = bA * action + bC * contact + BI .* intention;
+  
+  response ~ ordered_logistic(phi, cutpoint);
+  
+  cutpoint ~ normal(0, 1.5);
+  [bA, bI, bC, bIA, bIC] ~ normal(0, 0.5);
+}
+generated quantities {
+  vector[n_pred] BI;
+  vector[n_pred] phi;
+  BI = bI + bIA * action_pred + bIC * contact_pred;
+  phi = bA * action_pred + bC * contact_pred + BI .* intention_pred;
+  
+  array[n_pred] int<lower=1, upper=n_response> response_pred;
+  for (i in 1:n_pred) 
+    response_pred[i] = ordered_logistic_rng(phi[i], cutpoint);
+}
+'
+```
+
+Sample from the conditional ordinal model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m12.5, file = "fits/m12.5.rda")
+load(file = "fits/m12.5.rda")
+```
+
+```{r}
+#| eval: false
+
+m12.5 <- stan(
+  data = stan_data,
+  model_code = model_code_12.5,
+  cores = 4, seed = 12)
+```
+
+Behold the model summary.
+
+```{r}
+print(m12.5, 
+      pars = c("cutpoint", "bA", "bI", "bC", "bIA", "bIC"),
+      probs = c(0.055, 0.945))
+```
+
+Here are the $\beta$ coefficients in a coefficient plot.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 1.75
+#| warning: false
+
+as_draws_df(m12.5) |>
+  pivot_longer(cols = bA:bIC) |> 
+  
+  ggplot(aes(x = value, y = name)) +
+  stat_pointinterval(.width = 0.89, linewidth = 1/2, shape = 1) +
+  labs(x = "posterior",
+       y = NULL)
+```
+
+Here's how we can make the top row of Figure 12.6.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3.25
+
+# For the sample statistics
+d_cum_p <- d |>  
+  group_by(intention, contact, action) |> 
+  count(response) |> 
+  mutate(probability = cumsum(n / sum(n))) |> 
+  filter(response < 7)
+
+# For `expand_grid()`
+nd <- d |> 
+  count(action, contact, intention)
+
+set.seed(12)  # To make `slice_sample()` reproducible
+
+# Wrangle the posterior draws
+as_draws_df(m12.5) |> 
+  slice_sample(n = 50) |> 
+  expand_grid(nd) |> 
+  pivot_longer(starts_with("cutpoint"), values_to = "alpha") |> 
+  mutate(k = str_extract(name, "\\d")) |> 
+  mutate(BI = bI + bIA * action + bIC * contact) |> 
+  mutate(phi = bA * action + bC * contact + BI * intention) |> 
+  mutate(log_cum_odds = alpha - phi) |> 
+  select(.draw, action:intention, k, log_cum_odds) |> 
+  mutate(probability = plogis(log_cum_odds)) |> 
+  
+  # Plot
+  ggplot(aes(x = intention, y = probability)) +
+  geom_line(aes(group = interaction(.draw, k)),
+            alpha = 1/4, linewidth = 1/4) +
+  geom_point(data = d_cum_p,
+             color = "blue") +
+  scale_x_continuous("intention", breaks = 0:1) +
+  scale_y_continuous(breaks = c(0, .5, 1), limits = 0:1) +
+  facet_wrap(~ action + contact, labeller = label_both)
+```
+
+Here's how we might make the bottom row of Figure 12.6 using the `response_pred` posteriors from the `generated quantities` block.
+
+```{r}
+#| fig-width: 6.5
+#| fig-height: 3.25
+
+set.seed(12)  # To make `ndraws` reproducible
+
+m12.5 |> 
+  spread_draws(response_pred[i],
+               ndraws = 1000) |> 
+  left_join(d_pred, by = join_by(i)) |> 
+  mutate(response = response_pred,
+         intention = factor(intention)) |> 
+  
+  ggplot(aes(x = response, fill = intention)) +
+  geom_bar(position = position_dodge(width = 0.6), width = 0.6) +
+  scale_x_continuous(breaks = 1:7) +
+  scale_fill_manual(values = c("gray60", "blue")) +
+  ylim(0, NA) +
+  facet_wrap(~ action + contact, labeller = label_both)
+```
+
+#### Rethinking: Staring into the abyss.
+
+## Ordered categorical predictors
+
+> We can handle ordered outcome variables using a categorical model with a cumulative link. That was the previous section. What about ordered predictor variables? We could just include them as continuous predictors like in any linear model. But this isn't ideal. Just like with ordered outcomes, we don't really want to assume that the distance between each ordinal value is the same. Luckily, we don't have to. (p. 391)
+
+Here are the eight levels of `edu`.
+
+```{r}
+distinct(d, edu)
+```
+
+McElreath defined his `edu_new` variable with an impressively compact couple lines of code. Here we'll take a slightly different approach saving it as a factor with defined levels.
+
+```{r}
+edu_levels_vec <- c("Elementary School", "Middle School", "Some High School", "High School Graduate",
+                    "Some College", "Bachelor's Degree", "Master's Degree", "Graduate Degree")
+
+d <- d |> 
+  mutate(edu_new = factor(edu, levels = edu_levels_vec))
+
+# What did we do?
+d |> 
+  distinct(edu, edu_new) |> 
+  arrange(edu_new)
+```
+
+The prior often used to handle monotonic effects is the Dirichlet distribution. The Dirichlet distribution is the multivariate extension of the beta distribution, which we met back in @sec-Beta-binomial. Here we follow McElreath's **R** code 12.32 to simulate a few draws from the Dirichlet distribution.
+
+```{r}
+set.seed(1805)
+delta <- gtools::rdirichlet(10, alpha = rep(2, times = 7)) 
+
+# What?
+str(delta)
+```
+
+Plot `delta` with `ggplot()`.
+
+```{r}
+#| fig-width: 4.5
+#| fig-height: 2.5
+
+delta |> 
+  data.frame() |>
+  set_names(1:7) |> 
+  mutate(row = 1:n()) |> 
+  pivot_longer(-row, names_to = "index") |> 
+  
+  ggplot(aes(x = index, y = value, group = row,
+             alpha = row == 3, color = row == 3)) +
+  geom_line() +
+  geom_point() +
+  scale_alpha_manual(values = c(1/4, 1), breaks = NULL) +
+  scale_color_viridis_d(option = "A", end = 0.6, breaks = NULL) +
+  ylab("probability")
+```
+
+Update the `stan_data` to include `edu_new` and an `alpha` vector for the prior. Note how the `compose_data()` function converts the `edu_new` factor levels to the correct integer values.
+
+```{r}
+stan_data <- d |> 
+  select(response, action, intention, contact, edu_new) |> 
+  compose_data(n_response = n_distinct(response),
+               alpha = rep(2, times = 7))  # delta prior
+
+# What?
+str(stan_data)
+```
+
+Now we define `model_code_12.6`. Although we can vectorize the `ordered_logistic()` likelihood for `response`, I'm not aware we can vectorize the `phi` model containing the new `bE * sum(delta_j[1:edu_new[i]])` portion. One way or another, it looks like that requires a `for` loop. For more on why, see [this thread](https://discourse.mc-stan.org/t/vectorized-ordered-logistic-compiles-but-then-does-not-sample-correctly/10843/4) on the Stan forums.
+
+```{r}
+model_code_12.6 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_response;
+  int<lower=1> n_edu_new;
+  vector[n] action;
+  vector[n] contact;
+  vector[n] intention;
+  array[n] int edu_new;
+  array[n] int<lower=1, upper=n_response> response;
+  vector[n_edu_new - 1] alpha;
+}
+parameters {
+  ordered[n_response - 1] kappa;
+  real bE;
+  real bA;
+  real bI;
+  real bC;
+  simplex[n_edu_new - 1] delta;
+}
+model {
+  vector[n] phi;
+  vector[n_edu_new] delta_j;
+  
+  delta_j = append_row(0, delta);
+  for (i in 1:n) phi[i] = bE * sum(delta_j[1:edu_new[i]]) + bA * action[i] + bC * contact[i] + bI * intention[i];
+  response ~ ordered_logistic(phi, kappa);
+  
+  kappa ~ normal(0, 1.5);
+  delta ~ dirichlet(alpha);
+  [bE, bA, bI, bC] ~ normal(0, 1);
+}
+'
+```
+
+Sample from the conditional ordinal model with `stan()`.
+
+```{r}
+#| echo: false
+
+# 3.261547 mins
+
+# save(m12.6, file = "fits/m12.6.rda")
+load(file = "fits/m12.6.rda")
+```
+
+```{r}
+#| eval: false
+
+m12.6 <- stan(
+  data = stan_data,
+  model_code = model_code_12.6,
+  chains = 4, cores = 4, seed = 12)
+```
+
+In the text (p. 394), McElreath remarked it took about 20 minutes to fit this model in his computer. Using my 2023 M2-chip MacBook Pro, it took just under 4 minutes. Mind you, our **rstan** defaults to twice the number of warmup and post-warmup draws. If an when you can, try to vectorize your likelihood functions, friends.
+
+Behold the model summary.
+
+```{r}
+print(m12.6, probs = c(0.055, 0.945))
+```
+
+We can visualize the $\delta$ parameters in a version of Figure 12.8 with help from `GGally::ggpairs()`.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 8
+#| message: false
+
+m12.6 |> 
+  spread_draws(delta[j]) |> 
+  ungroup() |> 
+  left_join(d |>
+              mutate(j = as.integer(edu_new) - 1L) |> 
+              distinct(edu, edu_new, j),
+            by = join_by(j)) |> 
+  select(.draw, edu, delta) |> 
+  pivot_wider(names_from = edu, values_from = delta) |> 
+  select(-.draw) |> 
+  
+  ggpairs(upper = list(continuous = wrap("cor", stars = FALSE)),
+          lower = list(continuous = wrap("points", alpha = 0.1, size = 0.1))) +
+  theme(strip.text = element_text(size = 7))
+```
+
+Now we prepare for the more conventional model `m12.7`. First add a normalized version of `edu_new` called `edu_norm`.
+
+```{r}
+d <- d |> 
+  mutate(edu_norm = (as.integer(edu_new) - 1) / 7)
+
+# What does this look like?
+d |> 
+  distinct(edu, edu_new, edu_norm) |> 
+  arrange(edu_new)
+```
+
+Next we update the `stan_data` to include `edu_norm`.
+
+```{r}
+stan_data <- d |> 
+  select(response, action, intention, contact, edu_norm) |> 
+  compose_data(n_response = n_distinct(response))
+
+# What?
+str(stan_data)
+```
+
+Define `model_code_12.7`.
+
+```{r}
+model_code_12.7 <- '
+data {
+  int<lower=1> n;
+  int<lower=1> n_response;
+  vector[n] action;
+  vector[n] contact;
+  vector[n] intention;
+  vector[n] edu_norm;
+  array[n] int<lower=1, upper=n_response> response;
+}
+parameters {
+  ordered[n_response - 1] kappa;
+  real bE;
+  real bA;
+  real bI;
+  real bC;
+}
+model {
+  vector[n] phi;
+  phi = bE * edu_norm + bA * action + bC * contact + bI * intention;
+  response ~ ordered_logistic(phi, kappa);
+  
+  kappa ~ normal(0, 1.5);
+  [bE, bA, bI, bC] ~ normal(0, 1);
+}
+'
+```
+
+Sample from the conditional ordinal model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m12.7, file = "fits/m12.7.rda")
+load(file = "fits/m12.7.rda")
+```
+
+```{r}
+#| eval: false
+
+m12.7 <- stan(
+  data = stan_data,
+  model_code = model_code_12.7,
+  chains = 4, cores = 4, seed = 12)
+```
+
+Here's a focused summary of the $\beta$ coefficients.
+
+```{r}
+print(m12.7, pars = c("bE", "bA", "bI", "bC"), probs = c(0.055, 0.945))
+```
+
+## Summary
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
+## Comments {-}
+
