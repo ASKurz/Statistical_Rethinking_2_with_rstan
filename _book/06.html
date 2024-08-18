@@ -194,6 +194,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./09.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Markov Chain Monte Carlo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Big Entropy and the Generalized Linear Model</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">God Spiked the Integers</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Monsters and Mixtures</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -1571,14 +1595,14 @@ $ happiness &lt;dbl&gt; -2.0000000, -1.7894737, -1.5789474, -1.3684211, -1.15789
  $ n        : int 960</code></pre>
 </div>
 </div>
-<p>Define the two <code>model_code</code> objects.</p>
+<p>Define the two <code>model_code</code> objects. For <code>model_code_6.9</code>, note how since we’re using <code>mid</code> as an index variable, we have saved it as an integer in an array. We haven’t done this in a while, but we covered it in some detail in <a href="05.html#sec-Binary-categories"><span>Section&nbsp;5.3.1</span></a> if you need a refresher.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb99"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a>model_code_6<span class="fl">.9</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb99-2"><a href="#cb99-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
 <span id="cb99-3"><a href="#cb99-3" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb99-4"><a href="#cb99-4" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] happiness;</span></span>
 <span id="cb99-5"><a href="#cb99-5" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] a;</span></span>
-<span id="cb99-6"><a href="#cb99-6" aria-hidden="true" tabindex="-1"></a><span class="st">  int mid[n];</span></span>
+<span id="cb99-6"><a href="#cb99-6" aria-hidden="true" tabindex="-1"></a><span class="st">  array[n] int mid;</span></span>
 <span id="cb99-7"><a href="#cb99-7" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb99-8"><a href="#cb99-8" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
 <span id="cb99-9"><a href="#cb99-9" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[2] b0;</span></span>
@@ -1641,7 +1665,7 @@ b1      -0.80    0.00 0.11   -0.98   -0.62  1605    1
 sigma    1.01    0.00 0.02    0.97    1.05  2810    1
 lp__  -490.28    0.03 1.39 -492.85 -488.69  1785    1
 
-Samples were drawn using NUTS(diag_e) at Wed Jul 31 19:14:10 2024.
+Samples were drawn using NUTS(diag_e) at Wed Aug 14 10:08:02 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>

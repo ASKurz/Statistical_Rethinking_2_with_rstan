@@ -213,6 +213,30 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./09.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Markov Chain Monte Carlo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Big Entropy and the Generalized Linear Model</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">God Spiked the Integers</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Monsters and Mixtures</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -268,7 +292,7 @@ div.csl-indent {
   <li><a href="#categorical-variables" id="toc-categorical-variables" class="nav-link" data-scroll-target="#categorical-variables"><span class="header-section-number">5.3</span> Categorical variables</a>
   <ul>
   <li><a href="#rethinking-continuous-countries." id="toc-rethinking-continuous-countries." class="nav-link" data-scroll-target="#rethinking-continuous-countries."><span class="header-section-number">5.3.0.1</span> Rethinking: Continuous countries.</a></li>
-  <li><a href="#binary-categories." id="toc-binary-categories." class="nav-link" data-scroll-target="#binary-categories."><span class="header-section-number">5.3.1</span> Binary categories.</a></li>
+  <li><a href="#sec-Binary-categories" id="toc-sec-Binary-categories" class="nav-link" data-scroll-target="#sec-Binary-categories"><span class="header-section-number">5.3.1</span> Binary categories.</a></li>
   <li><a href="#many-categories." id="toc-many-categories." class="nav-link" data-scroll-target="#many-categories."><span class="header-section-number">5.3.2</span> Many categories.</a>
   <ul>
   <li><a href="#rethinking-differences-and-statistical-significance." id="toc-rethinking-differences-and-statistical-significance." class="nav-link" data-scroll-target="#rethinking-differences-and-statistical-significance."><span class="header-section-number">5.3.2.1</span> Rethinking: Differences and statistical significance.</a></li>
@@ -2402,8 +2426,8 @@ convergence, Rhat=1).</code></pre>
 <section id="rethinking-continuous-countries." class="level4" data-number="5.3.0.1">
 <h4 data-number="5.3.0.1" class="anchored" data-anchor-id="rethinking-continuous-countries."><span class="header-section-number">5.3.0.1</span> Rethinking: Continuous countries.</h4>
 </section>
-<section id="binary-categories." class="level3" data-number="5.3.1">
-<h3 data-number="5.3.1" class="anchored" data-anchor-id="binary-categories."><span class="header-section-number">5.3.1</span> Binary categories.</h3>
+<section id="sec-Binary-categories" class="level3" data-number="5.3.1">
+<h3 data-number="5.3.1" class="anchored" data-anchor-id="sec-Binary-categories"><span class="header-section-number">5.3.1</span> Binary categories.</h3>
 <p>Reload the <code>Howell1</code> data.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb134"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb134-1"><a href="#cb134-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(Howell1, <span class="at">package =</span> <span class="st">"rethinking"</span>)</span>
@@ -2516,7 +2540,7 @@ $ male   &lt;int&gt; 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0,
 </div>
 </div>
 <p>Do you see the <code>n_sex</code> value there? When you save variables as characters or as factors, the <code>compose_data()</code> function will automatically compute a corresponding <code>n_</code> value. To learn more, execute <code>?compose_data</code> in your console.</p>
-<p>Define the two <code>model_code</code>s. Notice how we’ve used the <code>n_sex</code> value in the first.</p>
+<p>Here we define the two <code>model_code</code>s. I should make a couple comments on the <code>data</code> blocks. Notice how we’ve defined the <code>n_sex</code> scalar in the first, and how we later use that value to define the length of the <code>a</code> vector in the <code>parameters</code> block. When we use values like that, as well as how we’ve been using <code>n</code> in all previous models, those values are always integers, which we declared in the <code>data</code> block by stating <code>int</code>. Up until this point, we have only been using integers as scalars. All of our primary data values have been placed in vectors. In Stan, vectors an be used for real and complex values, but not integers. If you want to feed in a series of integer values as data, you generally need to use an array, which is what we’re doing with the syntax of <code>array[n] int sex;</code> in the first <code>data</code> block, below. This is important because if you want to use McElreath’s index-variable approach, the index variable should be an integer. Note, however, that when you use the dummy-variable approach, you can save the dummy variables as either integers (saved in an array) or as real values (typically saved in a vector, but also possibly in an array). In my experience, this is all easy to mix up, so do spend some time looking through the <a href="https://mc-stan.org/docs/reference-manual/types.html"><em>Data Types and Declarations</em></a> section of the <em>Stan Reference Manual</em> <span class="citation" data-cites="standevelopmentteamStanReferenceManual2024">(<a href="references.html#ref-standevelopmentteamStanReferenceManual2024" role="doc-biblioref">Stan Development Team, 2024</a>)</span>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb144"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb144-1"><a href="#cb144-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Index variable approach</span></span>
 <span id="cb144-2"><a href="#cb144-2" aria-hidden="true" tabindex="-1"></a>model_code_5<span class="fl">.8</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
@@ -2524,7 +2548,7 @@ $ male   &lt;int&gt; 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0,
 <span id="cb144-4"><a href="#cb144-4" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb144-5"><a href="#cb144-5" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_sex;</span></span>
 <span id="cb144-6"><a href="#cb144-6" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] height;</span></span>
-<span id="cb144-7"><a href="#cb144-7" aria-hidden="true" tabindex="-1"></a><span class="st">  int sex[n];</span></span>
+<span id="cb144-7"><a href="#cb144-7" aria-hidden="true" tabindex="-1"></a><span class="st">  array[n] int sex;</span></span>
 <span id="cb144-8"><a href="#cb144-8" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb144-9"><a href="#cb144-9" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
 <span id="cb144-10"><a href="#cb144-10" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_sex] a;</span></span>
@@ -2594,7 +2618,7 @@ a[2]    142.54    0.03 1.70   139.82   145.30  3741    1
 sigma    27.41    0.01 0.84    26.11    28.77  3513    1
 lp__  -2074.04    0.03 1.26 -2076.34 -2072.71  1896    1
 
-Samples were drawn using NUTS(diag_e) at Wed Jul 31 16:06:50 2024.
+Samples were drawn using NUTS(diag_e) at Wed Aug 14 09:18:56 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -2611,7 +2635,7 @@ b1        7.02    0.05 2.26     3.48    10.55  2519    1
 sigma    27.42    0.02 0.84    26.16    28.80  2585    1
 lp__  -2072.70    0.03 1.24 -2075.06 -2071.39  1616    1
 
-Samples were drawn using NUTS(diag_e) at Wed Jul 31 16:07:17 2024.
+Samples were drawn using NUTS(diag_e) at Wed Aug 14 09:19:22 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -2731,7 +2755,7 @@ convergence, Rhat=1).</code></pre>
  $ n            : int 29</code></pre>
 </div>
 </div>
-<p>Define the two <code>model_code</code>s. Note our use of the <code>n_clade_id</code> value in the first.</p>
+<p>Define the two <code>model_code</code>s. Note how we’ve saved the <code>n_clade_id</code> variable as an integer in an array, in the first, which allows us to use it as an index in the <code>model</code> block.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb158"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb158-1"><a href="#cb158-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Index variable approach</span></span>
 <span id="cb158-2"><a href="#cb158-2" aria-hidden="true" tabindex="-1"></a>model_code_5<span class="fl">.9</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
@@ -2739,7 +2763,7 @@ convergence, Rhat=1).</code></pre>
 <span id="cb158-4"><a href="#cb158-4" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
 <span id="cb158-5"><a href="#cb158-5" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_clade_id;</span></span>
 <span id="cb158-6"><a href="#cb158-6" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] k;</span></span>
-<span id="cb158-7"><a href="#cb158-7" aria-hidden="true" tabindex="-1"></a><span class="st">  int clade_id[n];</span></span>
+<span id="cb158-7"><a href="#cb158-7" aria-hidden="true" tabindex="-1"></a><span class="st">  array[n] int clade_id;</span></span>
 <span id="cb158-8"><a href="#cb158-8" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb158-9"><a href="#cb158-9" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
 <span id="cb158-10"><a href="#cb158-10" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_clade_id] a;</span></span>
@@ -2811,7 +2835,7 @@ a[4]   -0.54    0.00 0.30  -1.01 -0.05  4111    1
 sigma   0.80    0.00 0.12   0.64  1.00  3459    1
 lp__  -11.32    0.04 1.67 -14.28 -9.32  1753    1
 
-Samples were drawn using NUTS(diag_e) at Wed Jul 31 16:17:26 2024.
+Samples were drawn using NUTS(diag_e) at Wed Aug 14 09:22:12 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -2978,8 +3002,8 @@ convergence, Rhat=1).</code></pre>
 <span id="cb172-5"><a href="#cb172-5" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_clade_id;</span></span>
 <span id="cb172-6"><a href="#cb172-6" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_house_id;</span></span>
 <span id="cb172-7"><a href="#cb172-7" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] k;</span></span>
-<span id="cb172-8"><a href="#cb172-8" aria-hidden="true" tabindex="-1"></a><span class="st">  int clade_id[n];</span></span>
-<span id="cb172-9"><a href="#cb172-9" aria-hidden="true" tabindex="-1"></a><span class="st">  int house_id[n];</span></span>
+<span id="cb172-8"><a href="#cb172-8" aria-hidden="true" tabindex="-1"></a><span class="st">  array[n] int clade_id;</span></span>
+<span id="cb172-9"><a href="#cb172-9" aria-hidden="true" tabindex="-1"></a><span class="st">  array[n] int house_id;</span></span>
 <span id="cb172-10"><a href="#cb172-10" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb172-11"><a href="#cb172-11" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
 <span id="cb172-12"><a href="#cb172-12" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_clade_id] a;</span></span>
@@ -3022,7 +3046,7 @@ b[4]    0.47    0.01 0.31  -0.03  0.97  3603    1
 sigma   0.78    0.00 0.12   0.61  0.99  3714    1
 lp__  -11.32    0.06 2.38 -15.56 -8.22  1555    1
 
-Samples were drawn using NUTS(diag_e) at Wed Jul 31 16:25:18 2024.
+Samples were drawn using NUTS(diag_e) at Wed Aug 14 09:24:36 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -3211,6 +3235,9 @@ loaded via a namespace (and not attached):
 <div id="refs" class="references csl-bib-body hanging-indent" data-line-spacing="2" role="list" style="display: none">
 <div id="ref-hindePrimateMilkProximate2011" class="csl-entry" role="listitem">
 Hinde, K., &amp; Milligan, L. A. (2011). Primate milk: <span>Proximate</span> mechanisms and ultimate perspectives. <em>Evolutionary Anthropology: Issues, News, and Reviews</em>, <em>20</em>(1), 9–23. <a href="https://doi.org/10.1002/evan.20289">https://doi.org/10.1002/evan.20289</a>
+</div>
+<div id="ref-standevelopmentteamStanReferenceManual2024" class="csl-entry" role="listitem">
+Stan Development Team. (2024). <em>Stan reference manual, <span>Version</span> 2.35</em>. <a href="https://mc-stan.org/docs/reference-manual/">https://mc-stan.org/docs/reference-manual/</a>
 </div>
 <div id="ref-R-tigris" class="csl-entry" role="listitem">
 Walker, K. (2022). <em>Tigris: <span>Load</span> census <span>TIGER</span>/<span>Line</span> shapefiles</em> [Manual]. <a href="https://github.com/walkerke/tigris">https://github.com/walkerke/tigris</a>
