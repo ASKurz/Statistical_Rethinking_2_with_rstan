@@ -25,7 +25,7 @@ Once you have installed **R**, execute the following to install the bulk of the 
 ```{r}
 #| eval: false
 
-packages <- c("dagitty", "devtools", "ggdag", "patchwork", "posterior", "remotes", "rstan", "tidybayes", "tidyverse", "tigris")
+packages <- c("dagitty", "devtools", "GGally", "ggdag", "patchwork", "posterior", "remotes", "rstan", "tidybayes", "tidyverse", "tigris")
 
 install.packages(packages, dependencies = TRUE)
 ```
@@ -65,7 +65,7 @@ For the **rstan** code, I'm also taking cues from the [*Stan Program Style Guide
 
 ## Warning  {-}
 
-This book is a side-product of another project for which I needed to learn more about **rstan**. It was also a good opportunity to learn more about making a [Quarto](https://quarto.org/)-based ebook [@quarto2024]. For this first 0.0.1 release, I'm only up through Chapter 8. I will continue to chip away on this as my schedule permits, but I am setting no goals and no deadlines. On the one hand, it would be nice to have another finished book in my portfolio; on the other hand, I really don't like using **rstan** and I still much prefer a **brms**-based workflow. The remaining chapters in this book may find themselves fleshed out in quick succession, or this whole project may lay fallow. We'll see...
+This book is a side-product of another project for which I needed to learn more about **rstan**. It was also a good opportunity to learn more about making a [Quarto](https://quarto.org/)-based ebook [@quarto2024]. For this second 0.0.2 release, I'm only up through Chapter 12. I will continue to chip away on this as my schedule permits, but I am setting no goals and no deadlines. On the one hand, it would be nice to have another finished book in my portfolio; on the other hand, I really don't like using **rstan** and I still much prefer a **brms**-based workflow. The remaining chapters in this book may find themselves fleshed out in quick succession, or this whole project may lay fallow. We'll see...
 
 ## Comments! {-}
 
@@ -76,7 +76,8 @@ This is my first ebook with comments sections! Please play nice. I don't plan on
 I'd like to thank the following for their helpful contributions:
 
 * Vincent Arel-Bundock ([\@vincentarelbundock](https://github.com/vincentarelbundock)),
-* Andrew Heiss ([\@andrewheiss](https://github.com/andrewheiss)), and
+* Andrew Heiss ([\@andrewheiss](https://github.com/andrewheiss)), 
+* Andrew Johnson  ([\@andrjohns](https://github.com/andrjohns)), and
 * John K. Kruschke ([\@kruschke](https://github.com/kruschke)).
 
 Each of these folks have shared **rstan** code that a directly helped make this book possible. I especially appreciate and recommend Arel-Bundock's website [*Statistical Rethinking 2 with Stan and R*](https://vincentarelbundock.github.io/rethinking2/), wherein you can find rendered `Rmarkdown` files with loads of **rstan** code on many of the same problems I'm tackling in this book. If you compare our works, you'll see I have been heavily influenced by Arel-Bundock's **rstan** style.
@@ -93,7 +94,7 @@ This book is licensed under the Creative Commons Zero v1.0 Universal license, th
   author = {Kurz, A. Solomon},
   year = {2024},
   month = {aug},
-  edition = {version 0.0.1},
+  edition = {version 0.0.2},
   url = {https://solomon.quarto.pub/sr2rstan/}
 }
 ```
