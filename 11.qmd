@@ -33,7 +33,7 @@ d <- chimpanzees
 rm(chimpanzees)
 ```
 
-Make the index variable `treatment`, a variant of which we'll be saving as a factor with labeled levels called `labels`.
+Make the index variable `treatment`, a variant of which we'll be saving as a factor with labeled levels named `labels`.
 
 ```{r}
 d <- d |> 
@@ -268,7 +268,7 @@ p2 <- bind_rows(prior_m11.2_df, prior_m11.3_df) |>
 p1 | p2
 ```
 
-The average *absolute* prior difference is about 0.1, very similar to McElreath's value from R code 11.9.
+The average *absolute* prior difference is about 0.1, very similar to McElreath's value from **R** code 11.9.
 
 ```{r}
 prior_m11.3_df |> 
@@ -295,7 +295,7 @@ $$
 \end{align*}
 $$
 
-where we now have four levels of $\alpha_j$ and seven levels of $\beta_k$. We'll call this model `m11.4`, and this time we actually sample from the posterior. In the `generated quantities` block, we're defining a vector of predicted values `p`, as well as the `log_lik` values for information criteria.
+where we now have four levels of $\alpha_j$, and seven levels of $\beta_k$. We'll call this model `m11.4`, and this time we actually sample from the posterior. In the `generated quantities` block, we're defining a vector of predicted values `p`, as well as the `log_lik` values for information criteria.
 
 ```{r}
 #| echo: false
@@ -734,10 +734,10 @@ $$\Pr(1, 1, 1, 1, 1, 1, 0, 0, 0 \mid p) = p^6 (1 - p)^{9 - 6}.$$
 Let's work this out in code.
 
 ```{r}
-# deviance of aggregated 6-in-9 
+# Deviance of aggregated 6-in-9 
 -2 * dbinom(6, size = 9, prob = 0.2, log = TRUE)
 
-# deviance of dis-aggregated 
+# Deviance of dis-aggregated 
 -2 * sum(dbinom(c(1, 1, 1, 1, 1, 1, 0, 0, 0), size = 1, prob = 0.2, log = TRUE))
 ```
 
@@ -882,7 +882,7 @@ $$
 \end{align*}
 $$
 
-where departments are indexed by $k$. Make the `model_code` and fit `m11.8` with `stan()`. Note the increase in the `iter` argument.
+where departments are indexed by $k$. Make the `model_code` and fit `m11.8` with `stan()`. Note how we're increasing the `iter` argument in `stan()`.
 
 ```{r}
 #| echo: false
@@ -1321,7 +1321,7 @@ p1 <- as_draws_df(m11.10) |>
   mutate(total_tools = exp(a + b * log_pop_std)) |> 
   
   ggplot(aes(x = log_pop_std, y = total_tools,
-             group = cid, color = cid, fill = cid)) +
+             color = cid, fill = cid, group = cid)) +
   stat_lineribbon(.width = 0.89, alpha = 1/4) +
   geom_point(data = d |> 
                mutate(k = l11.10$diagnostics$pareto_k),
@@ -1346,7 +1346,7 @@ p2 <- spread_draws(m11.10, a[cid], b[cid]) |>
   mutate(population = exp((log_pop_std * sd(log(d$population))) + mean(log(d$population)))) |> 
   
   ggplot(aes(x = population, y = total_tools,
-             group = cid, color = cid, fill = cid)) +
+             color = cid, fill = cid, group = cid)) +
   stat_lineribbon(.width = 0.89, alpha = 1/4) +
   geom_point(data = d |> 
                mutate(k = l11.10$diagnostics$pareto_k),
@@ -1367,7 +1367,7 @@ p2 <- spread_draws(m11.10, a[cid], b[cid]) |>
 
 Hawaii is influential in that it has a very large population relative to the other islands.
 
-#### Overthinking: Modeling tool innovation.
+#### Overthinking: Modeling tool innovation. {#sec-Overthinking-Modeling-tool-innovation}
 
 McElreath's theoretical, or scientific, model for `total_tools` is
 
@@ -1401,9 +1401,7 @@ $$
 \end{align*}
 $$
 
-where we exponentiate $\alpha_{\text{cid}[i]}$ to restrict the posterior to zero and above. Here's how we might fit that model with **rstan**.
-
-First we make some data `d_pred` for the predictions we'll display in the plot.
+where we exponentiate $\alpha_{\text{cid}[i]}$ to restrict the posterior to zero and above. To fit that model with **rstan**, first we make some data `d_pred` for the predictions we'll display in the plot.
 
 ```{r}
 d_pred <- tibble(
@@ -1431,7 +1429,6 @@ str(stan_data)
 ```
 
 Define `model_code_11.11`.
-
 
 ```{r}
 #| eval: false
@@ -1521,11 +1518,11 @@ tibble(m11.10 = l11.10$diagnostics$pareto_k,
   labs(subtitle = expression(Pareto~italic(k)))
 ```
 
-Okay, it's time to make Figure 11.10. In the first line in the `Wrangle` section, note how we're using `spread_draws()` to extract the `lambda_pred` values we defined in the `generated quantities`, above.
+Okay, it's time to make Figure 11.10. In the first line in the `Wrangle` section below, note how we're using `spread_draws()` to extract the `lambda_pred` values we defined in the `generated quantities`, above.
 
 ```{r}
 #| fig-width: 3.5
-#| fig-height: 3.25
+#| fig-height: 3
 
 # For the annotation
 d_text <- distinct(d, cid, contact) |> 
@@ -1541,7 +1538,7 @@ spread_draws(m11.11, lambda_pred[i]) |>
   
   # Plot!
   ggplot(aes(x = population, y = total_tools,
-             group = cid, color = cid, fill = cid)) +
+             color = cid, fill = cid, group = cid)) +
   stat_lineribbon(.width = 0.89, alpha = 1/4) +
   geom_point(data = d |> 
                mutate(k = l11.11$diagnostics$pareto_k),
@@ -1568,9 +1565,9 @@ loo_compare(l11.10, l11.11) |>
 
 ### Negative binomial (gamma-Poisson) models.
 
-### Example: Exposure and the offset.
+### Example: Exposure and the offset. {#sec-Example-Exposure-and-the-offset}
 
-Here we simulate our data.
+Here we simulate our industrious monk data.
 
 ```{r}
 set.seed(11)
@@ -1719,7 +1716,7 @@ Set up the `stan_data`.
 
 ```{r}
 stan_data <- d |> 
-  # `reject` is a reserved word in Stan, cannot use as variable name
+  # `reject` is a reserved word in Stan, and must not be used as variable name
   mutate(rej = reject) |> 
   select(admit, rej, applications) |> 
   compose_data()
@@ -1767,7 +1764,7 @@ model {
 '
 ```
 
-Compile and extract the posterior draws for both, with `stan()`.
+Compile and extract the posterior draws for both with `stan()`.
 
 ```{r}
 #| echo: false
