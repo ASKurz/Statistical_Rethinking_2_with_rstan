@@ -62,7 +62,7 @@ beta_a_b_from_mean_kappa <- function(mean, kappa) {
 }
 ```
 
-Now we can use Kruschke's `beta_a_b_from_mean_kappa()` to find the $\alpha$ and $\beta$ values corresponding to McElreath's `pbar` and `theta`.
+Now we can use the `beta_a_b_from_mean_kappa()` function to find the $\alpha$ and $\beta$ values corresponding to McElreath's `pbar` and `theta`.
 
 ```{r}
 beta_a_b_from_mean_kappa(mean = pbar, kappa = theta)
@@ -220,7 +220,7 @@ post |>
   mutate_if(is.double, round, digits = 3)
 ```
 
-Much like in the text, the difference between genders on admission rates is near zero with wide uncertainty intervals spanning in either direction.
+Much like in the text, the difference between genders on admission rates is near zero, with wide uncertainty intervals spanning in either direction.
 
 Here's the left panel of Figure 12.1.
 
@@ -305,7 +305,7 @@ rm(Kline)
 print(d)
 ```
 
-If you take a look of McElreath's `m12.2`, you'll see it's a gamma-Poisson version of the non-linear model he fit in last chapter, `m11.11`. The model is
+If you take a look at McElreath's `m12.2`, you'll see it's a gamma-Poisson version of the non-linear model `m11.11` he fit back in @sec-Overthinking-Modeling-tool-innovation. We can describe this new version of the model as
 
 ```{r}
 #| eval: false
@@ -322,11 +322,9 @@ $$
 \alpha_j & \sim \operatorname{Normal}(1, 1) \\
 \beta_j  & \sim \operatorname{Exponential}(1) \\
 \gamma & \sim \operatorname{Exponential}(1) \\
-\phi   & \sim \operatorname{Exponential}(1),
+\phi   & \sim \operatorname{Exponential}(1).
 \end{align*}
 $$
-
-which is a gamma-Poisson version of the theory-based Poisson model `m11.11` from the last chapter.
 
 Make the `d_pred` data for the predictions we'll display in the plot.
 
@@ -473,7 +471,7 @@ bind_rows(
   
   # Plot!
   ggplot(aes(x = population, y = total_tools,
-             group = cid, color = cid, fill = cid)) +
+             color = cid, fill = cid, group = cid)) +
   stat_lineribbon(.width = 0.89, point_interval = mean_qi,
                   alpha = 1/4) +
   geom_point(data = d_k,
@@ -500,7 +498,7 @@ bind_rows(
 
 ### Example: Zero-inflated Poisson.
 
-Do you remember the monk data from back in [Chapter 11][Example: Exposure and the offset.]? Here we simulate some more. This time we'll work in a little alcohol.
+Do you remember the monk data from back in @sec-Example-Exposure-and-the-offset? Here we simulate some more. This time we'll work in a little alcohol.
 
 ```{r}
 # Define parameters
@@ -564,7 +562,7 @@ y_i & \sim \operatorname{ZIPoisson}(p_i, \lambda_i) \\
 \end{align*}
 $$
 
-where both parameters in the likelihood, $p_i$ and $\lambda_i$ might get their own statistical model, making this a special case of what Bürkner [-@Bürkner2022Distributional] calls distributional models. One last thing to note is that in **brms**, $p_i$ is denoted `zi`. To fit a zero-inflated Poisson model with **brms**, make sure to specify the correct likelihood with `family = zero_inflated_poisson`. To use a non-default prior for `zi`, make sure to indicate `class = zi` within the `prior()` function.
+where both parameters in the likelihood, $p_i$ and $\lambda_i$ might get their own statistical model, making this a special case of what Bürkner [-@Bürkner2022Distributional] calls distributional models.
 
 Make the `stan_data`.
 
@@ -715,7 +713,7 @@ p2
 
 > Then to re-describe the histogram as log-cumulative odds, we'll need a series of intercept parameters. Each intercept will be on the log-cumulative-odds scale and stand in for the cumulative probability of each outcome. So this is just the application of the link function. The log-cumulative-odds that a response value $y_i$ is equal-to-or-less-than some possible outcome value $k$ is:
 >
-> $$\log \frac{\operatorname{Pr}(y_i \leq k)}{1 - \operatorname{Pr}(y_i \leq k)} = \alpha_k$$
+> $$\log \frac{\Pr(y_i \leq k)}{1 - \Pr(y_i \leq k)} = \alpha_k$$
 >
 > where $\alpha_k$ is an "intercept" unique to each possible outcome value $k$. (p. 383)
 
@@ -724,7 +722,6 @@ For Figure 12.4., we can compute the $\alpha_k$ estimates with the base-**R** `q
 ```{r}
 #| fig-width: 2.5
 #| fig-height: 3
-
 #| warning: false
 
 p3 <- d |>
@@ -912,7 +909,7 @@ tibble(k = 1:7,
   summarise(average_outcome = sum(p_k * k))
 ```
 
-Now we'll try it by subtracting .5 from each.
+Now we'll try it by subtracting 0.5 from each.
 
 ```{r}
 p_k <- m12.4 |> 
@@ -931,7 +928,7 @@ tibble(k = 1:7,
   summarise(average_outcome = sum(p_k * k))
 ```
 
-So the rule is we *subtract the linear model from each intercept*. "This way, a positive $\beta$ value indicates that an increase in the predictor variable $x$ results in an increase in the average response" (p. 387). Happily, even though this makes for a somewhat confusing statistical formula, we still enter our predictor terms into the `brm()` `formula` argument much the same way we always have. As to our upcoming model, we might express the statistical formula as
+So the rule is we *subtract the linear model from each intercept*. "This way, a positive $\beta$ value indicates that an increase in the predictor variable $x$ results in an increase in the average response" (p. 387). As to our upcoming model, we might express the statistical formula as
 
 $$
 \begin{align*} 
@@ -974,7 +971,7 @@ stan_data <- d |>
 str(stan_data)
 ```
 
-Now we define `model_code_12.4`. I learned the basic syntax for this kind of model from [this post](https://discourse.mc-stan.org/t/vectorized-ordered-logistic-compiles-but-then-does-not-sample-correctly/10843) on the Stan forums. Note how we're adding a `generated quantities` block for the pp-check.
+Now we define `model_code_12.5`. Note how we're adding a `generated quantities` block for the pp-check.
 
 ```{r}
 model_code_12.5 <- '
@@ -1133,7 +1130,7 @@ m12.5 |>
 
 #### Rethinking: Staring into the abyss.
 
-## Ordered categorical predictors
+## Ordered categorical predictors {#sec-Ordered-categorical-predictors}
 
 > We can handle ordered outcome variables using a categorical model with a cumulative link. That was the previous section. What about ordered predictor variables? We could just include them as continuous predictors like in any linear model. But this isn't ideal. Just like with ordered outcomes, we don't really want to assume that the distance between each ordinal value is the same. Luckily, we don't have to. (p. 391)
 
