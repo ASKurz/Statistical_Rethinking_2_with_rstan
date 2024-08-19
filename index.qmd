@@ -25,7 +25,7 @@ Once you have installed **R**, execute the following to install the bulk of the 
 ```{r}
 #| eval: false
 
-packages <- c("dagitty", "devtools", "GGally", "ggdag", "patchwork", "posterior", "remotes", "rstan", "tidybayes", "tidyverse", "tigris")
+packages <- c("bayesplot", "dagitty", "devtools", "GGally", "ggdag", "patchwork", "posterior", "remotes", "rstan", "tidybayes", "tidyverse", "tigris")
 
 install.packages(packages, dependencies = TRUE)
 ```
