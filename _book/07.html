@@ -2226,18 +2226,20 @@ model2 1.000
 model3 0.000 </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb149"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb149-1"><a href="#cb149-1" aria-hidden="true" tabindex="-1"></a><span class="co"># pseudobma</span></span>
-<span id="cb149-2"><a href="#cb149-2" aria-hidden="true" tabindex="-1"></a><span class="fu">loo_model_weights</span>(</span>
-<span id="cb149-3"><a href="#cb149-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="fu">extract_log_lik</span>(m6<span class="fl">.6</span>) <span class="sc">|&gt;</span> <span class="fu">loo</span>(),</span>
-<span id="cb149-4"><a href="#cb149-4" aria-hidden="true" tabindex="-1"></a>       <span class="fu">extract_log_lik</span>(m6<span class="fl">.7</span>) <span class="sc">|&gt;</span> <span class="fu">loo</span>(),</span>
-<span id="cb149-5"><a href="#cb149-5" aria-hidden="true" tabindex="-1"></a>       <span class="fu">extract_log_lik</span>(m6<span class="fl">.8</span>) <span class="sc">|&gt;</span> <span class="fu">loo</span>()),</span>
-<span id="cb149-6"><a href="#cb149-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"pseudobma"</span></span>
-<span id="cb149-7"><a href="#cb149-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb149-2"><a href="#cb149-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">7</span>)</span>
+<span id="cb149-3"><a href="#cb149-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb149-4"><a href="#cb149-4" aria-hidden="true" tabindex="-1"></a><span class="fu">loo_model_weights</span>(</span>
+<span id="cb149-5"><a href="#cb149-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="fu">extract_log_lik</span>(m6<span class="fl">.6</span>) <span class="sc">|&gt;</span> <span class="fu">loo</span>(),</span>
+<span id="cb149-6"><a href="#cb149-6" aria-hidden="true" tabindex="-1"></a>       <span class="fu">extract_log_lik</span>(m6<span class="fl">.7</span>) <span class="sc">|&gt;</span> <span class="fu">loo</span>(),</span>
+<span id="cb149-7"><a href="#cb149-7" aria-hidden="true" tabindex="-1"></a>       <span class="fu">extract_log_lik</span>(m6<span class="fl">.8</span>) <span class="sc">|&gt;</span> <span class="fu">loo</span>()),</span>
+<span id="cb149-8"><a href="#cb149-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"pseudobma"</span></span>
+<span id="cb149-9"><a href="#cb149-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Method: pseudo-BMA+ with Bayesian bootstrap
 ------
        weight
-model1 0.001 
-model2 0.999 
+model1 0.000 
+model2 1.000 
 model3 0.000 </code></pre>
 </div>
 </div>
