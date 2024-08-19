@@ -73,7 +73,7 @@ In the context of this chapter, it doesn't make sense to translate McElreath's `
 
 ### Preparation.
 
-Wrangle the data into a list with the `compose_data()` function. McElreath called his dat list `dat_slim`. Here we'll follow the conventions from earlier chapters and call the object `stan_data`.
+Wrangle the data into a list with the `compose_data()` function. McElreath called his data list `dat_slim`. Here we'll follow the conventions from earlier chapters and call the object `stan_data`.
 
 ```{r}
 stan_data <- dd |>
@@ -86,7 +86,7 @@ str(stan_data)
 
 ### Sampling from the posterior.
 
-Here our `model_code_9.1` is just a different version of `model_code_8.3` from the last chapter. Since we don't need the log-likelihood for this chapter, we've streamlined this version of the program a bit by removing the `transformed parameters` and `generated quantities`. We've also taken a cue from McElreath's code by hardcoding the value `0.215` into the `model` block, rather than importing the `xbar` scalar from the data list.
+Here our `model_code_9.1` is just a different version of `model_code_8.3` from @sec-Adding-an-interaction-does-work. Since we don't need the log-likelihood for this chapter, we've streamlined this version of the program a bit by removing the `transformed parameters` and `generated quantities`. We've also taken a cue from McElreath's code by hardcoding the value `0.215` into the `model` block, rather than importing the `xbar` scalar from the data list.
 
 ```{r}
 model_code_9.1 <- '
@@ -188,7 +188,7 @@ You can use the `get_elapsed_time()` function to extract the duration in seconds
 get_elapsed_time(m9.1b)
 ```
 
-As to the diagnostic statistics, you can compute the $\widehat R$ and effective-sample-size statistics with the `posterior::summarise_draws()` function, particularly with the nice `default_convergence_measures()` helper.
+As to the diagnostic statistics, you can compute the $\widehat R$ and effective-sample-size statistics with the `posterior::summarise_draws()` function, particularly with the nice helper function called `default_convergence_measures()`.
 
 ```{r}
 summarise_draws(m9.1b, default_convergence_measures())
@@ -226,6 +226,8 @@ as_draws_df(m9.1b) %>%
   cor()
 ```
 
+If you need to customize a `pairs()`-type plot much further than this, you're probably best off moving to a `GGally::ggpairs()`-based workflow, such as we demonstrate later in @sec-Ordered-categorical-predictors.
+
 ### Checking the chain.
 
 Here we apply the `traceplot()` to `m9.1b`. The default settings are `inc_warmup = FALSE`, which means we need to change that to `TRUE` if we want to see the warmup draws, like in the plots McElreath tends to show in the text.
@@ -252,7 +254,7 @@ as_draws_df(m9.1b) |>
 
 Note however that as the `as_draws_df()` function only returns post-warmup draws, this workflow will not produce traceplots like the ones in the text that show the warmup portion.
 
-McElreath pointed out a second way to visualize the chains is by the distribution of the ranked samples, which he called a **trank plot** (short for trace rank plot). I'm not aware that **rstan** has a built-in function for that. We can, however, make them with the `mcmc_rank_overlay()` function from **bayesplot**.
+McElreath pointed out a second way to visualize the chains is by the distribution of the ranked samples, which he called a *trank plot* (short for trace rank plot). I'm not aware that **rstan** has a built-in function for that. We can, however, make them with the `mcmc_rank_overlay()` function from **bayesplot**.
 
 ```{r}
 #| fig-width: 7
