@@ -657,8 +657,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Display summary of quadratic approximation </span></span>
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="fu">precis</span>(globe.qa, <span class="at">digits =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>       mean        sd      5.5%     94.5%
-p 0.6666664 0.1571338 0.4155362 0.9177966</code></pre>
+<pre><code>       mean        sd     5.5%     94.5%
+p 0.6666677 0.1571335 0.415538 0.9177974</code></pre>
 </div>
 </div>
 <p>In preparation for Figure 2.8, here’s the model with <span class="math inline">\(n = 18\)</span> and <span class="math inline">\(n = 36\)</span>.</p>
@@ -681,12 +681,12 @@ p 0.6666664 0.1571338 0.4155362 0.9177966</code></pre>
 <span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="fu">precis</span>(globe.qa<span class="fl">.18</span>, <span class="at">digits =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       mean        sd      5.5%     94.5%
-p 0.6666703 0.1111098 0.4890954 0.8442451</code></pre>
+p 0.6666662 0.1111104 0.4890902 0.8442421</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">precis</span>(globe.qa<span class="fl">.36</span>, <span class="at">digits =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       mean         sd      5.5%     94.5%
-p 0.6666664 0.07856692 0.5411013 0.7922315</code></pre>
+p 0.6666664 0.07856692 0.5411013 0.7922316</code></pre>
 </div>
 </div>
 <p>Now make Figure 2.8.</p>

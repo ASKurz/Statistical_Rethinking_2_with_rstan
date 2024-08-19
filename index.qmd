@@ -77,7 +77,7 @@ I'd like to thank the following for their helpful contributions:
 
 * Vincent Arel-Bundock ([\@vincentarelbundock](https://github.com/vincentarelbundock)),
 * Andrew Heiss ([\@andrewheiss](https://github.com/andrewheiss)), 
-* Andrew Johnson  ([\@andrjohns](https://github.com/andrjohns))
+* Andrew Johnson  ([\@andrjohns](https://github.com/andrjohns)),
 * John K. Kruschke ([\@kruschke](https://github.com/kruschke)), and
 * Jeff Pollock ([\@jeffpollock9](https://github.com/jeffpollock9)).
 
