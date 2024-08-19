@@ -271,10 +271,10 @@ div.csl-indent {
   <ul>
   <li><a href="#example-oceanic-tool-complexity." id="toc-example-oceanic-tool-complexity." class="nav-link" data-scroll-target="#example-oceanic-tool-complexity."><span class="header-section-number">11.2.1</span> Example: Oceanic tool complexity.</a>
   <ul>
-  <li><a href="#overthinking-modeling-tool-innovation." id="toc-overthinking-modeling-tool-innovation." class="nav-link" data-scroll-target="#overthinking-modeling-tool-innovation."><span class="header-section-number">11.2.1.1</span> Overthinking: Modeling tool innovation.</a></li>
+  <li><a href="#sec-Overthinking-Modeling-tool-innovation" id="toc-sec-Overthinking-Modeling-tool-innovation" class="nav-link" data-scroll-target="#sec-Overthinking-Modeling-tool-innovation"><span class="header-section-number">11.2.1.1</span> Overthinking: Modeling tool innovation.</a></li>
   </ul></li>
   <li><a href="#negative-binomial-gamma-poisson-models." id="toc-negative-binomial-gamma-poisson-models." class="nav-link" data-scroll-target="#negative-binomial-gamma-poisson-models."><span class="header-section-number">11.2.2</span> Negative binomial (gamma-Poisson) models.</a></li>
-  <li><a href="#example-exposure-and-the-offset." id="toc-example-exposure-and-the-offset." class="nav-link" data-scroll-target="#example-exposure-and-the-offset."><span class="header-section-number">11.2.3</span> Example: Exposure and the offset.</a></li>
+  <li><a href="#sec-Example-Exposure-and-the-offset" id="toc-sec-Example-Exposure-and-the-offset" class="nav-link" data-scroll-target="#sec-Example-Exposure-and-the-offset"><span class="header-section-number">11.2.3</span> Example: Exposure and the offset.</a></li>
   </ul></li>
   <li><a href="#multinomial-and-categorical-models" id="toc-multinomial-and-categorical-models" class="nav-link" data-scroll-target="#multinomial-and-categorical-models"><span class="header-section-number">11.3</span> Multinomial and categorical models</a>
   <ul>
@@ -337,7 +337,7 @@ div.csl-indent {
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> chimpanzees</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(chimpanzees)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Make the index variable <code>treatment</code>, a variant of which we’ll be saving as a factor with labeled levels called <code>labels</code>.</p>
+<p>Make the index variable <code>treatment</code>, a variant of which we’ll be saving as a factor with labeled levels named <code>labels</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> d <span class="sc">|&gt;</span> </span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">treatment =</span> <span class="fu">factor</span>(<span class="dv">1</span> <span class="sc">+</span> prosoc_left <span class="sc">+</span> <span class="dv">2</span> <span class="sc">*</span> condition)) <span class="sc">|&gt;</span> </span>
@@ -559,7 +559,7 @@ div.csl-indent {
 <p><img src="11_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="768"></p>
 </div>
 </div>
-<p>The average <em>absolute</em> prior difference is about 0.1, very similar to McElreath’s value from R code 11.9.</p>
+<p>The average <em>absolute</em> prior difference is about 0.1, very similar to McElreath’s value from <strong>R</strong> code 11.9.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>prior_m11<span class="fl">.3</span>_df <span class="sc">|&gt;</span> </span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
@@ -580,7 +580,7 @@ div.csl-indent {
 \beta_k  &amp; \sim \operatorname{Normal}(0, 0.5),
 \end{align*}
 \]</span></p>
-<p>where we now have four levels of <span class="math inline">\(\alpha_j\)</span> and seven levels of <span class="math inline">\(\beta_k\)</span>. We’ll call this model <code>m11.4</code>, and this time we actually sample from the posterior. In the <code>generated quantities</code> block, we’re defining a vector of predicted values <code>p</code>, as well as the <code>log_lik</code> values for information criteria.</p>
+<p>where we now have four levels of <span class="math inline">\(\alpha_j\)</span>, and seven levels of <span class="math inline">\(\beta_k\)</span>. We’ll call this model <code>m11.4</code>, and this time we actually sample from the posterior. In the <code>generated quantities</code> block, we’re defining a vector of predicted values <code>p</code>, as well as the <code>log_lik</code> values for information criteria.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>model_code_11<span class="fl">.4</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
@@ -1069,12 +1069,12 @@ See help('pareto-k-diagnostic') for details.</code></pre>
 <p><span class="math display">\[\Pr(1, 1, 1, 1, 1, 1, 0, 0, 0 \mid p) = p^6 (1 - p)^{9 - 6}.\]</span></p>
 <p>Let’s work this out in code.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="co"># deviance of aggregated 6-in-9 </span></span>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Deviance of aggregated 6-in-9 </span></span>
 <span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="sc">-</span><span class="dv">2</span> <span class="sc">*</span> <span class="fu">dbinom</span>(<span class="dv">6</span>, <span class="at">size =</span> <span class="dv">9</span>, <span class="at">prob =</span> <span class="fl">0.2</span>, <span class="at">log =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 11.79048</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># deviance of dis-aggregated </span></span>
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Deviance of dis-aggregated </span></span>
 <span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="sc">-</span><span class="dv">2</span> <span class="sc">*</span> <span class="fu">sum</span>(<span class="fu">dbinom</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>), <span class="at">size =</span> <span class="dv">1</span>, <span class="at">prob =</span> <span class="fl">0.2</span>, <span class="at">log =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 20.65212</code></pre>
@@ -1245,7 +1245,7 @@ convergence, Rhat=1).</code></pre>
 \delta_k          &amp; \sim \operatorname{Normal} (0, 1.5),
 \end{align*}
 \]</span></p>
-<p>where departments are indexed by <span class="math inline">\(k\)</span>. Make the <code>model_code</code> and fit <code>m11.8</code> with <code>stan()</code>. Note the increase in the <code>iter</code> argument.</p>
+<p>where departments are indexed by <span class="math inline">\(k\)</span>. Make the <code>model_code</code> and fit <code>m11.8</code> with <code>stan()</code>. Note how we’re increasing the <code>iter</code> argument in <code>stan()</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>model_code_11<span class="fl">.8</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
@@ -1684,7 +1684,7 @@ model1 -28.1      16.4   -70.7     16.7         8.3   3.5    141.4  33.4   </cod
 <span id="cb100-13"><a href="#cb100-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_tools =</span> <span class="fu">exp</span>(a <span class="sc">+</span> b <span class="sc">*</span> log_pop_std)) <span class="sc">|&gt;</span> </span>
 <span id="cb100-14"><a href="#cb100-14" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb100-15"><a href="#cb100-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> log_pop_std, <span class="at">y =</span> total_tools,</span>
-<span id="cb100-16"><a href="#cb100-16" aria-hidden="true" tabindex="-1"></a>             <span class="at">group =</span> cid, <span class="at">color =</span> cid, <span class="at">fill =</span> cid)) <span class="sc">+</span></span>
+<span id="cb100-16"><a href="#cb100-16" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> cid, <span class="at">fill =</span> cid, <span class="at">group =</span> cid)) <span class="sc">+</span></span>
 <span id="cb100-17"><a href="#cb100-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_lineribbon</span>(<span class="at">.width =</span> <span class="fl">0.89</span>, <span class="at">alpha =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>) <span class="sc">+</span></span>
 <span id="cb100-18"><a href="#cb100-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> d <span class="sc">|&gt;</span> </span>
 <span id="cb100-19"><a href="#cb100-19" aria-hidden="true" tabindex="-1"></a>               <span class="fu">mutate</span>(<span class="at">k =</span> l11<span class="fl">.10</span><span class="sc">$</span>diagnostics<span class="sc">$</span>pareto_k),</span>
@@ -1709,7 +1709,7 @@ model1 -28.1      16.4   -70.7     16.7         8.3   3.5    141.4  33.4   </cod
 <span id="cb100-38"><a href="#cb100-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">population =</span> <span class="fu">exp</span>((log_pop_std <span class="sc">*</span> <span class="fu">sd</span>(<span class="fu">log</span>(d<span class="sc">$</span>population))) <span class="sc">+</span> <span class="fu">mean</span>(<span class="fu">log</span>(d<span class="sc">$</span>population)))) <span class="sc">|&gt;</span> </span>
 <span id="cb100-39"><a href="#cb100-39" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb100-40"><a href="#cb100-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> population, <span class="at">y =</span> total_tools,</span>
-<span id="cb100-41"><a href="#cb100-41" aria-hidden="true" tabindex="-1"></a>             <span class="at">group =</span> cid, <span class="at">color =</span> cid, <span class="at">fill =</span> cid)) <span class="sc">+</span></span>
+<span id="cb100-41"><a href="#cb100-41" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> cid, <span class="at">fill =</span> cid, <span class="at">group =</span> cid)) <span class="sc">+</span></span>
 <span id="cb100-42"><a href="#cb100-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_lineribbon</span>(<span class="at">.width =</span> <span class="fl">0.89</span>, <span class="at">alpha =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>) <span class="sc">+</span></span>
 <span id="cb100-43"><a href="#cb100-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> d <span class="sc">|&gt;</span> </span>
 <span id="cb100-44"><a href="#cb100-44" aria-hidden="true" tabindex="-1"></a>               <span class="fu">mutate</span>(<span class="at">k =</span> l11<span class="fl">.10</span><span class="sc">$</span>diagnostics<span class="sc">$</span>pareto_k),</span>
@@ -1731,8 +1731,8 @@ model1 -28.1      16.4   -70.7     16.7         8.3   3.5    141.4  33.4   </cod
 </div>
 </div>
 <p>Hawaii is influential in that it has a very large population relative to the other islands.</p>
-<section id="overthinking-modeling-tool-innovation." class="level4" data-number="11.2.1.1">
-<h4 data-number="11.2.1.1" class="anchored" data-anchor-id="overthinking-modeling-tool-innovation."><span class="header-section-number">11.2.1.1</span> Overthinking: Modeling tool innovation.</h4>
+<section id="sec-Overthinking-Modeling-tool-innovation" class="level4" data-number="11.2.1.1">
+<h4 data-number="11.2.1.1" class="anchored" data-anchor-id="sec-Overthinking-Modeling-tool-innovation"><span class="header-section-number">11.2.1.1</span> Overthinking: Modeling tool innovation.</h4>
 <p>McElreath’s theoretical, or scientific, model for <code>total_tools</code> is</p>
 <p><span class="math display">\[\widehat{\text{total-tools}} = \frac{\alpha_{\text{cid}[i]} \: \text{population}^{\beta_{\text{cid}[i]}}}{\gamma}.\]</span></p>
 <p>We can use the Poisson likelihood to express this in a Bayesian model as</p>
@@ -1745,8 +1745,7 @@ model1 -28.1      16.4   -70.7     16.7         8.3   3.5    141.4  33.4   </cod
 \gamma    &amp; \sim \operatorname{Exponential}(1),
 \end{align*}
 \]</span></p>
-<p>where we exponentiate <span class="math inline">\(\alpha_{\text{cid}[i]}\)</span> to restrict the posterior to zero and above. Here’s how we might fit that model with <strong>rstan</strong>.</p>
-<p>First we make some data <code>d_pred</code> for the predictions we’ll display in the plot.</p>
+<p>where we exponentiate <span class="math inline">\(\alpha_{\text{cid}[i]}\)</span> to restrict the posterior to zero and above. To fit that model with <strong>rstan</strong>, first we make some data <code>d_pred</code> for the predictions we’ll display in the plot.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb101"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a>d_pred <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
 <span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">population =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">0</span>, <span class="at">to =</span> <span class="fl">3e5</span>, <span class="at">length.out =</span> <span class="dv">101</span>) <span class="sc">|&gt;</span> </span>
@@ -1895,7 +1894,7 @@ See help('pareto-k-diagnostic') for details.</code></pre>
 <p><img src="11_files/figure-html/unnamed-chunk-84-1.png" class="img-fluid" width="288"></p>
 </div>
 </div>
-<p>Okay, it’s time to make Figure 11.10. In the first line in the <code>Wrangle</code> section, note how we’re using <code>spread_draws()</code> to extract the <code>lambda_pred</code> values we defined in the <code>generated quantities</code>, above.</p>
+<p>Okay, it’s time to make Figure 11.10. In the first line in the <code>Wrangle</code> section below, note how we’re using <code>spread_draws()</code> to extract the <code>lambda_pred</code> values we defined in the <code>generated quantities</code>, above.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb114"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a><span class="co"># For the annotation</span></span>
 <span id="cb114-2"><a href="#cb114-2" aria-hidden="true" tabindex="-1"></a>d_text <span class="ot">&lt;-</span> <span class="fu">distinct</span>(d, cid, contact) <span class="sc">|&gt;</span> </span>
@@ -1911,7 +1910,7 @@ See help('pareto-k-diagnostic') for details.</code></pre>
 <span id="cb114-12"><a href="#cb114-12" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb114-13"><a href="#cb114-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Plot!</span></span>
 <span id="cb114-14"><a href="#cb114-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> population, <span class="at">y =</span> total_tools,</span>
-<span id="cb114-15"><a href="#cb114-15" aria-hidden="true" tabindex="-1"></a>             <span class="at">group =</span> cid, <span class="at">color =</span> cid, <span class="at">fill =</span> cid)) <span class="sc">+</span></span>
+<span id="cb114-15"><a href="#cb114-15" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> cid, <span class="at">fill =</span> cid, <span class="at">group =</span> cid)) <span class="sc">+</span></span>
 <span id="cb114-16"><a href="#cb114-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_lineribbon</span>(<span class="at">.width =</span> <span class="fl">0.89</span>, <span class="at">alpha =</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>) <span class="sc">+</span></span>
 <span id="cb114-17"><a href="#cb114-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> d <span class="sc">|&gt;</span> </span>
 <span id="cb114-18"><a href="#cb114-18" aria-hidden="true" tabindex="-1"></a>               <span class="fu">mutate</span>(<span class="at">k =</span> l11<span class="fl">.11</span><span class="sc">$</span>diagnostics<span class="sc">$</span>pareto_k),</span>
@@ -1946,9 +1945,9 @@ model1  -2.0       2.9   -42.6      6.6         6.9   2.6     85.2  13.2   </cod
 <section id="negative-binomial-gamma-poisson-models." class="level3" data-number="11.2.2">
 <h3 data-number="11.2.2" class="anchored" data-anchor-id="negative-binomial-gamma-poisson-models."><span class="header-section-number">11.2.2</span> Negative binomial (gamma-Poisson) models.</h3>
 </section>
-<section id="example-exposure-and-the-offset." class="level3" data-number="11.2.3">
-<h3 data-number="11.2.3" class="anchored" data-anchor-id="example-exposure-and-the-offset."><span class="header-section-number">11.2.3</span> Example: Exposure and the offset.</h3>
-<p>Here we simulate our data.</p>
+<section id="sec-Example-Exposure-and-the-offset" class="level3" data-number="11.2.3">
+<h3 data-number="11.2.3" class="anchored" data-anchor-id="sec-Example-Exposure-and-the-offset"><span class="header-section-number">11.2.3</span> Example: Exposure and the offset.</h3>
+<p>Here we simulate our industrious monk data.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb117"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">11</span>)</span>
 <span id="cb117-2"><a href="#cb117-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -2101,7 +2100,7 @@ convergence, Rhat=1).</code></pre>
 <p>Set up the <code>stan_data</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb129"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a>stan_data <span class="ot">&lt;-</span> d <span class="sc">|&gt;</span> </span>
-<span id="cb129-2"><a href="#cb129-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># `reject` is a reserved word in Stan, cannot use as variable name</span></span>
+<span id="cb129-2"><a href="#cb129-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># `reject` is a reserved word in Stan, and must not be used as variable name</span></span>
 <span id="cb129-3"><a href="#cb129-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">rej =</span> reject) <span class="sc">|&gt;</span> </span>
 <span id="cb129-4"><a href="#cb129-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(admit, rej, applications) <span class="sc">|&gt;</span> </span>
 <span id="cb129-5"><a href="#cb129-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compose_data</span>()</span>
@@ -2153,7 +2152,7 @@ convergence, Rhat=1).</code></pre>
 <span id="cb131-33"><a href="#cb131-33" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb131-34"><a href="#cb131-34" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Compile and extract the posterior draws for both, with <code>stan()</code>.</p>
+<p>Compile and extract the posterior draws for both with <code>stan()</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb132"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a>m11.binom <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb132-2"><a href="#cb132-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code_11.binom, </span>

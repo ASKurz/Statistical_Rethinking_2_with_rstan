@@ -386,7 +386,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>In the context of this chapter, it doesn’t make sense to translate McElreath’s <code>m8.3</code> <code>quap()</code> code to <code>stan()</code> code. Below, we’ll just go directly to the <code>stan()</code> variant of his <code>m9.1</code>.</p>
 <section id="preparation." class="level3" data-number="9.4.1">
 <h3 data-number="9.4.1" class="anchored" data-anchor-id="preparation."><span class="header-section-number">9.4.1</span> Preparation.</h3>
-<p>Wrangle the data into a list with the <code>compose_data()</code> function. McElreath called his dat list <code>dat_slim</code>. Here we’ll follow the conventions from earlier chapters and call the object <code>stan_data</code>.</p>
+<p>Wrangle the data into a list with the <code>compose_data()</code> function. McElreath called his data list <code>dat_slim</code>. Here we’ll follow the conventions from earlier chapters and call the object <code>stan_data</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>stan_data <span class="ot">&lt;-</span> dd <span class="sc">|&gt;</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(log_gdp_std, rugged_std, cid, rugged_std_c) <span class="sc">|&gt;</span>  </span>
@@ -407,7 +407,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sampling-from-the-posterior." class="level3" data-number="9.4.2">
 <h3 data-number="9.4.2" class="anchored" data-anchor-id="sampling-from-the-posterior."><span class="header-section-number">9.4.2</span> Sampling from the posterior.</h3>
-<p>Here our <code>model_code_9.1</code> is just a different version of <code>model_code_8.3</code> from the last chapter. Since we don’t need the log-likelihood for this chapter, we’ve streamlined this version of the program a bit by removing the <code>transformed parameters</code> and <code>generated quantities</code>. We’ve also taken a cue from McElreath’s code by hardcoding the value <code>0.215</code> into the <code>model</code> block, rather than importing the <code>xbar</code> scalar from the data list.</p>
+<p>Here our <code>model_code_9.1</code> is just a different version of <code>model_code_8.3</code> from <a href="08.html#sec-Adding-an-interaction-does-work"><span>Section&nbsp;8.1.3</span></a>. Since we don’t need the log-likelihood for this chapter, we’ve streamlined this version of the program a bit by removing the <code>transformed parameters</code> and <code>generated quantities</code>. We’ve also taken a cue from McElreath’s code by hardcoding the value <code>0.215</code> into the <code>model</code> block, rather than importing the <code>xbar</code> scalar from the data list.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>model_code_9<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
@@ -583,7 +583,7 @@ chain:3  0.036  0.034
 chain:4  0.041  0.042</code></pre>
 </div>
 </div>
-<p>As to the diagnostic statistics, you can compute the <span class="math inline">\(\widehat R\)</span> and effective-sample-size statistics with the <code>posterior::summarise_draws()</code> function, particularly with the nice <code>default_convergence_measures()</code> helper.</p>
+<p>As to the diagnostic statistics, you can compute the <span class="math inline">\(\widehat R\)</span> and effective-sample-size statistics with the <code>posterior::summarise_draws()</code> function, particularly with the nice helper function called <code>default_convergence_measures()</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summarise_draws</span>(m9<span class="fl">.1</span>b, <span class="fu">default_convergence_measures</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -629,6 +629,7 @@ b[2]  0.009139623 -0.08063637 0.02856225  1.000000000 -0.03518082
 sigma 0.019971693  0.03328394 0.01808661 -0.035180821  1.00000000</code></pre>
 </div>
 </div>
+<p>If you need to customize a <code>pairs()</code>-type plot much further than this, you’re probably best off moving to a <code>GGally::ggpairs()</code>-based workflow, such as we demonstrate later in <a href="12.html#sec-Ordered-categorical-predictors"><span>Section&nbsp;12.4</span></a>.</p>
 </section>
 <section id="checking-the-chain." class="level3" data-number="9.4.5">
 <h3 data-number="9.4.5" class="anchored" data-anchor-id="checking-the-chain."><span class="header-section-number">9.4.5</span> Checking the chain.</h3>
@@ -650,7 +651,7 @@ sigma 0.019971693  0.03328394 0.01808661 -0.035180821  1.00000000</code></pre>
 </div>
 </div>
 <p>Note however that as the <code>as_draws_df()</code> function only returns post-warmup draws, this workflow will not produce traceplots like the ones in the text that show the warmup portion.</p>
-<p>McElreath pointed out a second way to visualize the chains is by the distribution of the ranked samples, which he called a <strong>trank plot</strong> (short for trace rank plot). I’m not aware that <strong>rstan</strong> has a built-in function for that. We can, however, make them with the <code>mcmc_rank_overlay()</code> function from <strong>bayesplot</strong>.</p>
+<p>McElreath pointed out a second way to visualize the chains is by the distribution of the ranked samples, which he called a <em>trank plot</em> (short for trace rank plot). I’m not aware that <strong>rstan</strong> has a built-in function for that. We can, however, make them with the <code>mcmc_rank_overlay()</code> function from <strong>bayesplot</strong>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_draws_df</span>(m9<span class="fl">.1</span>b) <span class="sc">|&gt;</span>  </span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mcmc_rank_overlay</span>(<span class="at">pars =</span> <span class="fu">vars</span>(<span class="st">`</span><span class="at">a[1]</span><span class="st">`</span><span class="sc">:</span><span class="st">`</span><span class="at">b[2]</span><span class="st">`</span>),</span>
