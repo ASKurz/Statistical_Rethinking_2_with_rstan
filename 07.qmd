@@ -1631,6 +1631,8 @@ loo_model_weights(
 )
 
 # pseudobma
+set.seed(7)
+
 loo_model_weights(
   list(extract_log_lik(m6.6) |> loo(),
        extract_log_lik(m6.7) |> loo(),
