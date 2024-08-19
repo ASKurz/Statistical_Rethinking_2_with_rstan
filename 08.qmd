@@ -490,7 +490,7 @@ Note our use of the `case_when()` function when defining the linear models for t
 
 #### Rethinking: Why 97%?
 
-### Adding an interaction does work.
+### Adding an interaction does work. {#sec-Adding-an-interaction-does-work}
 
 In `model_code_8.3` we add an interaction to the model via the index-variable approach by setting `vector[n_cid] b` within the `parameters` block, and then by setting `b[cid]` in the `mu` formula within the `transformed parameters` block.
 
