@@ -513,12 +513,16 @@ layout <- c(
 In Figure 3.7, McElreath considered the longest sequence of the sample values. We've been using `rbinom()` with the `size` argument set to 9 for our simulations. E.g.,
 
 ```{r}
+set.seed(3)
+
 rbinom(10, size = 9, prob = 0.6)
 ```
 
 Notice this collapsed (i.e., aggregated) over the sequences within the individual sets of 9. What we need is to simulate nine individual trials many times over. For example, this
 
 ```{r}
+set.seed(3)
+
 rbinom(9, size = 1, prob = .6)
 ```
 
