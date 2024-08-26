@@ -23,7 +23,7 @@ theme_set(
 
 ## Binomial regression
 
-### Logistic regression: Prosocial chimpanzees.
+### Logistic regression: Prosocial chimpanzees. {#sec-Logistic-regression-Prosocial-chimpanzees}
 
 Load the @silkChimpanzeesAreIndifferent2005 `chimpanzees` data.
 
@@ -604,7 +604,7 @@ A limitation of relative measures measures like proportional odds is they ignore
 
 #### Overthinking: Proportional odds and relative risk.
 
-### Aggregated binomial: Chimpanzees again, condensed.
+### Aggregated binomial: Chimpanzees again, condensed. {#sec-Aggregated-binomial-Chimpanzees-again-condensed}
 
 With the **tidyverse**, we can use `group_by()` and `summarise()` to achieve what McElreath did with `aggregate()`.
 

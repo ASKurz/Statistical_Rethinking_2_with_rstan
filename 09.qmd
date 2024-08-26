@@ -497,7 +497,7 @@ p2 <- tibble(sigma = seq(from = 0, to = 12, length.out = 501)) |>
 
 #### Overthinking: Divergent transitions are your friend.
 
-### Non-identifiable parameters.
+### Non-identifiable parameters. {sec-Non-identifiable-parameters}
 
 Update the `stan_data`.
 
