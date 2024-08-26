@@ -1,0 +1,1484 @@
+# Models With Memory
+
+Load the packages.
+
+```{r}
+#| message: false
+#| warning: false
+
+# Load
+library(tidyverse)
+library(tidybayes)
+library(rstan)
+library(loo)
+library(patchwork)
+library(bayesplot)
+library(posterior)
+
+# Drop grid lines
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank())
+)
+```
+
+#### Rethinking: A model by any other name.
+
+## Example: Multilevel tadpoles
+
+Let's load the `reedfrogs` data [see @voneshCompensatoryLarvalResponses2005].
+
+```{r}
+data(reedfrogs, package = "rethinking")
+d <- reedfrogs
+rm(reedfrogs)
+```
+
+Go ahead and acquaint yourself with the `reedfrogs`.
+
+```{r}
+glimpse(d)
+```
+
+Making the `tank` cluster variable is easy.
+
+```{r}
+d <- d |>
+  mutate(tank = 1:n())
+```
+
+Here's the formula for the un-pooled model in which each `tank` gets its own intercept:
+
+$$
+\begin{align*}
+\text{surv}_i             & \sim \operatorname{Binomial}(n_i, p_i) \\
+\operatorname{logit}(p_i) & = \alpha_{\text{tank}[i]} \\
+\alpha_j                  & \sim \operatorname{Normal} (0, 1.5) & \text{for } j = 1, \dots, 48,
+\end{align*}
+$$
+
+where $n_i$ is indexed by the `density` column. Its values are distributed like so.
+
+```{r}
+d |> 
+  count(density)
+```
+
+Now we make the `stan_data` with the `compose_data()` function.
+
+```{r}
+stan_data <- d |>
+  select(surv, density, tank) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Make the `model_code` for the first simple model, which follows the basic format we learned back in @sec-Aggregated-binomial-Chimpanzees-again-condensed. Also note how we're getting ready for information criteria with the `generated quantities` block.
+
+```{r}
+model_code_13.1 <- '
+data {
+  int<lower=1> n;                       
+  array[n] int tank;
+  array[n] int density;
+  array[n] int surv;
+}
+parameters {
+  vector[n] a;
+}
+model {
+  surv ~ binomial(density, inv_logit(a[tank]));
+  a ~ normal(0, 1.5);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = binomial_lpmf(surv[i] | density[i], inv_logit(a[tank[i]]));
+}
+'
+```
+
+Now fit the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m13.1, file = "fits/m13.1.rda")
+load(file = "fits/m13.1.rda")
+```
+
+```{r}
+#| eval: false
+m13.1 <- stan(
+  model_code = model_code_13.1, 
+  data = stan_data,
+  cores = 4, seed = 13)
+```
+
+Check the model summary.
+
+```{r}
+print(m13.1, pars = c("a[1]", "a[48]"), probs = c(0.055, 0.945))
+```
+
+Note how with the `pars` argument, I restricted the output to the first and last intercept. You can adjust that code to inspect more or fewer of the intercepts, as desired.
+
+Now consider the multilevel alternative. Its formula is
+
+$$
+\begin{align*}
+\text{surv}_i             & \sim \operatorname{Binomial}(n_i, p_i) \\
+\operatorname{logit}(p_i) & = \alpha_{\text{tank}[i]} \\
+\alpha_j                  & \sim \operatorname{Normal}(\color{blue}{\bar \alpha}, \color{blue} \sigma) \\
+\color{blue}{\bar \alpha} & \color{blue} \sim \color{blue}{\operatorname{Normal}(0, 1.5)} \\
+\color{blue} \sigma       & \color{blue} \sim \color{blue}{\operatorname{Exponential}(1)},
+\end{align*}
+$$
+
+where
+
+> the prior for the tank intercepts is now a function of two parameters, $\bar \alpha$ and $\sigma$. You can say $\bar \alpha$ like "bar alpha." The bar means average. These two parameters inside the prior is where the "multi" in multilevel arises. The Gaussian distribution with mean $\bar \alpha$ standard deviation $\sigma$ is the prior for each tank’s intercept. But that prior itself has priors for $\bar \alpha$ and $\sigma$. So there are two levels in the model, each resembling a simpler model. (p. 403, *emphasis* in the original)
+
+Here we make the `model_code_13.2`, and fit the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m13.2, file = "fits/m13.2.rda")
+load(file = "fits/m13.2.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_13.2 <- '
+data {
+  int<lower=1> n;                       
+  array[n] int tank;
+  array[n] int density;
+  array[n] int surv;
+}
+parameters {
+  real abar;
+  vector[n] a;
+  real<lower=0> sigma;
+}
+model {
+  surv ~ binomial(density, inv_logit(a[tank]));
+  a ~ normal(abar, sigma);
+  abar ~ normal(0, 1.5);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = binomial_lpmf(surv[i] | density[i], inv_logit(a[tank[i]]));
+}
+'
+
+m13.2 <- stan(
+  model_code = model_code_13.2, 
+  data = stan_data,
+  cores = 4, seed = 13)
+```
+
+Check the model summary.
+
+```{r}
+print(m13.2, pars = c("abar", "sigma", "a[1]", "a[48]"), probs = c(0.055, 0.945))
+```
+
+Compare the two models by the WAIC with the `extract_log_lik()`, `waic()`, and `loo_compare()` functions.
+
+```{r}
+#| warning: false
+
+loo_compare(
+  extract_log_lik(m13.1) |> waic(),
+  extract_log_lik(m13.2) |> waic()
+) |> 
+  print(simplify = FALSE)
+```
+
+Our results match up nicely with those in the text (p. 404). Here are the stacking weights.
+
+```{r}
+#| warning: false
+
+set.seed(13)
+
+loo_model_weights(
+  list(extract_log_lik(m13.1) |> loo(),
+       extract_log_lik(m13.2) |> loo()),
+  method = "stacking"
+)
+```
+
+All the weight goes to the multilevel model.
+
+Here we use a little `bind_rows()` and `spread_draws()` magic to make a version of Figure 13.1 based on both models.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 5.5
+
+bind_rows(
+  m13.1 |> spread_draws(a[tank]),
+  m13.2 |> spread_draws(a[tank])
+) |> 
+  mutate(model = rep(c("conventional (m13.1)", "multilevel (m13.2)"), each = n() / 2),
+         propsurv = plogis(a)) |> 
+  group_by(tank, model) |> 
+  mean_qi(propsurv, .width = 0.89) |> 
+  left_join(d |> 
+              select(tank, density), 
+            by = join_by(tank)) |> 
+  
+  ggplot(aes(x = tank, y = propsurv)) +
+  geom_hline(yintercept = mean(d$propsurv), color = "white") +
+  geom_pointinterval(aes(ymin = .lower, ymax = .upper),
+                     linewidth = 1/4, shape = 1) +
+  geom_point(data = d,
+             color = "blue") +
+  scale_y_continuous("proportion survival", limits = 0:1) +
+  facet_grid(model ~ density, labeller = labeller(density = label_both), scales = "free_x")
+```
+
+Here's a version of Figure 13.2.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3
+#| warning: false
+
+set.seed(13)
+
+# Left
+p1 <- as_draws_df(m13.2) |> 
+  select(.draw, abar, sigma) |> 
+  slice_sample(n = 100) |> 
+  expand_grid(x = seq(from = -3.5, to = 4.5, length.out = 101)) |> 
+  mutate(density = dnorm(x = x, mean = abar, sd = sigma)) |> 
+  
+  ggplot(aes(x = x, y = density, group = .draw)) +
+  geom_line(alpha = 1/3, linewidth = 1/3) +
+  xlab("log-odds survive") +
+  coord_cartesian(xlim = c(-3, 4))
+
+# Right
+p2 <- as_draws_df(m13.2) |> 
+  select(.draw, abar, sigma) |> 
+  slice_sample(n = 8000, replace = TRUE) |> 
+  mutate(sim_tanks = rnorm(n = n(), mean = abar, sd = sigma)) |> 
+  mutate(p = plogis(sim_tanks)) |> 
+  
+  ggplot(aes(x = p)) +
+  geom_density(adjust = 0.1, fill = "gray65", linewidth = 0) +
+  labs(x = "probability survive",
+       y = NULL)
+
+# Combine
+p1 | p2
+```
+
+#### Overthinking: QUAP fails, MCMC succeeds.
+
+#### Rethinking: Varying intercepts as over-dispersion.
+
+#### Overthinking: Prior for variance components.
+
+Here's how we define and fit the model with the half-normal prior on $\sigma$.
+
+```{r}
+#| echo: false
+
+# save(m13.2b, file = "fits/m13.2b.rda")
+load(file = "fits/m13.2b.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_13.2b <- '
+data {
+  int<lower=1> n;                       
+  array[n] int tank;
+  array[n] int density;
+  array[n] int surv;
+}
+parameters {
+  real abar;
+  vector[n] a;
+  real<lower=0> sigma;
+}
+model {
+  surv ~ binomial(density, inv_logit(a[tank]));
+  a ~ normal(abar, sigma);
+  abar ~ normal(0, 1.5);
+  sigma ~ normal(0, 1);
+}
+'
+
+m13.2b <- stan(
+  model_code = model_code_13.2b, 
+  data = stan_data,
+  cores = 4, seed = 13)
+```
+
+Check the model summary.
+
+```{r}
+print(m13.2b, pars = c("abar", "sigma", "a[1]", "a[48]"), probs = c(0.055, 0.945))
+```
+
+If you're curious how the exponential and half-Normal priors compare to one another and to their posteriors, you might just plot.
+
+```{r}
+#| fig-width: 5.5
+#| fig-height: 2.5
+
+# For descriptive y-axis labels
+prior_vec <- c("sigma%~%exponential(1)", "sigma%~%'half-normal(0, 1)'")
+
+# Wrangle
+bind_rows(as_draws_df(m13.2), as_draws_df(m13.2b)) |> 
+  mutate(prior = rep(prior_vec, each = n() / 2)) |> 
+  
+  # Plot
+  ggplot(aes(x = sigma, y = prior)) +
+  stat_halfeye(point_interval = mean_qi, .width = 0.89) +
+  scale_y_discrete(NULL, expand = expansion(mult = 0.1), 
+                   labels = ggplot2:::parse_safe) +
+  xlab(expression(sigma[posterior]))
+```
+
+In this case, the prior didn't matter much.
+
+## Varying effects and the underfitting/overfitting trade-off
+
+### The model.
+
+The simulation formula should look familiar.
+
+$$
+\begin{align*}
+\text{surv}_i & \sim \operatorname{Binomial}(n_i, p_i) \\
+\operatorname{logit}(p_i) & = \alpha_{\text{pond}[i]} \\
+\alpha_j                  & \sim \operatorname{Normal}(\bar \alpha, \sigma) \\
+\bar \alpha               & \sim \operatorname{Normal}(0, 1.5) \\
+\sigma                    & \sim \operatorname{Exponential}(1)
+\end{align*}
+$$
+
+### Assign values to the parameters.
+
+Here we follow along with McElreath and "assign specific values representative of the actual tadpole data" (p. 409). Because he included a `set.seed()` line in his **R** code 13.8, our results should match his exactly.
+
+```{r}
+a_bar   <-  1.5
+sigma   <-  1.5
+n_ponds <- 60
+
+set.seed(5005)
+
+dsim <- tibble(
+  pond   = 1:n_ponds,
+  ni     = rep(c(5, 10, 25, 35), each = n_ponds / 4) |> as.integer(),
+  true_a = rnorm(n = n_ponds, mean = a_bar, sd = sigma))
+
+# What?
+head(dsim)
+```
+
+McElreath twice urged us to inspect the contents of this simulation. In addition to looking at the data with `head()`, we might well plot.
+
+```{r}
+#| fig-width: 5
+#| fig-height: 3
+
+dsim |> 
+  mutate(ni = factor(ni)) |> 
+  
+  ggplot(aes(x = true_a, y = ni)) +
+  stat_dotsinterval(size = 2/3, slab_size = 0, .width = 0.5) +
+  ggtitle("Log-odds varying by # tadpoles per pond") +
+  theme(plot.title = element_text(size = 14))
+```
+
+#### Overthinking: Data types and Stan models.
+
+> There are two basic types of numerical data in R, in- tegers and real values. A number like "3" could be either. Inside your computer, integers and real ("numeric") values are represented differently. For example, here is the same vector of values generated as both:
+
+```{r}
+class(1:3)
+class(c(1, 2, 3))
+```
+
+> Usually, you don't have to manage these types, because R manages them for you. But when you pass values to Stan, or another external program, often the internal representation does matter. In particular, Stan and ~~`ulam`~~ [`stan()`] sometimes require explicit integers. For example, in a binomial model, the "size" variable that specifies the number of trials must be of integer type. Stan may provide a mysterious warning message about a function not being found, when the size variable is instead of "real" type, or what R calls `numeric`. Using `as.integer` before passing the data to Stan or ~~`ulam`~~ [`stan()`] will resolve the issue. (p. 410)
+
+### Sumulate survivors.
+
+> Each pond $i$ has $n_i$ potential survivors, and nature flips each tadpole's coin, so to speak, with probability of survival $p_i$. This probability $p_i$ is implied by the model definition, and is equal to:
+>
+> $$p_i = \frac{\exp (\alpha_i)}{1 + \exp (\alpha_i)}$$
+>
+> The model uses a logit link, and so the probability is defined by the [`plogis()`] function. (p. 411)
+
+Although McElreath shared his `set.seed()` number in the last section, he didn't share it for this bit. We'll go ahead and carry over the one from last time. However, in a moment we'll see this clearly wasn't the one he used here. As a consequence, our results will deviate a bit from his.
+
+```{r}
+set.seed(5005)
+
+dsim <- dsim |>
+  mutate(si = rbinom(n = n(), prob = plogis(true_a), size = ni))
+
+# What?
+glimpse(dsim)
+```
+
+### Compute the no-pooling estimates.
+
+The no-pooling estimates (i.e., $\alpha_{\text{tank}[i]}$) are the results of simple algebra.
+
+```{r}
+dsim <- dsim |>
+  mutate(p_nopool = si / ni)
+
+# What?
+glimpse(dsim)
+```
+
+"These are the same no-pooling estimates you'd get by fitting a model with a dummy variable for each pond and flat priors that induce no regularization" (p. 411). That is, these are the same kinds of estimates we got back when we fit `m13.1`.
+
+### Compute the partial-pooling estimates.
+
+Now we make the `stan_data` with the `compose_data()` function.
+
+```{r}
+stan_data <- dsim |>
+  select(si, ni, pond) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Here we define and fit the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m13.3, file = "fits/m13.3.rda")
+load(file = "fits/m13.3.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_13.3 <- '
+data {
+  int<lower=1> n;                       
+  array[n] int pond;
+  array[n] int ni;
+  array[n] int si;
+}
+parameters {
+  real a_bar;
+  vector[n] a_pond;
+  real<lower=0> sigma;
+}
+model {
+  si ~ binomial(ni, inv_logit(a_pond[pond]));
+  a_pond ~ normal(a_bar, sigma);
+  a_bar ~ normal(0, 1.5);
+  sigma ~ exponential(1);
+}
+'
+
+m13.3 <- stan(
+  model_code = model_code_13.3, 
+  data = stan_data,
+  cores = 4, seed = 13)
+```
+
+Check the model summary.
+
+```{r}
+print(m13.3, 
+      pars = c("a_pond[1]", "a_pond[2]", 
+               "a_pond[59]", "a_pond[60]",
+               "a_bar", "sigma"), 
+      probs = c(0.055, 0.945))
+```
+
+To make Figure 13.3, we'll first need a couple data objects. The `draws` data frame has the information for the points, and the `draws_means` data frame has the information for the horizontal lines.
+
+```{r}
+#| message: false
+
+draws <- m13.3 |> 
+  spread_draws(a_pond[pond]) |> 
+  mutate(p_partpool = plogis(a_pond)) |> 
+  group_by(pond) |> 
+  summarise(p_partpool = mean(p_partpool)) |> 
+  left_join(dsim |> 
+              select(pond, true_a, p_nopool, ni)) |> 
+  mutate(p_true = plogis(true_a)) |>
+  mutate(nopool_error   = abs(p_nopool   - p_true),
+         partpool_error = abs(p_partpool - p_true)) |> 
+  pivot_longer(contains("error"), values_to = "error") |> 
+  mutate(pooling = ifelse(name == "nopool_error", "no", "partial"))
+
+draws_means <- draws |> 
+  group_by(pooling, ni) |> 
+  summarise(mean = mean(error))
+
+# What?
+glimpse(draws)
+glimpse(draws_means)
+```
+
+Now make the figure.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 3.5
+
+draws |> 
+  ggplot(aes(x = pond, y = error)) +
+  geom_point(aes(color = pooling, shape = pooling)) +
+  geom_hline(data = draws_means,
+             aes(yintercept = mean, color = pooling, linetype = pooling),
+             linewidth = 1/3) +
+  scale_color_viridis_d("Pooling?", option = "A", end = 0.6, direction = -1) +
+  scale_linetype_manual("Pooling?", values = 1:2) +
+  scale_shape_manual("Pooling?", values = c(19, 1)) +
+  ylab("absolute error") +
+  facet_wrap(~ ni, labeller = label_both, nrow = 1, scales = "free_x")
+```
+
+#### Overthinking: Repeating the pond simulation.
+
+Make the new `new_dsim` data frame, and them update the `stan_data`.
+
+```{r}
+set.seed(1999)  # For new data, set a new seed
+
+new_dsim <- tibble(
+  pond   = 1:n_ponds,
+  ni     = rep(c(5, 10, 25, 35), each = n_ponds / 4) |> as.integer(),
+  true_a = rnorm(n = n_ponds, mean = a_bar, sd = sigma)) |> 
+  mutate(si = rbinom(n = n(), prob = plogis(true_a), size = ni),
+         p_nopool = si / ni)
+
+stan_data <- new_dsim |>
+  select(si, ni, pond) |> 
+  compose_data()
+```
+
+Now update the fit with the `sampling()` function, saving the results as `m13.3new`.
+
+```{r}
+m13.3new <- sampling(
+    object = m13.3@stanmodel,
+    data = stan_data,
+    cores = 4, seed = 13) 
+```
+
+Make the new variant of the figure.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 3.5
+#| message: false
+
+# Wrangle
+# Use `m13.3new` in place of `m13.3`
+draws_new <- m13.3new |> 
+  spread_draws(a_pond[pond]) |> 
+  mutate(p_partpool = plogis(a_pond)) |> 
+  group_by(pond) |> 
+  summarise(p_partpool = mean(p_partpool)) |> 
+  # Use `new_dsim` in place of `new`
+  left_join(new_dsim |> 
+              select(pond, true_a, p_nopool, ni)) |> 
+  mutate(p_true = plogis(true_a)) |>
+  mutate(nopool_error   = abs(p_nopool   - p_true),
+         partpool_error = abs(p_partpool - p_true)) |> 
+  pivot_longer(contains("error"), values_to = "error") |> 
+  mutate(pooling = ifelse(name == "nopool_error", "no", "partial"))
+
+draws_means_new <- draws_new |> 
+  group_by(pooling, ni) |> 
+  summarise(mean = mean(error))
+
+# Ploe
+draws_new |> 
+  ggplot(aes(x = pond, y = error)) +
+  geom_point(aes(color = pooling, shape = pooling)) +
+  geom_hline(data = draws_means_new,
+             aes(yintercept = mean, color = pooling, linetype = pooling),
+             linewidth = 1/3) +
+  scale_color_viridis_d("Pooling?", option = "D", end = 0.6, direction = -1) +
+  scale_linetype_manual("Pooling?", values = 1:2) +
+  scale_shape_manual("Pooling?", values = c(19, 1)) +
+  ylab("absolute error") +
+  facet_wrap(~ ni, labeller = label_both, nrow = 1, scales = "free_x")
+```
+
+## More than one type of cluster
+
+#### Rethinking: Cross-classification and hierarchy.
+
+### Multilevel chimpanzees.
+
+The initial multilevel update from model `m11.4` from @sec-Logistic-regression-Prosocial-chimpanzees follows the statistical formula
+
+```{r}
+#| eval: false
+#| echo: false
+
+pulled_left
+pulled-left
+```
+
+$$
+\begin{align*}
+\text{pulled-left}_i         & \sim \operatorname{Binomial}(n_i = 1, p_i) \\
+\operatorname{logit} (p_i) & = \alpha_{\text{actor}[i]} + \beta_{\text{treatment}[i]} + \color{blue}{\gamma_{\text{block}[i]}} \\
+\alpha_j & \sim \operatorname{Normal}(\bar \alpha, \sigma_\alpha), \;\;\; \text{for } j = 1, \dots, 7 \\
+\beta_j  & \sim \operatorname{Normal}(0, 0.5), \;\;\; \text{for } j = 1, \dots, 4 \\
+\color{blue}{\gamma_j} & \color{blue} \sim \color{blue}{\operatorname{Normal}(0, \sigma_\gamma), \;\;\; \text{for } j = 1, \dots, 6} \\
+\bar \alpha   & \sim \operatorname{Normal}(0, 1.5) \\
+\sigma_\alpha & \sim \operatorname{Exponential}(1) \\
+\color{blue}{\sigma_\gamma} & \color{blue} \sim \color{blue}{\operatorname{Exponential}(1)}.
+\end{align*}
+$$
+
+Load the `chimpanzees` data, wrangle, and make the `stan_data`.
+
+```{r}
+data(chimpanzees, package = "rethinking")
+
+d <- chimpanzees |> 
+  mutate(actor     = factor(actor),
+         block     = factor(block),
+         treatment = factor(1 + prosoc_left + 2 * condition))
+
+rm(chimpanzees)
+
+stan_data <- d |>
+  select(pulled_left, actor, block, treatment) |>
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+Define `model_code_13.4`.
+
+```{r}
+model_code_13.4 <- '
+data {
+  int<lower=1> n;                       
+  int<lower=1> n_actor;
+  int<lower=1> n_treatment;
+  int<lower=1> n_block;
+  array[n] int actor;
+  array[n] int treatment;
+  array[n] int block;
+  array[n] int<lower=0, upper=1> pulled_left;
+}
+parameters {
+  vector[n_actor] a;
+  vector[n_treatment] b;
+  vector[n_block] g;
+  
+  real a_bar;
+  real<lower=0> sigma_a;
+  real<lower=0> sigma_g;
+}
+model {
+  pulled_left ~ binomial(1, inv_logit(a[actor] + b[treatment] + g[block]));
+  
+  b ~ normal(0, 0.5);
+  // adaptive priors
+  a ~ normal(a_bar, sigma_a);
+  g ~ normal(0, sigma_g);
+  // hyper-priors
+  a_bar ~ normal(0, 1.5);
+  [sigma_a, sigma_g] ~ exponential(1);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = binomial_lpmf(pulled_left[i] | 1, inv_logit(a[actor[i]] + b[treatment[i]] + g[block[i]]));
+}
+'
+```
+
+Fit the cross-classified chimp model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m13.4, file = "fits/m13.4.rda")
+load(file = "fits/m13.4.rda")
+```
+
+```{r}
+#| eval: false
+
+m13.4 <- stan(
+  model_code = model_code_13.4, 
+  data = stan_data,
+  cores = 4, seed = 13)
+```
+
+Like in the text, this model returned warnings about divergent transitions, which isn't great. As we learned back in @sec-Non-identifiable-parameters, we can check for the HMC diagnostic warnings with the `check_hmc_diagnostics()` function.
+
+```{r}
+check_hmc_diagnostics(m13.4)
+```
+
+Here's the parameter summary.
+
+```{r}
+print(m13.4, 
+      include = FALSE,
+      pars = c("log_lik", "lp__"),
+      probs = c(0.055, 0.945))
+```
+
+Here's Figure 13.4.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 4.5
+#| warning: false
+
+# For the y-axis ordering
+parameter_vec <- c(str_c("b[", 1:4, "]"), str_c("a[", 1:7, "]"), str_c("g[", 1:6, "]"), "a_bar", str_c("sigma_", c("a", "g")))
+
+# Left panel
+p1 <- as_draws_df(m13.4) |>
+  select(-contains("log_lik")) |> 
+  pivot_longer(cols = `a[1]`:sigma_g) |> 
+  mutate(name = factor(name, levels = parameter_vec) |> 
+           fct_rev()) |> 
+  
+  ggplot(aes(x = value, y = name)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_pointinterval(.width = 0.89, linewidth = 1, shape = 1) +
+  ylab(NULL)
+
+# For annotation
+d_text <- tibble(
+  group = c("actor", "block"),
+  value = c(3, 0.6),
+  y = c(0.10, 0.75))
+
+# Right panel
+p2 <- as_draws_df(m13.4) |> 
+  select(sigma_a, sigma_g) |> 
+  pivot_longer(everything()) |> 
+  mutate(group = ifelse(name == "sigma_a", "actor", "block")) |> 
+  
+  ggplot(aes(x = value)) +
+  stat_histinterval(aes(fill = group, group = group),
+                    .width = 0.89, alpha = 0.9, linewidth = 1, shape = 1) +
+  geom_text(data = d_text,
+            aes(y = y, label = group, color = group)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  scale_color_viridis_d(option = "C", begin = 0.4, end = 0.7, breaks = NULL) +
+  scale_fill_viridis_d(option = "C", begin = 0.4, end = 0.7, breaks = NULL) +
+  xlab("standard deviation") +
+  coord_cartesian(xlim = c(0, 4))
+
+# Define the `layout` for the panels
+layout <- c(
+  area(t = 1, b = 4, l = 1, r = 1),
+  area(t = 2, b = 4, l = 2, r = 2))
+
+# Combine and display
+p1 + p2 + 
+  plot_layout(design = layout)
+```
+
+Now define and fit the simpler version of the model that omits the $\gamma$-related parameters, `m13.5`.
+
+```{r}
+#| echo: false
+
+# save(m13.5, file = "fits/m13.5.rda")
+load(file = "fits/m13.5.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_13.5 <- '
+data {
+  int<lower=1> n;                       
+  int<lower=1> n_actor;
+  int<lower=1> n_treatment;
+  array[n] int actor;
+  array[n] int treatment;
+  array[n] int<lower=0, upper=1> pulled_left;
+}
+parameters {
+  vector[n_actor] a;
+  vector[n_treatment] b;
+  real a_bar;
+  real<lower=0> sigma_a;
+}
+model {
+  pulled_left ~ binomial(1, inv_logit(a[actor] + b[treatment]));
+  b ~ normal(0, 0.5);
+  // adaptive prior
+  a ~ normal(a_bar, sigma_a);
+  // hyper-priors
+  a_bar ~ normal(0, 1.5);
+  sigma_a ~ exponential(1);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = binomial_lpmf(pulled_left[i] | 1, inv_logit(a[actor[i]] + b[treatment[i]]));
+}
+'
+
+m13.5 <- stan(
+  model_code = model_code_13.5, 
+  data = stan_data,
+  cores = 4, seed = 13)
+```
+
+Compare the two models by the WAIC.
+
+```{r}
+#| warning: false
+
+loo_compare(
+  extract_log_lik(m13.4) |> waic(),
+  extract_log_lik(m13.5) |> waic()
+) |> 
+  print(simplify = FALSE)
+```
+
+Here are the stacking weights.
+
+```{r}
+#| warning: false
+
+set.seed(13)
+
+loo_model_weights(
+  list(extract_log_lik(m13.4) |> loo(),
+       extract_log_lik(m13.5) |> loo()),
+  method = "stacking"
+)
+```
+
+The stacking weights more heavily favor the simpler model `m13.5`, than the WAIC weights McElreath reported in the book (p. 418).
+
+> There is nothing to gain here by selecting either model. The comparison of the two models tells a richer story... Since this is an experiment, there is nothing to really select. The experimental design tells us the relevant causal model to inspect. (pp. 418--419)
+
+### Even more clusters.
+
+The next model `m13.6` is a minor generalization of `m13.4`, where the $\beta$ parameters are also partially pooled.
+
+```{r}
+#| echo: false
+
+# save(m13.6, file = "fits/m13.6.rda")
+load(file = "fits/m13.6.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_13.6 <- '
+data {
+  int<lower=1> n;                       
+  int<lower=1> n_actor;
+  int<lower=1> n_treatment;
+  int<lower=1> n_block;
+  array[n] int actor;
+  array[n] int treatment;
+  array[n] int block;
+  array[n] int<lower=0, upper=1> pulled_left;
+}
+parameters {
+  vector[n_actor] a;
+  vector[n_treatment] b;
+  vector[n_block] g;
+  real a_bar;
+  real<lower=0> sigma_a;
+  real<lower=0> sigma_b;
+  real<lower=0> sigma_g;
+}
+model {
+  pulled_left ~ binomial(1, inv_logit(a[actor] + b[treatment] + g[block]));
+  // adaptive priors
+  a ~ normal(a_bar, sigma_a);
+  b ~ normal(0, sigma_b);
+  g ~ normal(0, sigma_g);
+  // hyper-priors
+  a_bar ~ normal(0, 1.5);
+  [sigma_a, sigma_b, sigma_g] ~ exponential(1);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = binomial_lpmf(pulled_left[i] | 1, inv_logit(a[actor[i]] + b[treatment[i]] + g[block[i]]));
+}
+'
+
+m13.6 <- stan(
+  model_code = model_code_13.6, 
+  data = stan_data,
+  cores = 4, seed = 13)
+```
+
+In place of McElreath's `coeftab()` approach, let's just make a coefficient plot for the $\beta$ parameters.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 2
+
+bind_rows(spread_draws(m13.4, b[j]), 
+          spread_draws(m13.6, b[j])) |> 
+  mutate(model = rep(c("m13.4", "m13.6"), each = n() / 2),
+         parameter = str_c("beta[", j, "]")) |> 
+  
+  ggplot(aes(x = b, y = parameter, color = model)) +
+  stat_pointinterval(point_interval = mean_qi, .width = 0.89, 
+                     linewidth = 1, shape = 1,
+                     position = position_dodge(width = -0.4)) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  scale_color_viridis_d(option = "D", end = 0.4) +
+  xlab("posterior")
+```
+
+As McElreath wrote:
+
+> These are not identical, but they are very close. If you look at `sigma_b`, you'll see that it is small. (p. 420)
+
+Here's `sigma_b`.
+
+```{r}
+#| fig-width: 4.5
+#| fig-height: 2.5
+
+as_draws_df(m13.6) |> 
+  ggplot(aes(x = sigma_b)) +
+  stat_halfeye(.width = 0.89, adjust = 1/2, linewidth = 1, shape = 1) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(sigma[beta]))
+```
+
+Compare the two models `m13.4` and `m13.6` by the LOO and you'll see they're almost the same.
+
+```{r}
+#| warning: false
+
+loo_compare(
+  extract_log_lik(m13.4) |> loo(),
+  extract_log_lik(m13.6) |> loo()
+) |> 
+  print(simplify = FALSE)
+```
+
+If you check the `check_hmc_diagnostics()` output, you'll see we still have several divergent transitions with `m13.6`.
+
+```{r}
+check_hmc_diagnostics(m13.6)
+```
+
+## Divergent transitions and non-centered priors
+
+### Rethinking: No free samples.
+
+### The Devil's Funnel.
+
+McElreath posed a joint distribution
+
+$$
+\begin{align*}
+v & \sim \operatorname{Normal}(0, 3) \\
+x & \sim \operatorname{Normal}(0, \exp(v)),
+\end{align*}
+$$
+
+where the scale of $x$ depends on another variable, $v$. Here's how we might sample from those priors with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m13.7, file = "fits/m13.7.rda")
+load(file = "fits/m13.7.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_13.7 <- '
+data {
+  int<lower=1> n;
+}
+parameters {
+  real v;
+  real x;
+}
+model {
+  v ~ normal(0, 3);
+  x ~ normal(0, exp(v));
+}
+'
+
+m13.7 <- stan(
+  model_code = model_code_13.7, 
+  data = list(n = 1L),
+  cores = 4, seed = 13)
+```
+
+Behold the `print()` summary.
+
+```{r}
+print(m13.7, probs = c(0.055, 0.945))
+```
+
+We have lots of divergent transitions, and other scary warning messages, too.
+
+```{r}
+check_hmc_diagnostics(m13.7)
+```
+
+Here's a scatter plot of the results.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+as_draws_df(m13.7) |> 
+  ggplot(aes(x = x, y = v)) +
+  geom_point(alpha = 1/2, size = 1/4) +
+  labs(x = expression(italic(x)),
+       y = expression(italic(v)))
+```
+
+This is something of a version of McElreath's Figure 13.5a.
+
+Here are the trace plots via `mcmc_trace()`. They're a mess.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3
+
+mcmc_trace(m13.7, 
+           pars = vars(v:x),
+           facet_args = list(ncol = 1))
+```
+
+To avoid the divergent transitions than can arise models using the centered parameterization, we can switch from our original formula to a non-centered parameterization, such as:
+
+$$
+\begin{align*}
+v & \sim \operatorname{Normal}(0, 3) \\
+z & \sim \operatorname{Normal}(0, 1) \\
+x & = z \exp(v),
+\end{align*}
+$$
+
+where $x$ is now the product of two independent distributions, $v$ and $z$. For our `stan()`-based workflow, this means defining `v` and `z` in the `parameters` block, and then defining `x` as a function of the two in the `generated quantities`. But because `x` is a deterministic function of `v` and `z`, only `v` and `z` get assigned priors in the `model` block.
+
+```{r}
+#| echo: false
+
+# save(m13.7nc, file = "fits/m13.7nc.rda")
+load(file = "fits/m13.7nc.rda")
+```
+
+```{r}
+#| eval: false
+
+model_code_13.7nc <- '
+data {
+  int<lower=1> n;
+}
+parameters {
+  real v;
+  real z;
+}
+model {
+  v ~ normal(0, 3);
+  z ~ normal(0, 1);
+}
+generated quantities {
+  real x;
+  x = z * exp(v);
+}
+'
+
+m13.7nc <- stan(
+  model_code = model_code_13.7nc, 
+  data = list(n = 1L),
+  cores = 4, seed = 13)
+```
+
+Behold the `print()` summary.
+
+```{r}
+print(m13.7nc, probs = c(0.055, 0.945))
+```
+
+The values in the `n_eff` and `Rhat` columns are much better.
+
+Here's a scatter plot of the new results, which is something of a version of Figure 13.5b.
+
+```{r}
+#| fig-width: 3
+#| fig-height: 2.75
+
+as_draws_df(m13.7nc) |> 
+  ggplot(aes(x = z, y = v)) +
+  geom_point(alpha = 1/2, size = 1/4) +
+  labs(x = expression(italic(z)),
+       y = expression(italic(v)))
+```
+
+The trace plots for $v$ and $z$ look pretty great, too.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3
+
+mcmc_trace(m13.7nc, 
+           pars = vars(v:z),
+           facet_args = list(ncol = 1))
+```
+
+### Non-centered chimpanzees.
+
+At the top of the section, McElreath reported the `rethinking::ulam()` default is to set `adapt_delta = 0.95`. Readers should be aware that the `rstan::stan()` default is `adapt_delta = 0.80`. See the `stan` section of the *rstan reference manual* (link [here](https://CRAN.R-project.org/package=rstan/rstan.pdf)). A consequence of this difference is `rethinking::ulam()` will tend to take smaller step sizes than `rstan::stan()`, at the cost of slower exploration of the posterior. I don't know that one is inherently better than the other. They're just defaults.
+
+We can just use the `sampling()` to revisit `m13.4`. This time, we increase the `adapt_delta` parameter in a list fed to the `control` argument.
+
+```{r}
+m13.4b <- sampling(
+  object = m13.4@stanmodel,
+  data = stan_data,
+  cores = 4, seed = 13,
+  control = list(adapt_delta = 0.99))
+```
+
+Rather than using the full `check_hmc_diagnostics()` function like above, we can get a more divergent-transition-focused perspective with the `check_divergences()` function. Here we compare the results from both `m13.4` and `m13.4b`.
+
+```{r}
+check_divergences(m13.4)
+check_divergences(m13.4b)
+```
+
+We dropped from 108 to 4, which isn't nothing.
+
+Here's the `print()` summary.
+
+```{r}
+print(m13.4b, 
+      include = FALSE,
+      pars = c("log_lik", "lp__"),
+      probs = c(0.055, 0.945))
+```
+
+For `m13.4nc`, we first update the statistical model to
+
+$$
+\begin{align*}
+\text{pulled-left}_i         & \sim \operatorname{Binomial}(n_i = 1, p_i) \\
+
+\operatorname{logit} (p_i) & = \color{blue}{\underbrace{\bar \alpha + z_{\text{actor}[i]} \sigma_\alpha}_{\alpha_{\text{actor}[i]}}} + \beta_{\text{treatment}[i]} \color{blue} + \color{blue}{\underbrace{x_{\text{block}[i]} \sigma_\gamma}_{\gamma_{\text{block}[i]}}} \\
+
+\beta_j  & \sim \operatorname{Normal}(0, 0.5), \;\;\; \text{for } j = 1, \dots, 4 \\
+\color{blue}{x_j} & \color{blue} \sim \color{blue}{\operatorname{Normal}(0, 1)} \\
+\color{blue}{z_j} & \color{blue} \sim \color{blue}{\operatorname{Normal}(0, 1)} \\
+\bar \alpha   & \sim \operatorname{Normal}(0, 1.5) \\
+\sigma_\alpha, \sigma_\gamma & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+where each actor intercept $\alpha_j$ is defined by $\alpha + z_j \sigma_\alpha$, and each block intercept $\gamma_j$ is defined by $x_j \sigma_\gamma$.
+
+Here's how we might define `model_code_13.4nc`.
+
+```{r}
+model_code_13.4nc <- '
+data {
+  int<lower=1> n;                       
+  int<lower=1> n_actor;
+  int<lower=1> n_treatment;
+  int<lower=1> n_block;
+  array[n] int actor;
+  array[n] int treatment;
+  array[n] int block;
+  array[n] int<lower=0, upper=1> pulled_left;
+}
+parameters {
+  vector[n_actor] z;
+  vector[n_block] x;
+  vector[n_treatment] b;
+  real a_bar;
+  real<lower=0> sigma_a;
+  real<lower=0> sigma_g;
+}
+model {
+  vector[n] eta;  \\ To simplify the likelihood line
+  eta = a_bar + z[actor] * sigma_a + x[block] * sigma_g + b[treatment];
+  
+  pulled_left ~ binomial(1, inv_logit(eta));
+  
+  a_bar ~ normal(0, 1.5);
+  z ~ normal(0, 1);
+  x ~ normal(0, 1);
+  [sigma_a, sigma_g] ~ exponential(1);
+  b ~ normal(0, 0.5);
+}
+generated quantities {
+  vector[n_actor] a;
+  vector[n_block] g;
+  
+  a = a_bar + z * sigma_a;
+  g = x * sigma_g;
+}
+'
+```
+
+Now fit the non-centered version of the model with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m13.4nc, file = "fits/m13.4nc.rda")
+load(file = "fits/m13.4nc.rda")
+```
+
+```{r}
+#| eval: false
+
+m13.4nc <- stan(
+  model_code = model_code_13.4nc, 
+  data = stan_data,
+  cores = 4, seed = 13)
+```
+
+The `print()` summary for this version of the model is the best one yet.
+
+```{r}
+print(m13.4nc, 
+      include = FALSE,
+      pars = c("log_lik", "lp__"),
+      probs = c(0.055, 0.945))
+```
+
+We use the `summarise_draws()` function and the `parameter_vec` from a while back to make a version of McElreath's Figure 13.6. Here we replace the old-fashioned `n_eff` values with the newer `ess_bulk` and `ess_tail`.
+
+```{r}
+#| fig-width: 5.5
+
+bind_rows(
+  summarise_draws(m13.4, ess_bulk, ess_tail) |> filter(variable %in% parameter_vec),
+  summarise_draws(m13.4nc, ess_bulk, ess_tail) |> filter(variable %in% parameter_vec)
+) |> 
+  mutate(fit = rep(c("m13.4", "m13.4nc"), each = n() / 2)) |> 
+  pivot_longer(cols = contains("ess_")) |> 
+  pivot_wider(names_from = fit, values_from = value) |> 
+  
+  ggplot(aes(x = m13.4, y = m13.4nc)) +
+  geom_abline(color = "white") +
+  geom_point(shape = 1) +
+  coord_equal(xlim = c(0, 5000),
+              ylim = c(0, 5000)) +
+  labs(x = "m13.4 (centered)",
+       y = "m13.4nc (non-centered)") +
+  facet_wrap(~ name)
+```
+
+## Multilevel posterior predictions
+
+### Posterior prediction for same clusters.
+
+If you are using by-hand approach for computing model-based expectations for a multilevel model of this kind, `spread_draws()` seems like a good solution for a tidy workflow. Here's what that can look like for `actor == 2`, in `block == 1`. We just display the results in a plot resembling Figure 13.7a.
+
+```{r}
+#| fig-width: 2
+#| fig-height: 3
+
+chimp <- 2
+
+d_pred <- tibble(
+    actor = chimp,
+    block = 1,
+    treatment = 1:4)
+
+# For the x-axis
+treatment_labels_vec <- c("R/N", "L/N", "R/P", "L/P")
+
+m13.4 |> 
+  spread_draws(a[actor], b[treatment], g[block]) |> 
+  right_join(d_pred, by = join_by(actor, block, treatment)) |> 
+  mutate(p = plogis(a + b + g)) |> 
+  
+  ggplot(aes(x = treatment, y = p)) +
+  stat_lineribbon(point_interval = mean_qi, .width = 0.80, 
+                  fill = "gray67") +
+  scale_x_continuous(labels = treatment_labels_vec) +
+  labs(y = "proportion pulled left",
+       subtitle = "actor 2")
+```
+
+Note the severely-restricted range on the y axis.
+
+Part of the key to the `spread_draws()` approach is we named the indices for the `a`, `b`, and `g` vectors after the corresponding variables in the `d_pred` predictor data, and then used `right_join()` to connect the two.
+
+Here's what this looks like for `actor == 5`, as in Figure 13.7.
+
+```{r}
+#| fig-width: 2
+#| fig-height: 3
+
+# This has been updated
+chimp <- 5
+
+d_pred <- tibble(
+    actor = chimp,
+    block = 1,
+    treatment = 1:4)
+
+m13.4 |> 
+  spread_draws(a[actor], b[treatment], g[block]) |> 
+  right_join(d_pred, by = join_by(actor, block, treatment)) |> 
+  mutate(p = plogis(a + b + g)) |> 
+  
+  ggplot(aes(x = treatment, y = p)) +
+  stat_lineribbon(point_interval = mean_qi, .width = 0.80, 
+                  fill = "gray67") +
+  scale_x_continuous(labels = treatment_labels_vec) +
+  scale_y_continuous("proportion pulled left", limits = 0:1) +
+  labs(subtitle = "actor 5")
+```
+
+We could, of course, just make a faceted plot of all actors, in all blocks, and all treatments. For such a plot, we don't even need the `d_pred` data.
+
+```{r}
+#| fig-width: 7
+#| fig-height: 6
+
+m13.4 |>
+  spread_draws(a[actor], b[treatment], g[block]) |> 
+  mutate(p = plogis(a + b + g)) |> 
+  
+  ggplot(aes(x = treatment, y = p)) +
+  stat_lineribbon(point_interval = mean_qi, .width = 0.80, 
+                  fill = "gray67") +
+  scale_x_continuous(labels = treatment_labels_vec) +
+  scale_y_continuous("proportion pulled left", breaks = 0:2 / 2, limits = 0:1) +
+  facet_grid(actor ~ block, labeller = label_both)
+```
+
+This is yet another reminder there was very little variation across blocks.
+
+### Posterior prediction for new clusters.
+
+Here's how we might make Figure 13.7, left. Note how we've dropped the `a[actor]` and `g[block]` terms from `spread_draws()`, and added in `a_bar`. For this plot, we didn't need `d_pred` either.
+
+```{r}
+#| fig-width: 2
+#| fig-height: 3
+
+p1 <- m13.4 |> 
+  spread_draws(a_bar, b[treatment]) |> 
+  mutate(p = plogis(a_bar + b)) |> 
+  
+  ggplot(aes(x = treatment, y = p)) +
+  stat_lineribbon(point_interval = mean_qi, .width = 0.80, 
+                  fill = "gray67") +
+  scale_x_continuous(NULL, labels = treatment_labels_vec) +
+  scale_y_continuous("proportion pulled left", limits = 0:1) +
+  facet_wrap(~ "average actor")
+
+p1
+```
+
+If we want to depict the variability across the chimps, we need to bring `sigma_a` into the calculations. In the block of code, below, we simulate a bundle of new intercepts defined by
+
+$$\text{simulated chimpanzees} \sim \operatorname{Normal}(\bar \alpha, \sigma_\alpha).$$
+
+If we are going to continue using a `spread_draws()`-based approach, to my mind it makes sense to first convert the data to a wider format with respect to `treamtment`. Then we sample from `rnorm()`, and then we can convert the data back to the long format with respect to `treatment`. Otherwise you'd have different draws for different levels of `.draw`, which I believe would bungle the results.
+
+```{r}
+#| fig-width: 2
+#| fig-height: 3
+
+set.seed(13)
+
+p2 <- m13.4 |> 
+  spread_draws(a_bar, sigma_a, b[treatment]) |> 
+  pivot_wider(names_from = treatment, values_from = b) |> 
+  mutate(a_sim = rnorm(n = n(), mean = a_bar, sd = sigma_a)) |> 
+  pivot_longer(cols = `1`:`4`, values_to = "b") |> 
+  mutate(treatment = as.integer(name)) |> 
+  mutate(p = plogis(a_sim + b)) |> 
+  
+  ggplot(aes(x = treatment, y = p)) +
+  stat_lineribbon(point_interval = mean_qi, .width = 0.80, 
+                  fill = "gray67") +
+  scale_x_continuous(labels = treatment_labels_vec) +
+  scale_y_continuous(NULL, breaks = NULL, limits = 0:1) +
+  facet_wrap(~ "marginal of actor")
+
+p2
+```
+
+To simulate actors for the left panel of Figure 13.7, our basic data-wrangling workflow will be similar to what we just did. This time we'll use the `ndraws` argument within `spread_draws()` to randomly sample a subset of the 4,000 post-warmup posterior draws in the posterior, rather than use them all. When we plot, instead of summarizing the results with `stat_lineribbon()` we instead just plot individual lines with `geom_line()`, and we used the `.draw` index as a stand-in for simulated actors.
+
+```{r}
+#| fig-width: 2
+#| fig-height: 3
+
+set.seed(13)
+
+p3 <- m13.4 |> 
+  spread_draws(a_bar, sigma_a, b[treatment], ndraws = 100) |> 
+  pivot_wider(names_from = treatment, values_from = b) |> 
+  mutate(a_sim = rnorm(n = n(), mean = a_bar, sd = sigma_a)) |> 
+  pivot_longer(cols = `1`:`4`, values_to = "b") |> 
+  mutate(treatment = as.integer(name)) |> 
+  mutate(p = plogis(a_sim + b))  |> 
+  
+  ggplot(aes(x = treatment, y = p, group = .draw)) +
+  geom_line(alpha = 1/2) +
+  scale_x_continuous(NULL, labels = treatment_labels_vec) +
+  scale_y_continuous(NULL, breaks = NULL, limits = 0:1) +
+  facet_wrap(~ "100 simulated actors")
+
+p3
+```
+
+Here's the complete version of Figure 13.7.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3
+
+p1 | p2 | p3
+```
+
+### Post-stratification.
+
+## Summary
+
+## Session info {-}
+
+```{r}
+sessionInfo()
+```
+
+## Comments {-}
+
