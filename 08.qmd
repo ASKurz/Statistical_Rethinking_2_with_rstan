@@ -170,21 +170,12 @@ Define what I'm calling `model_code_8.1a`. Note that for this first version, we'
 
 ```{r}
 model_code_8.1a <- '
-data {
-  int<lower=1> n;
-  real xbar;
-  vector[n] log_gdp_std;
-  vector[n] rugged_std;
-}
 parameters {
   real a;
   real b;
   real<lower=0> sigma;
 }
 model {
-  // vector[n] mu;
-  // mu = a + b * (rugged_std - xbar);
-  // log_gdp_std ~ normal(mu, sigma);
   a ~ normal(1, 1);
   b ~ normal(0, 1);
   sigma ~ exponential(1);
@@ -211,24 +202,15 @@ m8.1a <- stan(
 ```
 
 Define `model_code_8.1b`. We're still sampling from the prior, but this time the priors are tighter.
-
+  
 ```{r}
 model_code_8.1b <- '
-data {
-  int<lower=1> n;
-  real xbar;
-  vector[n] log_gdp_std;
-  vector[n] rugged_std;
-}
 parameters {
   real a;
   real b;
   real<lower=0> sigma;
 }
 model {
-  // vector[n] mu;
-  // mu = a + b * (rugged_std - xbar);
-  // log_gdp_std ~ normal(mu, sigma);
   a ~ normal(1, 0.1);
   b ~ normal(0, 0.3);
   sigma ~ exponential(1);
@@ -281,7 +263,7 @@ bind_rows(as_draws_df(m8.1a), as_draws_df(m8.1b)) |>
   facet_wrap(~fit)
 ```
 
-Now define what we'll just call `model_code_8.1`, where the likelihood is now included in the `model` block. Note how we're also defining the `log_lik` vector within the `generated quantities` block so we can compute information criteria for model comparisons.
+Now define what we'll just call `model_code_8.1`, where we have included a `data` block and the likelihood is now included in the `model` block. Note how we're also defining the `log_lik` vector within the `generated quantities` block so we can compute information criteria for model comparisons.
 
 ```{r}
 model_code_8.1 <- '
@@ -980,11 +962,7 @@ To plot the prior-predictive expectations, we'll need to first sample from the p
 # No interaction
 model_code_8.4p <- '
 data {
-  int<lower=1> n;
   int<lower=1> n_pred;
-  vector[n] b;
-  vector[n] s;
-  vector[n] w;
   vector[n_pred] s_pred;
   vector[n_pred] w_pred;
 }
@@ -1010,11 +988,7 @@ generated quantities {
 # Interaction
 model_code_8.5p <- '
 data {
-  int<lower=1> n;
   int<lower=1> n_pred;
-  vector[n] b;
-  vector[n] s;
-  vector[n] w;
   vector[n_pred] s_pred;
   vector[n_pred] w_pred;
 }
