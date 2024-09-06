@@ -95,7 +95,7 @@ stan_data <- d |>
 str(stan_data)
 ```
 
-Define and sample from the initial program for the prior simulations.
+Define and sample from the initial program for the prior simulations. Note how for this application, we don't even need a `data` block in the `model_code`.
 
 ```{r}
 #| echo: false
@@ -108,15 +108,11 @@ load(file = "fits/m11.1.rda")
 #| eval: false
 
 model_code_11.1 <- '
-data {
-  int<lower=1> n;                       
-  array[n] int<lower=0, upper=1> pulled_left;
-}
 parameters {
   real a;
 }
 model {
-  // pulled_left ~ binomial(1, inv_logit(a));
+  // Prior only
   a ~ normal(0, 10);
 }
 '
@@ -167,17 +163,14 @@ load(file = "fits/m11.2.rda")
 
 model_code_11.2 <- '
 data {
-  int<lower=1> n;                       
   int<lower=1> n_treatment;
-  vector[n] treatment;
-  array[n] int<lower=0, upper=1> pulled_left;
 }
 parameters {
   real a;
   vector[n_treatment] b;
 }
 model {
-  // pulled_left ~ binomial(1, inv_logit(a + b[treatment]));
+  // Priors only
   a ~ normal(0, 1.5);
   b ~ normal(0, 10);
 }
@@ -205,17 +198,13 @@ load(file = "fits/m11.3.rda")
 
 model_code_11.3 <- '
 data {
-  int<lower=1> n;                       
   int<lower=1> n_treatment;
-  vector[n] treatment;
-  array[n] int<lower=0, upper=1> pulled_left;
 }
 parameters {
   real a;
   vector[n_treatment] b;
 }
 model {
-  // pulled_left ~ binomial(1, inv_logit(a + b[n_treatment]));
   a ~ normal(0, 1.5);
   b ~ normal(0, 0.5);  // This is the only new part
 }
