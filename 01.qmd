@@ -1,9 +1,10 @@
-# The Golem of Prague
-
-There's nothing for us to code in this chapter. Instead, here are the links to a few of McElreath's lectures on the material on this chapter of the text. If you didn't know, he's a good speaker. Enjoy!
+# ~~The Golem of Prague~~ **rstan** overview {#sec-rstan-overview}
 
 ```{r}
 #| echo: false
+#| eval: false
+
+# There’s nothing for us to code in this chapter. Instead, here are the links to a few of McElreath's lectures on the material on this chapter of the text. If you didn't know, he's a good speaker. Enjoy!
 
 vembedr::use_align(vembedr::embed_url("https://youtu.be/4WVelCswXo4"), 
                    "center")
@@ -13,6 +14,473 @@ vembedr::use_align(vembedr::embed_url("https://youtu.be/cclUd_HoRlo?si=qNucBCKnD
 
 vembedr::use_align(vembedr::embed_url("https://youtu.be/FdnMWdICdRs?si=U9Bivx2f0wGQD2nh"), 
                    "center")
+```
+
+There's really nothing in this chapter of the text for us to translate into **tidyverse** and **rstan** code. I'm going to repurpose it, instead. Though the chapters and sections in this ebook usually follow those in McElreath's source text pretty closely, this chapter will be an exception.
+
+As I've been putting together this ebook, I have settled on a general workflow for fitting models with **rstan**. In this section, I will briefly introduce the **rstan** interface for Stan through the lens of that general workflow. As you become more acquainted with **rstan**, you may well find you prefer a different workflow. To each their own. Here we introduce mine.
+
+*Why here?*, you ask. For the sake of this project, I don't think it works well to wait until @sec-Markov-Chain-Monte-Carlo before we properly introduce the basic work flow for **rstan**. I do explain a lot of the fine points starting in @sec-Geocentric-Models, but that still doesn't quite get the job done. The way you define and fit models with **rstan** is sufficiently different from McElreath's `quap()` and `ulam()` functions that it really needs a different kind of introduction, especially for how we format the data (what we call `stan_data` below), and how we set up the Stan program (what we call `model_code` below).
+
+To start, load the packages, and remove the default grid lines from the plots.
+
+```{r}
+#| message: false
+#| warning: false
+
+# Load
+library(tidyverse)
+library(tidybayes)
+library(rstan)
+library(posterior)
+
+# Drop grid lines
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank())
+)
+```
+
+## Salamanders have data
+
+For this run-through, we'll be using the `salamanders` data [@welsh1995habitat] from McElreath's **rethinking** package. McElreath introduced these data briefly in the practice questions at the end of Chapter 11.^[Keep in mind I do not cover practice questions in my ebooks.] As is the custom throughout the text, we'll save the data frame as `d`.
+
+```{r}
+data(package = "rethinking", salamanders)
+d <- salamanders
+rm(salamanders)
+
+# What?
+glimpse(d)
+```
+
+Our focal variable will be `SALAMAN`, which is the number of salamanders from 47 different sites in California. For predictor variable will be `PCTCOVER`, which is the percentage of ground cover at a given site. Here's a scatter plot of the two variables.
+
+```{r}
+#| fig-width: 5
+#| fig-height: 2.75
+
+d |> 
+  ggplot(aes(x = PCTCOVER, y = SALAMAN)) +
+  geom_point() +
+  xlim(0, 100)
+```
+
+For the code to come, we'll add two variables to the data frame. The `count` variable will be the same as `SALAMAN`, but just with a simpler name. Following conventions McElreath used throughout the text, the `cover_std` variable will be a standardized version of `PCTCOVER`.
+
+```{r}
+d <- d |> 
+  mutate(count = SALAMAN,
+         cover_std = (PCTCOVER - mean(PCTCOVER)) / sd(PCTCOVER)) 
+
+# What?
+head(d)
+```
+
+Our model will follow the equation
+
+```{r}
+#| eval: false
+#| echo: false
+
+cover_std
+cover-std
+```
+
+$$
+\begin{align*}
+\text{count}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\log(\lambda_i) & = a + b \times \text{cover-std}_i \\
+a & \sim \operatorname{Normal}(\log(1), 1) \\
+b & \sim \operatorname{Normal}(0, 1),
+\end{align*}
+$$
+
+the priors of which I've designed as weakly-regularizing on the scale of the data.
+
+## Stan likes data in lists
+
+Many model-fitting functions in **R** allow for a variety of data types, including data frames (of which tibbles are a special case), lists, free-floating vectors, and so on. Stan expects data in lists, and the primary model-fitting functions in the **rstan** package expect data lists, too.
+
+The **tidybayes** package includes a `compose_data()`, which makes it easy to convert data frames into the list format expected by **rstan**. We will use the `compose_data()` function throughout this ebook, and our convention will be to save the output as an object called `stan_data`. Here's what this can look like for our simple example.
+
+```{r}
+stan_data <- d |> 
+  select(count, cover_std) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+The `compose_data()` function automatically added a scalar value `n`, which defines the number of rows in the original data frame. As we will see, scalar values defining various dimensions are important for the kind of syntax we use with **rstan**. In some of the models to come, we will even have data lists containing several scalar values.
+
+## `model_code` and its blocks
+
+Stan programs are organized into a series of program blocks, and those blocks are saved as a character string for the primary **rstan** functions. Following the schematic in the [*Program Blocks*](https://mc-stan.org/docs/reference-manual/blocks.html) section in the *Stan Reference Manual* [@standevelopmentteamStanReferenceManual2024], those blocks are:
+
+```default
+functions {
+  // ... function declarations and definitions ...
+}
+data {
+  // ... declarations ...
+}
+transformed data {
+   // ... declarations ... statements ...
+}
+parameters {
+   // ... declarations ...
+}
+transformed parameters {
+   // ... declarations ... statements ...
+}
+model {
+   // ... declarations ... statements ...
+}
+generated quantities {
+   // ... declarations ... statements ...
+}
+```
+
+These blocks must always be in this order, but not all Stan programs need all of the blocks. For example, in our model of the `salamanders` data, we only need the `data`, `parameters`, and `model` blocks. Here's what they look like, saved as a character string named `model_code`.
+
+```{r}
+model_code <- '
+data {
+  int<lower=1> n;
+  vector[n] cover_std;
+  array[n] int<lower=0> count;
+}
+parameters {
+  real a;
+  real b;
+}
+model {
+  count ~ poisson(exp(a + b * cover_std));  // Likelihood
+  a ~ normal(log(1), 1);                    // Priors
+  b ~ normal(0, 1);
+}
+'
+```
+
+In Stan program blocks, each line ends with a `;`. As you can see in the `model` block, we can annotate the code with `//` marks. We'll focus on each of the three program blocks in the subsections below.
+
+### Our `data` block.
+
+Data declarations are a big deal with Stan. We'll cover a few of the fine points in this section, but the primary information source is the [*Data Types and Declarations*](https://mc-stan.org/docs/reference-manual/types.html) section of the *Stan Reference Manual*. At some time or another, you'll want to invest in studying that material.
+
+Here's a focused look at our `data` block.
+
+```default
+data {
+  int<lower=1> n;
+  vector[n] cover_std;
+  array[n] int<lower=0> count;
+}
+```
+
+All the data required by the model must be declared in the `data` block^[A possible exception is if you define a transformed version of any of your data in the `transformed data` block. However, I do not plan on using the `transformed data` approach in this ebook.]. One generally defines one variable per line, but it is possible to declare multiple variables in a single line (see [here](https://mc-stan.org/docs/reference-manual/types.html#declaring-multiple-variables-at-once)).
+
+It's important to understand that Stan programs are read in order, top to bottom. Thus the first line in a `data` block is often used to define any scalar values being used to define dimensions. Recall how earlier we learned how the `compose_data()` function automatically makes an `n` scalar, which defines the number of rows in the original data set. We will be using that `n` scalar, and its ilk, a lot in this ebook.
+
+With the syntax of `int` in this first line, we have declared that `n` scalar value is a integer. Stan can accept two primitive number types, which are `int` for integers and `real` for continuous numbers. There are other special types, such as `complex`, but I believe we will just be using `int` and `real` in this ebook.
+
+Some values have *constraints*, and by the `<lower=1>` syntax in our first line, we have declared `1` to be the lowest integer value allowed for our `n` scalar. Technically, we didn't need to define this constraint for this example; the model will fit fine without it. In this case, the constraint will serve as a error check to make sure we have a least one case in our data.
+
+By the second line `vector[n] cover_std;`, we have defined our `cover_std` predictor values as a vector of length `n`. In the second line `array[n] int<lower=0> count;`, we defined our `count` values as a 1-dimensional array of length `n`. Stan supports several data types, such as scalars, vectors, matrices, and arrays (see [here](https://mc-stan.org/docs/reference-manual/types.html#overview-of-data-types)). Though sequences of real values (such as `cover_std`) can be declared in vectors or arrays, sequences of integers go into arrays. If you try to declare a sequence of integer values as a vector, Stan will return an error. In my experience, properly juggling vectors and arrays has been a major source of frustration. Stan is picky, friends. Respect the data types.
+
+Note how by `int<lower=0>`, we declared the `count` variable is constrained to non-negative integer values. The model would have fit fine without the `<lower=0>` constraint, but that constraint serves as an error check ensuring none of our salamander counts are out-of bounds values like -1. Don't try fitting Poisson models with negative counts, friends.
+
+### Our `parameters` block.
+
+A good initial place to learn the technical details for the `parameters` block is in the [*Program block: `parameters`*](https://mc-stan.org/docs/reference-manual/blocks.html#program-block-parameters) section of the *Stan Reference Manual*. Otherwise you can glean a lot of applied insights from the [*Regression Models*](https://mc-stan.org/docs/stan-users-guide/regression.html) section of the *Stan User's Guide*.
+
+Here's a focused look at our `parameters` block.
+
+```default
+parameters {
+  real a;
+  real b;
+}
+```
+
+Both our intercept `a` and slope `b` have been declared as unconstrained `real` values. Parameters can have constraints, such as `<lower=0>` boundaries for $\sigma$ parameters, and `<lower=0, upper=1>` boundaries for proportions. Though we don't have any in this example, you can also declare vectors of parameters, and even matrices. You'll see many examples of these in the later chapters of the ebook.
+
+Importantly, the parameters declared in the `parameters` block are the ones sampled by Stan's HMC sampler.
+
+### Our `model` block.
+
+In the above sections were we detailed the contents of our `data` and `parameters` blocks, all of their contents were what are called *declarations*.  We named data elements and model parameters. Whereas `model` blocks do allow for declarations, they also allow for *statements*. A great place to learn all about statements is the [*Statements*](https://mc-stan.org/docs/reference-manual/statements.html) section of the *Stan Reference Manual*. You might also read the brief [*Program block: `model`*](https://mc-stan.org/docs/reference-manual/blocks.html#program-block-model) section of the *Stan Reference Manual*, or soak in all the applied examples in the [*Regression Models*](https://mc-stan.org/docs/stan-users-guide/regression.html) section of the *Stan User's Guide*. When you're really ready to get serious, you could browse though pretty much the whole of the [*Stan Functions Reference*](https://mc-stan.org/docs/functions-reference/) [@standevelopmentteamStanFunctionsReference2024].
+
+Here's a focused look at our `model` block.
+
+```default
+model {
+  count ~ poisson(exp(a + b * cover_std));  // Likelihood
+  a ~ normal(log(1), 1);                    // Priors
+  b ~ normal(0, 1);
+}
+```
+
+My preference is to define the likelihood first, and then add the priors. I've seen many examples of the reverse, and some times they're even shuffled all around. You pick whatever convention that makes sense for you and your collaborators.
+
+In our first line, we have defined the `count` response variable as Poisson distributed, with the syntax of `count ~ poisson()`. The sole parameter within the `poisson()` likelihood is `lambda`, which we have defined as `exp(a + b * cover_std)`. Note how in our syntax, we explicitly multiplied the `b` parameter with the `cover_std` data vector by way of the `*` operator. Also note that by nesting the linear equation within the `exp()` function, we have implicitly used the log link.
+
+Throughout this ebook, I will usually use likelihood syntax following this same basic format. But it's important to understand there are many other options. For example, some people prefer `for` loops to our vectorized code.  That could look like this:
+
+```default
+model {
+  for (i in 1:n) count[i] ~ poisson(exp(a + b * cover_std[i]));  // This is new
+  a ~ normal(log(1), 1);  // These two lines are still the same
+  b ~ normal(0, 1);
+}
+```
+
+Not all functions in Stan are vectorized, but I believe all can be used in the context of a loop. As we will see in the ebook, a few of the likelihoods currently require a `for` loop. But generally speaking, vectorized code tends to run faster in Stan than code with `for` loops. It's good to know both, but when possible, I always prefer vectorized code.
+
+Sometimes Stan provides variants of popular likelihood functions that are parameterized in terms of their typical link functions. In this case, we could have used the `poisson_log()` function, which obviates the need for nesting the linear model within the `exp()` function. That would look like this:
+
+```default
+model {
+  count ~ poisson_log(a + b * cover_std);  // This is the only line that changed
+  a ~ normal(log(1), 1);
+  b ~ normal(0, 1);
+}
+```
+
+I'm not currently in the habit of running models with this style of syntax. If you fit the model both ways, you'll see the overall results are very similar. However, in this case the `poisson_log()` version was a little faster, and it had slightly better HMC chain diagnostics by way of the $\widehat R$ and effective sample size estimates.
+
+There are even other functions that follow the so-called *generalized linear model* specification, such as the `poisson_log_glm()` function (see [here](https://mc-stan.org/docs/functions-reference/unbounded_discrete_distributions.html#poisson-log-glm)). At the moment, I do not have experience with this class of functions. Perhaps I'll give them some study and coverage in the future.
+
+Anyway, you'll note that our prior lines follow a similar kind of syntax as our likelihood line for the `count` variable. Each prior line started with the parameter of interest on the left side, followed by the tilde `~`, and then concluded with a distribution. With the prior for `a`, you'll notice it is legal to insert functions like `log()` into the hyperparameters. Though not shown here, it is also possible to assign vectors of parameters to a common prior, which we will see in some of the examples in the ebook (e.g., see @sec-Many-categories).
+
+There are many many other fine points we could discuss here about the `model` block, but I think this is a fine place to stop for our basic introduction. We have the rest of the ebook for the details.
+
+## HMC sampling with **rstan**
+
+To my eye, there are two basic ways to draw posterior samples from **rstan**. We'll cover both.
+
+### Primary method: Just use `stan()`.
+
+The first method for fitting **rstan** models, and the primary method we'll be using in this ebook, is with the `stan()` function. For us, the two main arguments are the `data` argument, into which we insert our `stan_data`, and the `model_code` argument, into which we insert our `model_code` with its `data`, `parameters`, and `model` block information. There are a whole slew of other arguments with default settings you might want to change. For example, `stan()` automatically samples from 4 HMC chains by the default setting `chains = 4`, which I generally find reasonable. Though it by default samples from the four chains in sequence, we will instead sample from them in parallel by setting `cores = 4`. To make the results more reproducible, I will also set `seed = 1`.
+
+```{r}
+#| echo: false
+
+# save(m1.1, file = "fits/m1.1.rda")
+load(file = "fits/m1.1.rda")
+```
+
+```{r}
+#| eval: false
+
+m1.1 <- stan(
+  # These two lines are necessary
+  data = stan_data,
+  model_code = model_code,
+  # These settings are optional
+  cores = 4, seed = 1)
+```
+
+Following the conventions McElreath used throughout the text, we have saved the model fit object as `m1.1`, where the `m` prefix stands for fitted model, the first numeral index indicates we are in the first chapter, and the second numerical index indicated this if the first model we have fit within this chapter. You can name your model fits whatever you want.
+
+### Secondary method: Use `stan_model()` and `sampling()`.
+
+The second method splits the model fitting process into two steps. We use the `stan_model()` function to translate the code in our `model_code` object into C++, and then that C++ code is compiled into a so-called dynamic shared object (DSO), which is then loaded. Though there are many arguments within the `stan_model()` function, the only one required by us is `model_code`. Following some of McElreath's naming conventions, we'll save the results as `dso1.1`.
+
+```{r}
+#| echo: false
+
+# save(dso1.1, file = "fits/dso1.1.rda")
+load(file = "fits/dso1.1.rda")
+```
+
+```{r}
+#| eval: false
+
+dso1.1 <- stan_model(model_code = model_code)
+```
+
+The resulting object is of S4 class `stanmodel`.
+
+```{r}
+class(dso1.1)
+```
+
+Our `dso1.1` object does not contain HMC samples. We compute those in the next step with the `sampling()` function. Here we assign our `dso1.1` to the `object` argument, and assign our `stan_data` to the `data` argument. As with the `stan()` function above, we are at liberty to adjust the various technical settings, such as with the `cores` and `seed` arguments. I'll save the output as `samp1.1`.
+
+```{r}
+#| echo: false
+
+# save(samp1.1, file = "fits/samp1.1.rda")
+load(file = "fits/samp1.1.rda")
+```
+
+```{r}
+#| eval: false
+
+samp1.1 <- sampling(
+    object = dso1.1,
+    data = stan_data,
+    cores = 4, seed = 1) 
+```
+
+### Compare the two methods by output.
+
+We might compare the structures of our `m1.1` and `samp1.1` objects with `str()`.
+
+```{r}
+str(m1.1, max.level = 2)
+str(samp1.1, max.level = 2)
+```
+
+They look about the same. But do they contain the same posterior draws? We can extract the posterior draws from both with the `posterior::as_draws_df()` function. If we nest that output within the `all.equal()` function, we can test whether the output is identical.
+
+```{r}
+all.equal(
+  as_draws_df(m1.1),
+  as_draws_df(samp1.1)
+)
+```
+
+Yep, it is. Both methods returned the exact same HMC draws. *Which method is better?*, you say. Well, I generally prefer the 1-step `stan()` method, and that's the method I use the most. But the 2-step `stan_model()`-to-`sampling()` method has its strengths. We'll see examples of this in @sec-Overthinking-Simulating-the-divorce-example and @sec-Scoring-the-right-data. As the careful reader will see, there are even ways to combine the two methods.
+
+## Evaluate the posteior draws
+
+We can use good-old `print()` for a quick summary of the posterior. Here we'll just focus on `m1.1`.
+
+```{r}
+print(m1.1)
+```
+
+There are various ways to customize this output, and you'll see I often use the `pars` and `probs` arguments throughout the text.
+
+Note how the `print()` output includes the `se_mean`, `n_eff`, and `Rhat` columns for basic numeric summaries of the quality of the HMC draws. If you require more detail and greater customization, consider the `summarise_draws()` function from the **posterior** package. Here's what that looks like with its `default_convergence_measures()` helper function.
+
+```{r}
+summarise_draws(m1.1, default_convergence_measures())
+```
+
+**rstan** also has a `check_hmc_diagnostics()` function for checking the kinds of scary warning messages McElreath started discussing in @sec-Markov-Chain-Monte-Carlo. For our little `m1.1` model, all is good.
+
+```{r}
+check_hmc_diagnostics(m1.1)
+```
+
+The **rstan** package comes with several built-in plotting functions. You can make trace plots with `stan_trace()`, and overlaid density plots with `stan_dens()`.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 2.75
+
+stan_trace(m1.1)
+stan_dens(m1.1, separate_chains = TRUE, linewidth = 0.1)
+```
+
+There are several other `stan_*()` functions for other kinds of plots, such as `stan_plot()` and `stan_ac()`. These all return **ggplot2** objects, which can be modified with the usual functions like `theme()`, `labs()`, and so on. For a general overview, execute `?stan_plot` in your console.
+
+There's also a rogue `traceplot()` function that returns the same output as `stan_trace()`. I don't know what the deal is with that, but my best guess is `traceplot()` was around before the **rstan** team added in the **ggplot2**-based plots, and they've just kept the function name to keep someone's old code from breaking. If anyone knows the actual history, do share in the comments.
+
+```{r}
+#| echo: false
+#| eval: false
+
+all.equal(
+  traceplot(m1.1),
+  stan_trace(m1.1)
+)
+```
+
+As for pulling the actual HMC draws, there are two methods I like and use throughout the book. The first is with the `as_draws_df()` function from the **posterior** package, which we briefly saw above. Here's a closer look at the output.
+
+```{r}
+as_draws_df(m1.1) |>
+  glimpse()
+```
+
+You get a data frame in the wide format where each parameter has its own column, each row is one of the HMC draws, and there are three index variables called `.chain`, `.iteration`, and `.draw`. The `as_draws_df()` function returns a special kind of data frame, which is also of class `draws_df` and `draws`. To learn more, execute `?as_draws_df` in your console.
+
+To give you a sense of how it works in action, here's an `as_draws_df()`-based way to plot the fitted line against the sample data.
+
+```{r}
+#| fig-width: 5
+#| fig-height: 2.75
+
+as_draws_df(m1.1) |> 
+  expand_grid(cover_std = seq(from = -1.7, to = 1.5, length.out = 201)) |> 
+  mutate(PCTCOVER = cover_std * sd(d$PCTCOVER) + mean(d$PCTCOVER),
+         y_hat = exp(a + b * cover_std)) |> 
+  filter(PCTCOVER >= 0 & PCTCOVER <= 100) |> 
+  
+  ggplot(aes(x = PCTCOVER)) +
+  stat_lineribbon(aes(y = y_hat),
+                  .width = 0.89, 
+                  color = "blue", fill = alpha("blue", 1/3), linewidth = 1) +
+  geom_point(data = d,
+             aes(y = count)) +
+  labs(x = "% ground coverage per site",
+       y = "salamander count")
+```
+
+The other way I like to extract the **rstan**-based HMC draws is with the sister functions `gather_draws()` and `spread_draws()` from the **tidybayes** package. Here's what their output looks like for `m1.1`.
+
+```{r}
+gather_draws(m1.1, a, b) |> 
+  glimpse()
+spread_draws(m1.1, a, b) |> 
+  glimpse()
+```
+
+Both return data frames with those `.chain`, `.iteration`, and `.draw` index variables. Whereas `gather_draws()` returned a long format with respect to our focal parameters `a` and `b`, `spread_draws()` returned them in a wide format. With a simple model like `m1.1`, these two functions don't really shine. But they tend to work very nicely once we have models with vectors of parameters, such as showcased in @sec-Many-categories and @sec-Logistic-regression-Prosocial-chimpanzees. 
+
+Here's an example of how the long `gather_draws()` output makes it easy to showcase both the parameters in a faceted half-eye plot.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 2.75
+
+gather_draws(m1.1, a, b) |> 
+  ggplot(aes(x = .value)) +
+  stat_halfeye(.width = 0.89, fill = alpha("blue", 1/2), linewidth = 1, shape = 1) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("parameter space") +
+  facet_wrap(~ .variable, scales = "free")
+```
+
+For now, I think this should be enough to get you moving with **rstan**. We have the rest of the ebook to fill in the details and chase down endless tangents. Happy modeling, friends.
+
+```{r}
+#| echo: false
+#| eval: false
+
+model_code2 <- '
+data {
+  int<lower=1> n;
+  vector[n] cover_std;
+  array[n] int<lower=0> count;
+}
+parameters {
+  real a;
+  real b;
+}
+model {
+  count ~ poisson_log(a + b * cover_std);  // Likelihood
+  a ~ normal(log(1), 1);                    // Priors
+  b ~ normal(0, 1);
+}
+'
+
+m1.2 <- stan(
+  data = stan_data,
+  model_code = model_code2,
+  cores = 4, seed = 1)
+
+print(m1.1)
+print(m1.2)
+
+get_elapsed_time(m1.1)
+get_elapsed_time(m1.2)
 ```
 
 ## Session info {-}
