@@ -1,4 +1,4 @@
-# Markov Chain Monte Carlo
+# Markov Chain Monte Carlo {#sec-Markov-Chain-Monte-Carlo}
 
 Load the packages.
 

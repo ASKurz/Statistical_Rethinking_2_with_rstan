@@ -1156,7 +1156,7 @@ log_prob_df |>
 
 That is the log-pointwise-predictive-density, $\text{lppd}(y, \Theta)$, computed by hand.
 
-### Scoring the right data.
+### Scoring the right data. {#sec-Scoring-the-right-data}
 
 Since our `stan()` models from above do not have log-likelihood values saved from each, we have to options to make an alternative to McElreath's R code 7.15:
 

@@ -586,7 +586,7 @@ bind_rows(
   facet_wrap(~ name, labeller = label_parsed, ncol = 1)
 ```
 
-#### Overthinking: Simulating the divorce example.
+#### Overthinking: Simulating the divorce example.{#sec-Overthinking-Simulating-the-divorce-example}
 
 Okay, let's simulate our divorce data in a **tidyverse** sort of way.
 
@@ -2305,7 +2305,7 @@ bind_rows(
   facet_wrap( ~ name, scales = "free_x")
 ```
 
-### Many categories.
+### Many categories. {#sec-Many-categories}
 
 Load the `milk` data.
 
