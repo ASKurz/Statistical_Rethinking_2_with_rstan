@@ -147,7 +147,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./01.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></span></a>
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><del>The Golem of Prague</del> <strong>rstan</strong> overview</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -214,6 +214,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="./12.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Monsters and Mixtures</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Models With Memory</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -1612,7 +1618,7 @@ $ happiness &lt;dbl&gt; -2.0000000, -1.7894737, -1.5789474, -1.3684211, -1.15789
 <span id="cb99-13"><a href="#cb99-13" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
 <span id="cb99-14"><a href="#cb99-14" aria-hidden="true" tabindex="-1"></a><span class="st">  happiness ~ normal(b0[mid] + b1 * a, sigma);</span></span>
 <span id="cb99-15"><a href="#cb99-15" aria-hidden="true" tabindex="-1"></a><span class="st">  </span></span>
-<span id="cb99-16"><a href="#cb99-16" aria-hidden="true" tabindex="-1"></a><span class="st">  b0 ~ normal(0, 1);</span></span>
+<span id="cb99-16"><a href="#cb99-16" aria-hidden="true" tabindex="-1"></a><span class="st">  b0 ~ std_normal();  // normal(0, 1)</span></span>
 <span id="cb99-17"><a href="#cb99-17" aria-hidden="true" tabindex="-1"></a><span class="st">  b1 ~ normal(0, 2);</span></span>
 <span id="cb99-18"><a href="#cb99-18" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
 <span id="cb99-19"><a href="#cb99-19" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
@@ -1632,13 +1638,14 @@ $ happiness &lt;dbl&gt; -2.0000000, -1.7894737, -1.5789474, -1.3684211, -1.15789
 <span id="cb99-33"><a href="#cb99-33" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
 <span id="cb99-34"><a href="#cb99-34" aria-hidden="true" tabindex="-1"></a><span class="st">  happiness ~ normal(b0 + b1 * a, sigma);</span></span>
 <span id="cb99-35"><a href="#cb99-35" aria-hidden="true" tabindex="-1"></a><span class="st">  </span></span>
-<span id="cb99-36"><a href="#cb99-36" aria-hidden="true" tabindex="-1"></a><span class="st">  b0 ~ normal(0, 1);</span></span>
+<span id="cb99-36"><a href="#cb99-36" aria-hidden="true" tabindex="-1"></a><span class="st">  b0 ~ std_normal();  // normal(0, 1)</span></span>
 <span id="cb99-37"><a href="#cb99-37" aria-hidden="true" tabindex="-1"></a><span class="st">  b1 ~ normal(0, 2);</span></span>
 <span id="cb99-38"><a href="#cb99-38" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
 <span id="cb99-39"><a href="#cb99-39" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb99-40"><a href="#cb99-40" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Fit the models with <code>stan()</code>.</p>
+<p>Did you catch our use of the <code>std_normal()</code> function for some of the priors? When you have a standard-normal prior, you can use <code>std_normal()</code> in place of <code>normal(0, 1)</code>. In the <a href="https://mc-stan.org/docs/functions-reference/unbounded_continuous_distributions.html#standard-normal-distribution"><em>Standard normal distribution</em></a> section of the <em>Stan Functions Reference</em>, we learn the <code>std_normal()</code> can be quite a bit faster than <code>normal(0, 1)</code>, so it’s worth giving a try. In my experience, though, that extra speed sometimes seem to come at the cost of lower ESS values. For the sake of practice, we’ll use <code>std_normal()</code> wherever we can throughout this chapter.</p>
+<p>Anyway, now fit the models with <code>stan()</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb100"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a>m6<span class="fl">.9</span> <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
 <span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
@@ -1659,13 +1666,13 @@ $ happiness &lt;dbl&gt; -2.0000000, -1.7894737, -1.5789474, -1.3684211, -1.15789
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
          mean se_mean   sd    5.5%   94.5% n_eff Rhat
-b0[1]   -0.19    0.00 0.06   -0.29   -0.09  1705    1
-b0[2]    1.27    0.00 0.09    1.13    1.41  1696    1
-b1      -0.80    0.00 0.11   -0.98   -0.62  1605    1
-sigma    1.01    0.00 0.02    0.97    1.05  2810    1
-lp__  -490.28    0.03 1.39 -492.85 -488.69  1785    1
+b0[1]   -0.19    0.00 0.07   -0.29   -0.09  1191    1
+b0[2]    1.27    0.00 0.09    1.13    1.41  1194    1
+b1      -0.80    0.00 0.12   -0.98   -0.61  1089    1
+sigma    1.01    0.00 0.02    0.97    1.05  2382    1
+lp__  -490.37    0.03 1.41 -492.93 -488.71  1710    1
 
-Samples were drawn using NUTS(diag_e) at Wed Aug 14 10:08:02 2024.
+Samples were drawn using NUTS(diag_e) at Thu Sep 12 12:56:48 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -1682,7 +1689,7 @@ b1       0.00    0.00 0.13   -0.21    0.20  1273    1
 sigma    1.22    0.00 0.03    1.17    1.26  2361    1
 lp__  -668.61    0.03 1.18 -670.82 -667.33  1595    1
 
-Samples were drawn using NUTS(diag_e) at Wed Jul 31 19:14:37 2024.
+Samples were drawn using NUTS(diag_e) at Thu Sep 12 12:57:10 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -1788,7 +1795,7 @@ convergence, Rhat=1).</code></pre>
 <span id="cb111-14"><a href="#cb111-14" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
 <span id="cb111-15"><a href="#cb111-15" aria-hidden="true" tabindex="-1"></a><span class="st">  c ~ normal(b0 + b1 * p + b2 * g, sigma);</span></span>
 <span id="cb111-16"><a href="#cb111-16" aria-hidden="true" tabindex="-1"></a><span class="st">  </span></span>
-<span id="cb111-17"><a href="#cb111-17" aria-hidden="true" tabindex="-1"></a><span class="st">  [b0, b1, b2] ~ normal(0, 1);</span></span>
+<span id="cb111-17"><a href="#cb111-17" aria-hidden="true" tabindex="-1"></a><span class="st">  [b0, b1, b2] ~ std_normal();  // normal(0, 1)</span></span>
 <span id="cb111-18"><a href="#cb111-18" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
 <span id="cb111-19"><a href="#cb111-19" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb111-20"><a href="#cb111-20" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span>
@@ -1811,7 +1818,7 @@ convergence, Rhat=1).</code></pre>
 <span id="cb111-37"><a href="#cb111-37" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
 <span id="cb111-38"><a href="#cb111-38" aria-hidden="true" tabindex="-1"></a><span class="st">  c ~ normal(b0 + b1 * p + b2 * g + b3 * u, sigma);</span></span>
 <span id="cb111-39"><a href="#cb111-39" aria-hidden="true" tabindex="-1"></a><span class="st">  </span></span>
-<span id="cb111-40"><a href="#cb111-40" aria-hidden="true" tabindex="-1"></a><span class="st">  [b0, b1, b2, b3] ~ normal(0, 1);</span></span>
+<span id="cb111-40"><a href="#cb111-40" aria-hidden="true" tabindex="-1"></a><span class="st">  [b0, b1, b2, b3] ~ std_normal();  // normal(0, 1)</span></span>
 <span id="cb111-41"><a href="#cb111-41" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
 <span id="cb111-42"><a href="#cb111-42" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb111-43"><a href="#cb111-43" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1837,13 +1844,13 @@ convergence, Rhat=1).</code></pre>
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
          mean se_mean   sd    5.5%   94.5% n_eff Rhat
-b0      -0.12    0.00 0.10   -0.28    0.05  4367    1
-b1       1.79    0.00 0.05    1.71    1.86  4098    1
-b2      -0.84    0.00 0.11   -1.01   -0.67  3668    1
-sigma    1.43    0.00 0.07    1.32    1.55  3876    1
-lp__  -174.41    0.03 1.44 -177.00 -172.79  2239    1
+b0      -0.12    0.00 0.10   -0.28    0.05  3924    1
+b1       1.79    0.00 0.05    1.71    1.86  4046    1
+b2      -0.84    0.00 0.11   -1.01   -0.66  3565    1
+sigma    1.43    0.00 0.07    1.32    1.55  3764    1
+lp__  -174.47    0.03 1.49 -177.12 -172.76  2198    1
 
-Samples were drawn using NUTS(diag_e) at Wed Jul 31 19:18:35 2024.
+Samples were drawn using NUTS(diag_e) at Thu Sep 12 12:59:57 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -1855,14 +1862,14 @@ convergence, Rhat=1).</code></pre>
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
          mean se_mean   sd    5.5%   94.5% n_eff Rhat
-b0      -0.12    0.00 0.07   -0.24   -0.01  3407    1
-b1       1.01    0.00 0.07    0.90    1.11  1709    1
-b2      -0.04    0.00 0.10   -0.20    0.12  2087    1
-b3       2.00    0.00 0.15    1.76    2.24  1849    1
-sigma    1.04    0.00 0.05    0.95    1.12  2851    1
-lp__  -110.42    0.04 1.63 -113.42 -108.49  1541    1
+b0      -0.12    0.00 0.07   -0.24   -0.01  3115    1
+b1       1.01    0.00 0.07    0.91    1.12  1631    1
+b2      -0.04    0.00 0.10   -0.20    0.12  2235    1
+b3       1.99    0.00 0.15    1.75    2.23  1706    1
+sigma    1.04    0.00 0.05    0.95    1.13  3009    1
+lp__  -110.45    0.04 1.63 -113.53 -108.54  1795    1
 
-Samples were drawn using NUTS(diag_e) at Wed Jul 31 19:19:02 2024.
+Samples were drawn using NUTS(diag_e) at Thu Sep 12 13:00:18 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -1988,7 +1995,7 @@ convergence, Rhat=1).</code></pre>
 <span id="cb128-12"><a href="#cb128-12" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
 <span id="cb128-13"><a href="#cb128-13" aria-hidden="true" tabindex="-1"></a><span class="st">  c ~ normal(X * b, sigma);  // Linear model defined in matrix algebra notation Xb</span></span>
 <span id="cb128-14"><a href="#cb128-14" aria-hidden="true" tabindex="-1"></a><span class="st">  </span></span>
-<span id="cb128-15"><a href="#cb128-15" aria-hidden="true" tabindex="-1"></a><span class="st">  b ~ normal(0, 1);</span></span>
+<span id="cb128-15"><a href="#cb128-15" aria-hidden="true" tabindex="-1"></a><span class="st">  b ~ std_normal();  // normal(0, 1)</span></span>
 <span id="cb128-16"><a href="#cb128-16" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
 <span id="cb128-17"><a href="#cb128-17" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb128-18"><a href="#cb128-18" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -2018,13 +2025,13 @@ convergence, Rhat=1).</code></pre>
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
          mean se_mean   sd    5.5%   94.5% n_eff Rhat
-b[1]    -0.12    0.00 0.10   -0.28    0.05  3758    1
-b[2]     1.79    0.00 0.05    1.72    1.86  3719    1
-b[3]    -0.84    0.00 0.11   -1.01   -0.67  3534    1
-sigma    1.43    0.00 0.07    1.32    1.55  3181    1
-lp__  -174.39    0.03 1.41 -177.11 -172.78  1933    1
+b[1]    -0.12    0.00 0.10   -0.28    0.05  3964    1
+b[2]     1.79    0.00 0.04    1.72    1.86  3381    1
+b[3]    -0.84    0.00 0.11   -1.01   -0.67  3654    1
+sigma    1.43    0.00 0.07    1.31    1.55  3796    1
+lp__  -174.38    0.03 1.42 -177.00 -172.76  1915    1
 
-Samples were drawn using NUTS(diag_e) at Wed Jul 31 19:24:54 2024.
+Samples were drawn using NUTS(diag_e) at Thu Sep 12 13:19:04 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -2036,14 +2043,14 @@ convergence, Rhat=1).</code></pre>
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
          mean se_mean   sd    5.5%   94.5% n_eff Rhat
-b[1]    -0.12    0.00 0.07   -0.23   -0.01  3001    1
-b[2]     1.01    0.00 0.07    0.91    1.12  1576    1
-b[3]    -0.04    0.00 0.10   -0.20    0.12  2098    1
-b[4]     2.00    0.00 0.15    1.75    2.23  1605    1
-sigma    1.04    0.00 0.05    0.96    1.12  2905    1
-lp__  -110.41    0.04 1.59 -113.36 -108.48  1836    1
+b[1]    -0.12    0.00 0.07   -0.24    0.00  3338    1
+b[2]     1.01    0.00 0.07    0.90    1.12  1535    1
+b[3]    -0.04    0.00 0.10   -0.19    0.12  1773    1
+b[4]     2.00    0.00 0.15    1.76    2.24  1581    1
+sigma    1.03    0.00 0.05    0.95    1.12  3210    1
+lp__  -110.42    0.04 1.60 -113.31 -108.47  1602    1
 
-Samples were drawn using NUTS(diag_e) at Wed Jul 31 19:26:25 2024.
+Samples were drawn using NUTS(diag_e) at Thu Sep 12 13:19:08 2024.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -2057,15 +2064,15 @@ convergence, Rhat=1).</code></pre>
 <span id="cb135-3"><a href="#cb135-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str</span>(<span class="at">max.level =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>List of 5
- $ b0   : num [1:4000(1d)] -0.0904 -0.0834 -0.0218 -0.0959 -0.2803 ...
+ $ b0   : num [1:4000(1d)] -0.135 -0.2317 -0.0966 0.131 -0.0273 ...
   ..- attr(*, "dimnames")=List of 1
- $ b1   : num [1:4000(1d)] 1.86 1.83 1.79 1.74 1.75 ...
+ $ b1   : num [1:4000(1d)] 1.77 1.73 1.77 1.88 1.86 ...
   ..- attr(*, "dimnames")=List of 1
- $ b2   : num [1:4000(1d)] -0.987 -0.838 -0.864 -0.769 -0.708 ...
+ $ b2   : num [1:4000(1d)] -0.715 -0.662 -0.68 -0.991 -0.861 ...
   ..- attr(*, "dimnames")=List of 1
- $ sigma: num [1:4000(1d)] 1.35 1.53 1.55 1.39 1.33 ...
+ $ sigma: num [1:4000(1d)] 1.41 1.49 1.4 1.35 1.27 ...
   ..- attr(*, "dimnames")=List of 1
- $ lp__ : num [1:4000(1d)] -175 -174 -174 -173 -176 ...
+ $ lp__ : num [1:4000(1d)] -173 -175 -174 -179 -177 ...
   ..- attr(*, "dimnames")=List of 1</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb137"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb137-1"><a href="#cb137-1" aria-hidden="true" tabindex="-1"></a><span class="co"># `model.matrix()` approach</span></span>
@@ -2073,11 +2080,11 @@ convergence, Rhat=1).</code></pre>
 <span id="cb137-3"><a href="#cb137-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str</span>(<span class="at">max.level =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>List of 3
- $ b    : num [1:4000, 1:3] -0.2285 -0.1263 -0.1282 -0.0969 -0.13 ...
+ $ b    : num [1:4000, 1:3] -0.1659 -0.00733 0.07502 0.09348 -0.24614 ...
   ..- attr(*, "dimnames")=List of 2
- $ sigma: num [1:4000(1d)] 1.42 1.38 1.37 1.4 1.32 ...
+ $ sigma: num [1:4000(1d)] 1.33 1.42 1.42 1.51 1.41 ...
   ..- attr(*, "dimnames")=List of 1
- $ lp__ : num [1:4000(1d)] -173 -173 -173 -172 -174 ...
+ $ lp__ : num [1:4000(1d)] -173 -174 -175 -176 -174 ...
   ..- attr(*, "dimnames")=List of 1</code></pre>
 </div>
 </div>
@@ -2092,18 +2099,18 @@ convergence, Rhat=1).</code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 5
 # Groups:   .variable [3]
-   .chain .iteration .draw .variable  .value
-    &lt;int&gt;      &lt;int&gt; &lt;int&gt; &lt;chr&gt;       &lt;dbl&gt;
- 1      1          1     1 b0        -0.154 
- 2      1          1     1 b1         1.79  
- 3      1          1     1 b2        -0.828 
- 4      1          2     2 b0        -0.164 
- 5      1          2     2 b1         1.68  
- 6      1          2     2 b2        -0.823 
- 7      1          3     3 b0        -0.143 
- 8      1          3     3 b1         1.89  
- 9      1          3     3 b2        -0.763 
-10      1          4     4 b0        -0.0669</code></pre>
+   .chain .iteration .draw .variable .value
+    &lt;int&gt;      &lt;int&gt; &lt;int&gt; &lt;chr&gt;      &lt;dbl&gt;
+ 1      1          1     1 b0        -0.125
+ 2      1          1     1 b1         1.76 
+ 3      1          1     1 b2        -0.881
+ 4      1          2     2 b0        -0.308
+ 5      1          2     2 b1         1.77 
+ 6      1          2     2 b2        -0.832
+ 7      1          3     3 b0        -0.145
+ 8      1          3     3 b1         1.77 
+ 9      1          3     3 b2        -0.881
+10      1          4     4 b0        -0.126</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb141"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb141-1"><a href="#cb141-1" aria-hidden="true" tabindex="-1"></a><span class="co"># `spread_draws()`</span></span>
 <span id="cb141-2"><a href="#cb141-2" aria-hidden="true" tabindex="-1"></a>m6<span class="fl">.11</span> <span class="sc">|&gt;</span> </span>
@@ -2113,16 +2120,16 @@ convergence, Rhat=1).</code></pre>
 <pre><code># A tibble: 10 × 6
    .chain .iteration .draw       b0    b1     b2
     &lt;int&gt;      &lt;int&gt; &lt;int&gt;    &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
- 1      1          1     1 -0.154    1.79 -0.828
- 2      1          2     2 -0.164    1.68 -0.823
- 3      1          3     3 -0.143    1.89 -0.763
- 4      1          4     4 -0.0669   1.85 -1.02 
- 5      1          5     5 -0.167    1.74 -0.721
- 6      1          6     6 -0.259    1.75 -0.740
- 7      1          7     7  0.0162   1.83 -0.961
- 8      1          8     8  0.0213   1.78 -0.980
- 9      1          9     9 -0.0983   1.82 -0.870
-10      1         10    10 -0.00547  1.72 -0.765</code></pre>
+ 1      1          1     1 -0.125    1.76 -0.881
+ 2      1          2     2 -0.308    1.77 -0.832
+ 3      1          3     3 -0.145    1.77 -0.881
+ 4      1          4     4 -0.126    1.76 -0.904
+ 5      1          5     5 -0.0634   1.88 -0.948
+ 6      1          6     6 -0.00258  1.84 -0.949
+ 7      1          7     7 -0.111    1.79 -0.872
+ 8      1          8     8  0.0970   1.82 -0.905
+ 9      1          9     9 -0.0870   1.83 -0.986
+10      1         10    10 -0.241    1.73 -0.613</code></pre>
 </div>
 </div>
 <p>The output for both are long w/r/t the <code>.chain</code>, <code>.iteration</code>, and <code>.draw</code> columns. But whereas the <code>gather_draws()</code> output are also long w/r/t the <code>b</code> parameters, as indicated in the <code>.variable</code> column, each of the <code>b</code> parameters gets its own column in the <code>spread_draws()</code>.</p>
@@ -2139,16 +2146,16 @@ convergence, Rhat=1).</code></pre>
 # Groups:   k, .variable [3]
        k .chain .iteration .draw .variable  .value
    &lt;int&gt;  &lt;int&gt;      &lt;int&gt; &lt;int&gt; &lt;chr&gt;       &lt;dbl&gt;
- 1     1      1          1     1 b         -0.145 
- 2     2      1          1     1 b          1.80  
- 3     3      1          1     1 b         -0.801 
- 4     1      1          2     2 b         -0.0535
- 5     2      1          2     2 b          1.77  
- 6     3      1          2     2 b         -0.958 
- 7     1      1          3     3 b         -0.153 
- 8     2      1          3     3 b          1.76  
- 9     3      1          3     3 b         -0.800 
-10     1      1          4     4 b         -0.152 </code></pre>
+ 1     1      1          1     1 b         -0.148 
+ 2     2      1          1     1 b          1.84  
+ 3     3      1          1     1 b         -0.918 
+ 4     1      1          2     2 b         -0.226 
+ 5     2      1          2     2 b          1.78  
+ 6     3      1          2     2 b         -0.960 
+ 7     1      1          3     3 b          0.0519
+ 8     2      1          3     3 b          1.82  
+ 9     3      1          3     3 b         -0.805 
+10     1      1          4     4 b         -0.149 </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb145"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb145-1"><a href="#cb145-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Look at this output with an alternative name for the `b` dimensions</span></span>
 <span id="cb145-2"><a href="#cb145-2" aria-hidden="true" tabindex="-1"></a><span class="co"># m6.11b |&gt;</span></span>
@@ -2166,16 +2173,16 @@ convergence, Rhat=1).</code></pre>
 # Groups:   k [3]
        k       b .chain .iteration .draw
    &lt;int&gt;   &lt;dbl&gt;  &lt;int&gt;      &lt;int&gt; &lt;int&gt;
- 1     1 -0.145       1          1     1
- 2     2  1.80        1          1     1
- 3     3 -0.801       1          1     1
- 4     1 -0.0535      1          2     2
- 5     2  1.77        1          2     2
- 6     3 -0.958       1          2     2
- 7     1 -0.153       1          3     3
- 8     2  1.76        1          3     3
- 9     3 -0.800       1          3     3
-10     1 -0.152       1          4     4</code></pre>
+ 1     1 -0.148       1          1     1
+ 2     2  1.84        1          1     1
+ 3     3 -0.918       1          1     1
+ 4     1 -0.226       1          2     2
+ 5     2  1.78        1          2     2
+ 6     3 -0.960       1          2     2
+ 7     1  0.0519      1          3     3
+ 8     2  1.82        1          3     3
+ 9     3 -0.805       1          3     3
+10     1 -0.149       1          4     4</code></pre>
 </div>
 </div>
 <p>Though maybe obscured by our use of <code>head(n = 10)</code>, the output for both is long w/r/t the <span class="math inline">\(\beta\)</span> parameters. The output for each of the <span class="math inline">\(\beta\)</span> parameters is indexed by the <code>k</code> column in both, and whereas the output for <code>gather_draws()</code> now has a <code>.variable</code> column with a constant value <code>b</code> and a <code>.value</code> column for the actual values of the draws, the output for <code>spread_draws()</code> simply collapsed those two into a single column <code>b</code> which contains the values from each parameter’s draw.</p>

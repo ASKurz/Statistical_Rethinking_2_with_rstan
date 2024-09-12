@@ -166,7 +166,7 @@ div.csl-indent {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./01.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></span></a>
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><del>The Golem of Prague</del> <strong>rstan</strong> overview</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -237,6 +237,12 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Models With Memory</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -266,7 +272,7 @@ div.csl-indent {
   </ul></li>
   <li><a href="#approximating-the-posterior." id="toc-approximating-the-posterior." class="nav-link" data-scroll-target="#approximating-the-posterior."><span class="header-section-number">5.1.4</span> Approximating the posterior.</a>
   <ul>
-  <li><a href="#overthinking-simulating-the-divorce-example." id="toc-overthinking-simulating-the-divorce-example." class="nav-link" data-scroll-target="#overthinking-simulating-the-divorce-example."><span class="header-section-number">5.1.4.1</span> Overthinking: Simulating the divorce example.</a></li>
+  <li><a href="#sec-Overthinking-Simulating-the-divorce-example" id="toc-sec-Overthinking-Simulating-the-divorce-example" class="nav-link" data-scroll-target="#sec-Overthinking-Simulating-the-divorce-example"><span class="header-section-number">5.1.4.1</span> Overthinking: Simulating the divorce example.</a></li>
   </ul></li>
   <li><a href="#plotting-multivariate-posteriors." id="toc-plotting-multivariate-posteriors." class="nav-link" data-scroll-target="#plotting-multivariate-posteriors."><span class="header-section-number">5.1.5</span> Plotting multivariate posteriors.</a>
   <ul>
@@ -293,7 +299,7 @@ div.csl-indent {
   <ul>
   <li><a href="#rethinking-continuous-countries." id="toc-rethinking-continuous-countries." class="nav-link" data-scroll-target="#rethinking-continuous-countries."><span class="header-section-number">5.3.0.1</span> Rethinking: Continuous countries.</a></li>
   <li><a href="#sec-Binary-categories" id="toc-sec-Binary-categories" class="nav-link" data-scroll-target="#sec-Binary-categories"><span class="header-section-number">5.3.1</span> Binary categories.</a></li>
-  <li><a href="#many-categories." id="toc-many-categories." class="nav-link" data-scroll-target="#many-categories."><span class="header-section-number">5.3.2</span> Many categories.</a>
+  <li><a href="#sec-Many-categories" id="toc-sec-Many-categories" class="nav-link" data-scroll-target="#sec-Many-categories"><span class="header-section-number">5.3.2</span> Many categories.</a>
   <ul>
   <li><a href="#rethinking-differences-and-statistical-significance." id="toc-rethinking-differences-and-statistical-significance." class="nav-link" data-scroll-target="#rethinking-differences-and-statistical-significance."><span class="header-section-number">5.3.2.1</span> Rethinking: Differences and statistical significance.</a></li>
   </ul></li>
@@ -861,8 +867,8 @@ convergence, Rhat=1).</code></pre>
 <p><img src="05_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="576"></p>
 </div>
 </div>
-<section id="overthinking-simulating-the-divorce-example." class="level4" data-number="5.1.4.1">
-<h4 data-number="5.1.4.1" class="anchored" data-anchor-id="overthinking-simulating-the-divorce-example."><span class="header-section-number">5.1.4.1</span> Overthinking: Simulating the divorce example.</h4>
+<section id="sec-Overthinking-Simulating-the-divorce-example" class="level4" data-number="5.1.4.1">
+<h4 data-number="5.1.4.1" class="anchored" data-anchor-id="sec-Overthinking-Simulating-the-divorce-example"><span class="header-section-number">5.1.4.1</span> Overthinking: Simulating the divorce example.</h4>
 <p>Okay, let’s simulate our divorce data in a <strong>tidyverse</strong> sort of way.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># How many states would you like?</span></span>
@@ -2671,8 +2677,8 @@ convergence, Rhat=1).</code></pre>
 </div>
 </div>
 </section>
-<section id="many-categories." class="level3" data-number="5.3.2">
-<h3 data-number="5.3.2" class="anchored" data-anchor-id="many-categories."><span class="header-section-number">5.3.2</span> Many categories.</h3>
+<section id="sec-Many-categories" class="level3" data-number="5.3.2">
+<h3 data-number="5.3.2" class="anchored" data-anchor-id="sec-Many-categories"><span class="header-section-number">5.3.2</span> Many categories.</h3>
 <p>Load the <code>milk</code> data.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb151"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb151-1"><a href="#cb151-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(milk, <span class="at">package =</span> <span class="st">"rethinking"</span>)</span>
