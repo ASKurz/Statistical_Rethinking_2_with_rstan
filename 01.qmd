@@ -94,11 +94,11 @@ b & \sim \operatorname{Normal}(0, 1),
 \end{align*}
 $$
 
-the priors of which I've designed as weakly-regularizing on the scale of the data. Since I'm writing this ebook with an experience readership in mind, I'm assuming it's okay to start with a Poisson model. For any readers unacquainted with Poisson regression, McElreath covered the basics in @sec-Poisson-regression.
+the priors of which I've designed as weakly-regularizing on the scale of the data. Since I'm writing this ebook with an experienced readership in mind, I'm assuming it's okay to start with a Poisson model. For any readers who might be unacquainted with Poisson regression, McElreath covered the basics in @sec-Poisson-regression.
 
 ## Stan likes data in lists
 
-Many model-fitting functions in **R** allow for a variety of data types, including data frames (of which tibbles are a special case), lists, free-floating vectors, and so on. Stan expects data in lists, and the primary model-fitting functions in the **rstan** package expect data lists, too.
+Many model-fitting functions in **R** allow for a variety of data types, including data frames, lists, free-floating vectors, and so on. Stan expects data in lists, and the primary model-fitting functions in the **rstan** package expect data lists, too.
 
 The **tidybayes** package includes a `compose_data()`, which makes it easy to convert data frames into the list format expected by **rstan**. We will use the `compose_data()` function throughout this ebook, and our convention will be to save the output as an object called `stan_data`. Here's what this can look like for our salamanders example.
 
@@ -192,7 +192,7 @@ Note how by `int<lower=0>`, we declared the `count` variable is constrained to n
 
 ### Our `parameters` block.
 
-A good initial place to learn the technical details for the `parameters` block is in the [*Program block: `parameters`*](https://mc-stan.org/docs/reference-manual/blocks.html#program-block-parameters) section of the *Stan Reference Manual* [@standevelopmentteamStanReferenceManual2024]. Otherwise you can glean a lot of applied insights from the [*Regression Models*](https://mc-stan.org/docs/stan-users-guide/regression.html) section of the *Stan User's Guide*.
+A good initial place to learn the technical details for the `parameters` block is in the [*Program block: `parameters`*](https://mc-stan.org/docs/reference-manual/blocks.html#program-block-parameters) section of the *Stan Reference Manual*. Otherwise you can glean a lot of applied insights from the [*Regression Models*](https://mc-stan.org/docs/stan-users-guide/regression.html) section of the *Stan User's Guide*.
 
 Here's a focused look at our `parameters` block.
 
@@ -384,8 +384,8 @@ check_hmc_diagnostics(m1.1)
 The **rstan** package comes with several built-in plotting functions. You can make trace plots with `stan_trace()`, and overlaid density plots with `stan_dens()`.
 
 ```{r}
-#| fig-width: 8
-#| fig-height: 2.75
+#| fig-width: 7
+#| fig-height: 2.5
 
 stan_trace(m1.1)
 stan_dens(m1.1, separate_chains = TRUE, linewidth = 0.1)
