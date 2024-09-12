@@ -166,7 +166,7 @@ div.csl-indent {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./01.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></span></a>
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><del>The Golem of Prague</del> <strong>rstan</strong> overview</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -233,6 +233,12 @@ div.csl-indent {
   <div class="sidebar-item-container"> 
   <a href="./12.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Monsters and Mixtures</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Models With Memory</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -453,26 +459,17 @@ div.csl-indent {
 <p>Define what I’m calling <code>model_code_8.1a</code>. Note that for this first version, we’ll be sampling from the prior.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.1</span>a <span class="ot">&lt;-</span> <span class="st">'</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="st">  real xbar;</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] log_gdp_std;</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] rugged_std;</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="st">  real a;</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="st">  real b;</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="st">  real&lt;lower=0&gt; sigma;</span></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="st">  // vector[n] mu;</span></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="st">  // mu = a + b * (rugged_std - xbar);</span></span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="st">  // log_gdp_std ~ normal(mu, sigma);</span></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="st">  a ~ normal(1, 1);</span></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="st">  b ~ normal(0, 1);</span></span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="st">  real a;</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="st">  real b;</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="st">  real&lt;lower=0&gt; sigma;</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="st">  a ~ normal(1, 1);</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="st">  b ~ normal(0, 1);</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Compile and fit the initial model with <code>stan()</code>. For the sake of bookkeeping, we’ll detract a little from the text and call this <code>m8.1a</code>. You’ll see why in a moment.</p>
 <div class="cell">
@@ -484,26 +481,17 @@ div.csl-indent {
 <p>Define <code>model_code_8.1b</code>. We’re still sampling from the prior, but this time the priors are tighter.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.1</span>b <span class="ot">&lt;-</span> <span class="st">'</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="st">  real xbar;</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] log_gdp_std;</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] rugged_std;</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="st">  real a;</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="st">  real b;</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="st">  real&lt;lower=0&gt; sigma;</span></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="st">  // vector[n] mu;</span></span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="st">  // mu = a + b * (rugged_std - xbar);</span></span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="st">  // log_gdp_std ~ normal(mu, sigma);</span></span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a><span class="st">  a ~ normal(1, 0.1);</span></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="st">  b ~ normal(0, 0.3);</span></span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="st">  real a;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="st">  real b;</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="st">  real&lt;lower=0&gt; sigma;</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="st">  a ~ normal(1, 0.1);</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="st">  b ~ normal(0, 0.3);</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now sample from the tighter priors, and call the object <code>m8.1b</code>.</p>
 <div class="cell">
@@ -537,7 +525,7 @@ div.csl-indent {
 <p><img src="08_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="576"></p>
 </div>
 </div>
-<p>Now define what we’ll just call <code>model_code_8.1</code>, where the likelihood is now included in the <code>model</code> block. Note how we’re also defining the <code>log_lik</code> vector within the <code>generated quantities</code> block so we can compute information criteria for model comparisons.</p>
+<p>Now define what we’ll just call <code>model_code_8.1</code>, where we have included a <code>data</code> block and the likelihood is now included in the <code>model</code> block. Note how we’re also defining the <code>log_lik</code> vector within the <code>generated quantities</code> block so we can compute information criteria for model comparisons.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
@@ -1294,62 +1282,54 @@ convergence, Rhat=1).</code></pre>
 <div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="co"># No interaction</span></span>
 <span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.4</span>p <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
-<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
-<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_pred;</span></span>
-<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] b;</span></span>
-<span id="cb79-7"><a href="#cb79-7" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] s;</span></span>
-<span id="cb79-8"><a href="#cb79-8" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] w;</span></span>
-<span id="cb79-9"><a href="#cb79-9" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] s_pred;</span></span>
-<span id="cb79-10"><a href="#cb79-10" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] w_pred;</span></span>
-<span id="cb79-11"><a href="#cb79-11" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb79-12"><a href="#cb79-12" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
-<span id="cb79-13"><a href="#cb79-13" aria-hidden="true" tabindex="-1"></a><span class="st">  real a;</span></span>
-<span id="cb79-14"><a href="#cb79-14" aria-hidden="true" tabindex="-1"></a><span class="st">  real b1;</span></span>
-<span id="cb79-15"><a href="#cb79-15" aria-hidden="true" tabindex="-1"></a><span class="st">  real b2;</span></span>
-<span id="cb79-16"><a href="#cb79-16" aria-hidden="true" tabindex="-1"></a><span class="st">  real&lt;lower=0&gt; sigma;</span></span>
-<span id="cb79-17"><a href="#cb79-17" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb79-18"><a href="#cb79-18" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
-<span id="cb79-19"><a href="#cb79-19" aria-hidden="true" tabindex="-1"></a><span class="st">  // Only the priors</span></span>
-<span id="cb79-20"><a href="#cb79-20" aria-hidden="true" tabindex="-1"></a><span class="st">  a ~ normal(0.5, 0.25);</span></span>
-<span id="cb79-21"><a href="#cb79-21" aria-hidden="true" tabindex="-1"></a><span class="st">  b1 ~ normal(0, 0.25);</span></span>
-<span id="cb79-22"><a href="#cb79-22" aria-hidden="true" tabindex="-1"></a><span class="st">  b2 ~ normal(0, 0.25);</span></span>
-<span id="cb79-23"><a href="#cb79-23" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_pred;</span></span>
+<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] s_pred;</span></span>
+<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] w_pred;</span></span>
+<span id="cb79-7"><a href="#cb79-7" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb79-8"><a href="#cb79-8" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
+<span id="cb79-9"><a href="#cb79-9" aria-hidden="true" tabindex="-1"></a><span class="st">  real a;</span></span>
+<span id="cb79-10"><a href="#cb79-10" aria-hidden="true" tabindex="-1"></a><span class="st">  real b1;</span></span>
+<span id="cb79-11"><a href="#cb79-11" aria-hidden="true" tabindex="-1"></a><span class="st">  real b2;</span></span>
+<span id="cb79-12"><a href="#cb79-12" aria-hidden="true" tabindex="-1"></a><span class="st">  real&lt;lower=0&gt; sigma;</span></span>
+<span id="cb79-13"><a href="#cb79-13" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb79-14"><a href="#cb79-14" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
+<span id="cb79-15"><a href="#cb79-15" aria-hidden="true" tabindex="-1"></a><span class="st">  // Only the priors</span></span>
+<span id="cb79-16"><a href="#cb79-16" aria-hidden="true" tabindex="-1"></a><span class="st">  a ~ normal(0.5, 0.25);</span></span>
+<span id="cb79-17"><a href="#cb79-17" aria-hidden="true" tabindex="-1"></a><span class="st">  b1 ~ normal(0, 0.25);</span></span>
+<span id="cb79-18"><a href="#cb79-18" aria-hidden="true" tabindex="-1"></a><span class="st">  b2 ~ normal(0, 0.25);</span></span>
+<span id="cb79-19"><a href="#cb79-19" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
+<span id="cb79-20"><a href="#cb79-20" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb79-21"><a href="#cb79-21" aria-hidden="true" tabindex="-1"></a><span class="st">generated quantities {</span></span>
+<span id="cb79-22"><a href="#cb79-22" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] mu;</span></span>
+<span id="cb79-23"><a href="#cb79-23" aria-hidden="true" tabindex="-1"></a><span class="st">  mu = a + b1 * w_pred + b2 * s_pred;</span></span>
 <span id="cb79-24"><a href="#cb79-24" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb79-25"><a href="#cb79-25" aria-hidden="true" tabindex="-1"></a><span class="st">generated quantities {</span></span>
-<span id="cb79-26"><a href="#cb79-26" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] mu;</span></span>
-<span id="cb79-27"><a href="#cb79-27" aria-hidden="true" tabindex="-1"></a><span class="st">  mu = a + b1 * w_pred + b2 * s_pred;</span></span>
-<span id="cb79-28"><a href="#cb79-28" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb79-29"><a href="#cb79-29" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span>
-<span id="cb79-30"><a href="#cb79-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb79-31"><a href="#cb79-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Interaction</span></span>
-<span id="cb79-32"><a href="#cb79-32" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.5</span>p <span class="ot">&lt;-</span> <span class="st">'</span></span>
-<span id="cb79-33"><a href="#cb79-33" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
-<span id="cb79-34"><a href="#cb79-34" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
-<span id="cb79-35"><a href="#cb79-35" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_pred;</span></span>
-<span id="cb79-36"><a href="#cb79-36" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] b;</span></span>
-<span id="cb79-37"><a href="#cb79-37" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] s;</span></span>
-<span id="cb79-38"><a href="#cb79-38" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] w;</span></span>
-<span id="cb79-39"><a href="#cb79-39" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] s_pred;</span></span>
-<span id="cb79-40"><a href="#cb79-40" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] w_pred;</span></span>
-<span id="cb79-41"><a href="#cb79-41" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb79-42"><a href="#cb79-42" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
-<span id="cb79-43"><a href="#cb79-43" aria-hidden="true" tabindex="-1"></a><span class="st">  real a;</span></span>
-<span id="cb79-44"><a href="#cb79-44" aria-hidden="true" tabindex="-1"></a><span class="st">  real b1;</span></span>
-<span id="cb79-45"><a href="#cb79-45" aria-hidden="true" tabindex="-1"></a><span class="st">  real b2;</span></span>
-<span id="cb79-46"><a href="#cb79-46" aria-hidden="true" tabindex="-1"></a><span class="st">  real b3;</span></span>
-<span id="cb79-47"><a href="#cb79-47" aria-hidden="true" tabindex="-1"></a><span class="st">  real&lt;lower=0&gt; sigma;</span></span>
-<span id="cb79-48"><a href="#cb79-48" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb79-49"><a href="#cb79-49" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
-<span id="cb79-50"><a href="#cb79-50" aria-hidden="true" tabindex="-1"></a><span class="st">  // Only the priors</span></span>
-<span id="cb79-51"><a href="#cb79-51" aria-hidden="true" tabindex="-1"></a><span class="st">  a ~ normal(0.5, 0.25);</span></span>
-<span id="cb79-52"><a href="#cb79-52" aria-hidden="true" tabindex="-1"></a><span class="st">  [b1, b2, b3] ~ normal(0, 0.25);</span></span>
-<span id="cb79-53"><a href="#cb79-53" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
-<span id="cb79-54"><a href="#cb79-54" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb79-55"><a href="#cb79-55" aria-hidden="true" tabindex="-1"></a><span class="st">generated quantities {</span></span>
-<span id="cb79-56"><a href="#cb79-56" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] mu;</span></span>
-<span id="cb79-57"><a href="#cb79-57" aria-hidden="true" tabindex="-1"></a><span class="st">  mu = a + b1 * w_pred + b2 * s_pred + b3 .* w_pred .* s_pred;</span></span>
-<span id="cb79-58"><a href="#cb79-58" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
-<span id="cb79-59"><a href="#cb79-59" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb79-25"><a href="#cb79-25" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span>
+<span id="cb79-26"><a href="#cb79-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-27"><a href="#cb79-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Interaction</span></span>
+<span id="cb79-28"><a href="#cb79-28" aria-hidden="true" tabindex="-1"></a>model_code_8<span class="fl">.5</span>p <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<span id="cb79-29"><a href="#cb79-29" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
+<span id="cb79-30"><a href="#cb79-30" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n_pred;</span></span>
+<span id="cb79-31"><a href="#cb79-31" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] s_pred;</span></span>
+<span id="cb79-32"><a href="#cb79-32" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] w_pred;</span></span>
+<span id="cb79-33"><a href="#cb79-33" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb79-34"><a href="#cb79-34" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
+<span id="cb79-35"><a href="#cb79-35" aria-hidden="true" tabindex="-1"></a><span class="st">  real a;</span></span>
+<span id="cb79-36"><a href="#cb79-36" aria-hidden="true" tabindex="-1"></a><span class="st">  real b1;</span></span>
+<span id="cb79-37"><a href="#cb79-37" aria-hidden="true" tabindex="-1"></a><span class="st">  real b2;</span></span>
+<span id="cb79-38"><a href="#cb79-38" aria-hidden="true" tabindex="-1"></a><span class="st">  real b3;</span></span>
+<span id="cb79-39"><a href="#cb79-39" aria-hidden="true" tabindex="-1"></a><span class="st">  real&lt;lower=0&gt; sigma;</span></span>
+<span id="cb79-40"><a href="#cb79-40" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb79-41"><a href="#cb79-41" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
+<span id="cb79-42"><a href="#cb79-42" aria-hidden="true" tabindex="-1"></a><span class="st">  // Only the priors</span></span>
+<span id="cb79-43"><a href="#cb79-43" aria-hidden="true" tabindex="-1"></a><span class="st">  a ~ normal(0.5, 0.25);</span></span>
+<span id="cb79-44"><a href="#cb79-44" aria-hidden="true" tabindex="-1"></a><span class="st">  [b1, b2, b3] ~ normal(0, 0.25);</span></span>
+<span id="cb79-45"><a href="#cb79-45" aria-hidden="true" tabindex="-1"></a><span class="st">  sigma ~ exponential(1);</span></span>
+<span id="cb79-46"><a href="#cb79-46" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb79-47"><a href="#cb79-47" aria-hidden="true" tabindex="-1"></a><span class="st">generated quantities {</span></span>
+<span id="cb79-48"><a href="#cb79-48" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n_pred] mu;</span></span>
+<span id="cb79-49"><a href="#cb79-49" aria-hidden="true" tabindex="-1"></a><span class="st">  mu = a + b1 * w_pred + b2 * s_pred + b3 .* w_pred .* s_pred;</span></span>
+<span id="cb79-50"><a href="#cb79-50" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb79-51"><a href="#cb79-51" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Sample from the two priors with <code>stan()</code>.</p>
 <div class="cell">

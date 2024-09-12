@@ -166,7 +166,7 @@ div.csl-indent {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./01.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></span></a>
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><del>The Golem of Prague</del> <strong>rstan</strong> overview</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -237,6 +237,12 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Models With Memory</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -286,7 +292,7 @@ div.csl-indent {
   <ul>
   <li><a href="#overthinking-computing-the-lppd." id="toc-overthinking-computing-the-lppd." class="nav-link" data-scroll-target="#overthinking-computing-the-lppd."><span class="header-section-number">7.2.4.1</span> Overthinking: Computing the lppd.</a></li>
   </ul></li>
-  <li><a href="#scoring-the-right-data." id="toc-scoring-the-right-data." class="nav-link" data-scroll-target="#scoring-the-right-data."><span class="header-section-number">7.2.5</span> Scoring the right data.</a>
+  <li><a href="#sec-Scoring-the-right-data" id="toc-sec-Scoring-the-right-data" class="nav-link" data-scroll-target="#sec-Scoring-the-right-data"><span class="header-section-number">7.2.5</span> Scoring the right data.</a>
   <ul>
   <li><a href="#overthinking-simulated-training-and-testing." id="toc-overthinking-simulated-training-and-testing." class="nav-link" data-scroll-target="#overthinking-simulated-training-and-testing."><span class="header-section-number">7.2.5.1</span> Overthinking: Simulated training and testing.</a></li>
   </ul></li>
@@ -1675,8 +1681,8 @@ $ `density[i][s]` &lt;dbl&gt; 0.5583681, 0.5016021, 0.3885140, 0.6378460, 0.4205
 <p>That is the log-pointwise-predictive-density, <span class="math inline">\(\text{lppd}(y, \Theta)\)</span>, computed by hand.</p>
 </section>
 </section>
-<section id="scoring-the-right-data." class="level3" data-number="7.2.5">
-<h3 data-number="7.2.5" class="anchored" data-anchor-id="scoring-the-right-data."><span class="header-section-number">7.2.5</span> Scoring the right data.</h3>
+<section id="sec-Scoring-the-right-data" class="level3" data-number="7.2.5">
+<h3 data-number="7.2.5" class="anchored" data-anchor-id="sec-Scoring-the-right-data"><span class="header-section-number">7.2.5</span> Scoring the right data.</h3>
 <p>Since our <code>stan()</code> models from above do not have log-likelihood values saved from each, we have to options to make an alternative to McElreath’s R code 7.15:</p>
 <ul>
 <li>we can compute each by hand, like in the last section, but with a custom-defined linear function within <code>dnorm()</code>, or</li>

@@ -147,7 +147,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./01.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></span></a>
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><del>The Golem of Prague</del> <strong>rstan</strong> overview</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -218,6 +218,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Models With Memory</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -280,7 +286,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#rethinking-the-folk-theorem-of-statistical-computing." id="toc-rethinking-the-folk-theorem-of-statistical-computing." class="nav-link" data-scroll-target="#rethinking-the-folk-theorem-of-statistical-computing."><span class="header-section-number">9.5.3.1</span> Rethinking: The folk theorem of statistical computing.</a></li>
   <li><a href="#overthinking-divergent-transitions-are-your-friend." id="toc-overthinking-divergent-transitions-are-your-friend." class="nav-link" data-scroll-target="#overthinking-divergent-transitions-are-your-friend."><span class="header-section-number">9.5.3.2</span> Overthinking: Divergent transitions are your friend.</a></li>
   </ul></li>
-  <li><a href="#non-identifiable-parameters." id="toc-non-identifiable-parameters." class="nav-link" data-scroll-target="#non-identifiable-parameters."><span class="header-section-number">9.5.4</span> Non-identifiable parameters.</a>
+  <li><a href="#sec-Non-identifiable-parameters" id="toc-sec-Non-identifiable-parameters" class="nav-link" data-scroll-target="#sec-Non-identifiable-parameters"><span class="header-section-number">9.5.4</span> Non-identifiable parameters.</a>
   <ul>
   <li><a href="#rethinking-hamiltonian-warnings-and-gibbs-overconfidence." id="toc-rethinking-hamiltonian-warnings-and-gibbs-overconfidence." class="nav-link" data-scroll-target="#rethinking-hamiltonian-warnings-and-gibbs-overconfidence."><span class="header-section-number">9.5.4.1</span> Rethinking: Hamiltonian warnings and Gibbs overconfidence.</a></li>
   </ul></li>
@@ -296,7 +302,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Markov Chain Monte Carlo</span></h1>
+<h1 class="title"><span id="sec-Markov-Chain-Monte-Carlo" class="quarto-section-identifier"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Markov Chain Monte Carlo</span></span></h1>
 </div>
 
 
@@ -910,8 +916,8 @@ convergence, Rhat=1).</code></pre>
 <h4 data-number="9.5.3.2" class="anchored" data-anchor-id="overthinking-divergent-transitions-are-your-friend."><span class="header-section-number">9.5.3.2</span> Overthinking: Divergent transitions are your friend.</h4>
 </section>
 </section>
-<section id="non-identifiable-parameters." class="level3" data-number="9.5.4">
-<h3 data-number="9.5.4" class="anchored" data-anchor-id="non-identifiable-parameters."><span class="header-section-number">9.5.4</span> Non-identifiable parameters.</h3>
+<section id="sec-Non-identifiable-parameters" class="level3" data-number="9.5.4">
+<h3 data-number="9.5.4" class="anchored" data-anchor-id="sec-Non-identifiable-parameters"><span class="header-section-number">9.5.4</span> Non-identifiable parameters.</h3>
 <p>Update the <code>stan_data</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">41</span>)</span>
