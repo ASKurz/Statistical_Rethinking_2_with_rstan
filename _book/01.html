@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Statistical rethinking 2 with rstan and the tidyverse - 1&nbsp; The Golem of Prague</title>
+<title>Statistical rethinking 2 with rstan and the tidyverse - 1&nbsp; The Golem of Prague rstan overview</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -54,7 +54,26 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -95,8 +114,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
-<link href="site_libs/vembedr-0.1.5/css/vembedr.css" rel="stylesheet">
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 </head>
 
@@ -109,7 +129,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./01.html"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></a></li></ol></nav>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./01.html"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">~~The Golem of Prague~~ **rstan** overview</span></a></li></ol></nav>
       <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
       </a>
       <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
@@ -146,7 +166,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./01.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></span></a>
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><del>The Golem of Prague</del> <strong>rstan</strong> overview</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -217,6 +237,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Models With Memory</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -231,7 +257,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#session-info" id="toc-session-info" class="nav-link active" data-scroll-target="#session-info">Session info</a></li>
+  <li><a href="#we-have-salamanders-data" id="toc-we-have-salamanders-data" class="nav-link active" data-scroll-target="#we-have-salamanders-data"><span class="header-section-number">1.1</span> We have salamanders data</a></li>
+  <li><a href="#stan-likes-data-in-lists" id="toc-stan-likes-data-in-lists" class="nav-link" data-scroll-target="#stan-likes-data-in-lists"><span class="header-section-number">1.2</span> Stan likes data in lists</a></li>
+  <li><a href="#model_code-and-its-blocks" id="toc-model_code-and-its-blocks" class="nav-link" data-scroll-target="#model_code-and-its-blocks"><span class="header-section-number">1.3</span> <code>model_code</code> and its blocks</a>
+  <ul>
+  <li><a href="#our-data-block." id="toc-our-data-block." class="nav-link" data-scroll-target="#our-data-block."><span class="header-section-number">1.3.1</span> Our <code>data</code> block.</a></li>
+  <li><a href="#our-parameters-block." id="toc-our-parameters-block." class="nav-link" data-scroll-target="#our-parameters-block."><span class="header-section-number">1.3.2</span> Our <code>parameters</code> block.</a></li>
+  <li><a href="#sec-Our-model-block" id="toc-sec-Our-model-block" class="nav-link" data-scroll-target="#sec-Our-model-block"><span class="header-section-number">1.3.3</span> Our <code>model</code> block.</a></li>
+  </ul></li>
+  <li><a href="#hmc-sampling-with-rstan" id="toc-hmc-sampling-with-rstan" class="nav-link" data-scroll-target="#hmc-sampling-with-rstan"><span class="header-section-number">1.4</span> HMC sampling with <strong>rstan</strong></a>
+  <ul>
+  <li><a href="#primary-method-just-use-stan." id="toc-primary-method-just-use-stan." class="nav-link" data-scroll-target="#primary-method-just-use-stan."><span class="header-section-number">1.4.1</span> Primary method: Just use <code>stan()</code>.</a></li>
+  <li><a href="#secondary-method-use-stan_model-and-sampling." id="toc-secondary-method-use-stan_model-and-sampling." class="nav-link" data-scroll-target="#secondary-method-use-stan_model-and-sampling."><span class="header-section-number">1.4.2</span> Secondary method: Use <code>stan_model()</code> and <code>sampling()</code>.</a></li>
+  <li><a href="#compare-the-two-methods-by-output." id="toc-compare-the-two-methods-by-output." class="nav-link" data-scroll-target="#compare-the-two-methods-by-output."><span class="header-section-number">1.4.3</span> Compare the two methods by output.</a></li>
+  </ul></li>
+  <li><a href="#evaluate-the-posteior-draws" id="toc-evaluate-the-posteior-draws" class="nav-link" data-scroll-target="#evaluate-the-posteior-draws"><span class="header-section-number">1.5</span> Evaluate the posteior draws</a></li>
+  <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info">Session info</a></li>
   <li><a href="#comments" id="toc-comments" class="nav-link" data-scroll-target="#comments">Comments</a></li>
   </ul>
 <div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
@@ -241,7 +282,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></h1>
+<h1 class="title"><span id="sec-rstan-overview" class="quarto-section-identifier"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><del>The Golem of Prague</del> <strong>rstan</strong> overview</span></span></h1>
 </div>
 
 
@@ -256,35 +297,440 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<p>There’s nothing for us to code in this chapter. Instead, here are the links to a few of McElreath’s lectures on the material on this chapter of the text. If you didn’t know, he’s a good speaker. Enjoy!</p>
+<p>There’s really nothing in this chapter of the text for us to translate into <strong>tidyverse</strong> and <strong>rstan</strong> code. I’m going to repurpose it, instead. Though the chapters and sections in this ebook usually follow those in McElreath’s source text pretty closely, this chapter will be an exception. As I’ve been putting together this ebook, I have settled on a general workflow for fitting models with <strong>rstan</strong>. In this section, I will briefly introduce the <strong>rstan</strong> interface for Stan through the lens of that general workflow.</p>
+<p><em>Why here?</em>, you ask. For the sake of this project, I don’t think it works well to wait until <a href="09.html"><span>Chapter&nbsp;9</span></a> before we properly introduce the basic work flow for <strong>rstan</strong>. I do explain a lot of the fine points starting in <a href="04.html"><span>Chapter&nbsp;4</span></a>, but that still doesn’t quite get the job done. The way you define and fit models with <strong>rstan</strong> is sufficiently different from McElreath’s <code>quap()</code> and <code>ulam()</code> functions that it really needs a different kind of introduction, especially for how we format the data (what we call <code>stan_data</code> below), and how we set up the Stan program (what we call <code>model_code</code> below).</p>
+<p>To start, load the packages, and remove the default grid lines from the plots.</p>
 <div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidybayes)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rstan)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(posterior)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop grid lines</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_gray</span>() <span class="sc">+</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="we-have-salamanders-data" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="we-have-salamanders-data"><span class="header-section-number">1.1</span> We have salamanders data</h2>
+<p>For this run-through, we’ll be using the <code>salamanders</code> data <span class="citation" data-cites="welsh1995habitat">(<a href="references.html#ref-welsh1995habitat" role="doc-biblioref">Welsh Jr &amp; Lind, 1995</a>)</span> from McElreath’s <strong>rethinking</strong> package. McElreath introduced these data briefly in the practice questions at the end of Chapter 11.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> As is the custom throughout the text, we’ll save the primary data frame as <code>d</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="at">package =</span> <span class="st">"rethinking"</span>, salamanders)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> salamanders</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(salamanders)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># What?</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 47
+Columns: 4
+$ SITE      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 1…
+$ SALAMAN   &lt;int&gt; 13, 11, 11, 9, 8, 7, 6, 6, 5, 5, 4, 3, 3, 3, 3, 3, 2, 2, 2, …
+$ PCTCOVER  &lt;int&gt; 85, 86, 90, 88, 89, 83, 83, 91, 88, 90, 87, 83, 87, 89, 92, …
+$ FORESTAGE &lt;int&gt; 316, 88, 548, 64, 43, 368, 200, 71, 42, 551, 675, 217, 212, …</code></pre>
+</div>
+</div>
+<p>Our focal variable will be <code>SALAMAN</code>, which is the number of salamanders found in 47 different sites in California. Our predictor variable will be <code>PCTCOVER</code>, which is the percentage of ground cover at a given site. Here’s what those two variables look like in a scatter plot.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>d <span class="sc">|&gt;</span> </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> PCTCOVER, <span class="at">y =</span> SALAMAN)) <span class="sc">+</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlim</span>(<span class="dv">0</span>, <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<div class="vembedr" align="center">
-<div>
-<iframe src="https://www.youtube.com/embed/4WVelCswXo4" width="533" height="300" frameborder="0" allowfullscreen="" data-external="1"></iframe>
+<p><img src="01_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="480"></p>
 </div>
 </div>
+<p>For the code to come, we’ll add two variables to the <code>d</code> data frame. The <code>count</code> variable will be the same as <code>SALAMAN</code>, but just with a simpler name. Following conventions McElreath used throughout the text, the <code>cover_std</code> variable will be a standardized version of <code>PCTCOVER</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> d <span class="sc">|&gt;</span> </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">count =</span> SALAMAN,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">cover_std =</span> (PCTCOVER <span class="sc">-</span> <span class="fu">mean</span>(PCTCOVER)) <span class="sc">/</span> <span class="fu">sd</span>(PCTCOVER)) </span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># What?</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  SITE SALAMAN PCTCOVER FORESTAGE count cover_std
+1    1      13       85       316    13 0.7273231
+2    2      11       86        88    11 0.7552742
+3    3      11       90       548    11 0.8670786
+4    4       9       88        64     9 0.8111764
+5    5       8       89        43     8 0.8391275
+6    6       7       83       368     7 0.6714209</code></pre>
 </div>
+</div>
+<p>Our practice model will follow the equation</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{count}_i &amp; \sim \operatorname{Poisson}(\lambda_i) \\
+\log(\lambda_i) &amp; = a + b \times \text{cover-std}_i \\
+a &amp; \sim \operatorname{Normal}(\log(1), 1) \\
+b &amp; \sim \operatorname{Normal}(0, 1),
+\end{align*}
+\]</span></p>
+<p>the priors of which I’ve designed as weakly-regularizing on the scale of the data. Since I’m writing this ebook with an experienced readership in mind, I’m assuming it’s okay to start with a Poisson model. For any readers who might be unacquainted with Poisson regression, McElreath covered the basics in <a href="11.html#sec-Poisson-regression"><span>Section&nbsp;11.2</span></a>.</p>
+</section>
+<section id="stan-likes-data-in-lists" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="stan-likes-data-in-lists"><span class="header-section-number">1.2</span> Stan likes data in lists</h2>
+<p>Many model-fitting functions in <strong>R</strong> allow for a variety of data types, including data frames, lists, free-floating vectors, and so on. Stan expects data in lists, and the primary model-fitting functions in the <strong>rstan</strong> package expect data lists, too.</p>
+<p>The <strong>tidybayes</strong> package includes a <code>compose_data()</code>, which makes it easy to convert data frames into the list format expected by <strong>rstan</strong>. We will use the <code>compose_data()</code> function throughout this ebook, and our convention will be to save the output as an object called <code>stan_data</code>. Here’s what this can look like for our salamanders example.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>stan_data <span class="ot">&lt;-</span> d <span class="sc">|&gt;</span> </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(count, cover_std) <span class="sc">|&gt;</span> </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compose_data</span>()</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># What?</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(stan_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>List of 3
+ $ count    : int [1:47(1d)] 13 11 11 9 8 7 6 6 5 5 ...
+ $ cover_std: num [1:47(1d)] 0.727 0.755 0.867 0.811 0.839 ...
+ $ n        : int 47</code></pre>
+</div>
+</div>
+<p>The <code>compose_data()</code> function automatically added a scalar value <code>n</code>, which defines the number of rows in the original data frame. As we will see, scalar values defining various dimensions are important for the kind of syntax we use with <strong>rstan</strong>. In some of the models to come, we will even have data lists containing several scalar values.</p>
+</section>
+<section id="model_code-and-its-blocks" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="model_code-and-its-blocks"><span class="header-section-number">1.3</span> <code>model_code</code> and its blocks</h2>
+<p>Stan programs are organized into a series of program blocks, and those blocks are saved as a character string for the primary <strong>rstan</strong> functions.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> Following the schematic in the <a href="https://mc-stan.org/docs/reference-manual/blocks.html"><em>Program Blocks</em></a> section in the <em>Stan Reference Manual</em> <span class="citation" data-cites="standevelopmentteamStanReferenceManual2024">(<a href="references.html#ref-standevelopmentteamStanReferenceManual2024" role="doc-biblioref">Stan Development Team, 2024b</a>)</span>, those blocks are:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>functions {</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  // ... function declarations and definitions ...</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>data {</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  // ... declarations ...</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>transformed data {</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>   // ... declarations ... statements ...</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>parameters {</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>   // ... declarations ...</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>transformed parameters {</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>   // ... declarations ... statements ...</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>model {</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>   // ... declarations ... statements ...</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>generated quantities {</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>   // ... declarations ... statements ...</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>These blocks must always be in this order, but not all Stan programs need all of the blocks. For example, in our model of the <code>salamanders</code> data, we only need the <code>data</code>, <code>parameters</code>, and <code>model</code> blocks. Here’s what they look like, saved as a character string named <code>model_code</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>model_code <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="st">  int&lt;lower=1&gt; n;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="st">  vector[n] cover_std;</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="st">  array[n] int&lt;lower=0&gt; count;</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="st">parameters {</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="st">  real a;</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="st">  real b;</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="st">model {</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="st">  count ~ poisson(exp(a + b * cover_std));  // Likelihood</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="st">  a ~ normal(log(1), 1);                    // Priors</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="st">  b ~ normal(0, 1);</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In Stan program blocks, each line ends with a <code>;</code>. As you can see in the <code>model</code> block, we can annotate the code with <code>//</code> marks. We’ll focus on each of the three program blocks in the subsections below.</p>
+<section id="our-data-block." class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" class="anchored" data-anchor-id="our-data-block."><span class="header-section-number">1.3.1</span> Our <code>data</code> block.</h3>
+<p>Data declarations are a <em>big deal</em> with Stan. We’ll cover a few of the fine points in this section, but the primary information source is the <a href="https://mc-stan.org/docs/reference-manual/types.html"><em>Data Types and Declarations</em></a> section of the <em>Stan Reference Manual</em>. At some time or another, you’ll want to study that material.</p>
+<p>Here’s a focused look at our <code>data</code> block.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>data {</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  int&lt;lower=1&gt; n;</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  vector[n] cover_std;</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  array[n] int&lt;lower=0&gt; count;</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>All the data required by the model must be declared in the <code>data</code> block.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> One generally defines one variable per line, but it is possible to declare multiple variables in a single line (see <a href="https://mc-stan.org/docs/reference-manual/types.html#declaring-multiple-variables-at-once">here</a>).</p>
+<p>It’s important to understand that Stan programs are read in order, top to bottom. Thus the first line in a <code>data</code> block is often used to define any scalar values being used to define dimensions. Recall how earlier we learned the <code>compose_data()</code> function automatically makes an <code>n</code> scalar, which defines the number of rows in the original data set. We will be using that <code>n</code> scalar, and its ilk, a lot in this ebook.</p>
+<p>With the syntax of <code>int</code> in this first line, we have declared that <code>n</code> scalar value is a integer. Stan can accept two primitive number types, which are <code>int</code> for integers and <code>real</code> for continuous numbers. There are other special types, such as <code>complex</code>, but I believe we will just be using <code>int</code> and <code>real</code> in this ebook.</p>
+<p>Some values have <em>constraints</em>, and by the <code>&lt;lower=1&gt;</code> syntax in our first line, we have declared <code>1</code> to be the lowest integer value allowed for our <code>n</code> scalar. Technically, we didn’t need to define this constraint for this example; the model will fit fine without it. In this case, the constraint will serve as a error check to make sure we have a least one case in our data.</p>
+<p>By the second line <code>vector[n] cover_std;</code>, we have defined our <code>cover_std</code> predictor values as a vector of length <code>n</code>. In the second line <code>array[n] int&lt;lower=0&gt; count;</code>, we defined our <code>count</code> values as a 1-dimensional array of length <code>n</code>. Stan supports several data types, such as scalars, vectors, matrices, and arrays (see <a href="https://mc-stan.org/docs/reference-manual/types.html#overview-of-data-types">here</a>). Though sequences of real values (such as <code>cover_std</code>) can be declared in vectors or arrays, sequences of integers go into arrays. If you try to declare a sequence of integer values as a vector, Stan will return an error. In my experience, properly juggling vectors and arrays has been a major source of frustration. Stan is picky, friends. Respect the data types.</p>
+<p>Note how by <code>int&lt;lower=0&gt;</code>, we declared the <code>count</code> variable is constrained to non-negative integer values. The model would have fit fine without the <code>&lt;lower=0&gt;</code> constraint, but that constraint serves as an error check ensuring none of our salamander counts are out-of bounds values like -1. Don’t try fitting Poisson models with negative counts, friends.</p>
+</section>
+<section id="our-parameters-block." class="level3" data-number="1.3.2">
+<h3 data-number="1.3.2" class="anchored" data-anchor-id="our-parameters-block."><span class="header-section-number">1.3.2</span> Our <code>parameters</code> block.</h3>
+<p>A good initial place to learn the technical details for the <code>parameters</code> block is in the <a href="https://mc-stan.org/docs/reference-manual/blocks.html#program-block-parameters"><em>Program block: <code>parameters</code></em></a> section of the <em>Stan Reference Manual</em>. Otherwise you can glean a lot of applied insights from the <a href="https://mc-stan.org/docs/stan-users-guide/regression.html"><em>Regression Models</em></a> section of the <em>Stan User’s Guide</em>.</p>
+<p>Here’s a focused look at our <code>parameters</code> block.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>parameters {</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  real a;</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  real b;</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Both our intercept <code>a</code> and slope <code>b</code> have been declared as unconstrained <code>real</code> values. Parameters can have constraints, such as <code>&lt;lower=0&gt;</code> boundaries for <span class="math inline">\(\sigma\)</span> parameters, and <code>&lt;lower=0, upper=1&gt;</code> boundaries for proportions. Though we don’t have any in this example, you can also declare vectors of parameters, and even matrices. You’ll see many examples of these in the later chapters of the ebook.</p>
+<p>Importantly, the parameters declared in the <code>parameters</code> block are the ones sampled by Stan’s HMC sampler.</p>
+</section>
+<section id="sec-Our-model-block" class="level3" data-number="1.3.3">
+<h3 data-number="1.3.3" class="anchored" data-anchor-id="sec-Our-model-block"><span class="header-section-number">1.3.3</span> Our <code>model</code> block.</h3>
+<p>In the above sections were we detailed the contents of our <code>data</code> and <code>parameters</code> blocks, all of their contents were what are called <em>declarations</em>. We named data elements and model parameters. Whereas <code>model</code> blocks do allow for declarations, they also allow for <em>statements</em>. A great place to learn all about statements is the <a href="https://mc-stan.org/docs/reference-manual/statements.html"><em>Statements</em></a> section of the <em>Stan Reference Manual</em>. You might also read the brief <a href="https://mc-stan.org/docs/reference-manual/blocks.html#program-block-model"><em>Program block: <code>model</code></em></a> section of the <em>Stan Reference Manual</em>, or soak in all the applied examples in the <a href="https://mc-stan.org/docs/stan-users-guide/regression.html"><em>Regression Models</em></a> section of the <em>Stan User’s Guide</em>. When you’re really ready to get serious, you could browse though pretty much the whole of the <a href="https://mc-stan.org/docs/functions-reference/"><em>Stan Functions Reference</em></a> <span class="citation" data-cites="standevelopmentteamStanFunctionsReference2024">(<a href="references.html#ref-standevelopmentteamStanFunctionsReference2024" role="doc-biblioref">Stan Development Team, 2024a</a>)</span>.</p>
+<p>Here’s a focused look at our <code>model</code> block.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>model {</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  count ~ poisson(exp(a + b * cover_std));  // Likelihood</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  a ~ normal(log(1), 1);                    // Priors</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  b ~ normal(0, 1);</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>My preference is to define the likelihood first, and then add the priors. I’ve seen many examples of the reverse, and sometimes they’re even shuffled all around. You pick whatever convention that makes sense for you and your collaborators, but I do recommend you’re consistent with your choice.</p>
+<p>With the syntax of <code>count ~ poisson()</code> in our first line, we have defined the <code>count</code> response variable as Poisson distributed. The sole parameter within the <code>poisson()</code> likelihood is <code>lambda</code>, which we have defined as <code>exp(a + b * cover_std)</code>. Note how in our syntax, we explicitly multiplied the <code>b</code> parameter with the <code>cover_std</code> data vector by way of the <code>*</code> operator. Also note that by nesting the linear equation within the <code>exp()</code> function, we have implicitly used the log link.</p>
+<p>Throughout this ebook, I will usually use likelihood syntax following this same basic format. But it’s important to understand there are many other options. For example, some people might prefer <code>for</code> loops to our vectorized code. That could look like this:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>model {</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  for (i in 1:n) count[i] ~ poisson(exp(a + b * cover_std[i]));  // This is new</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  a ~ normal(log(1), 1);  // These two lines are still the same</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  b ~ normal(0, 1);</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Not all functions in Stan are vectorized, but I believe all can be used in the context of a loop. As we will see in the ebook, a few of the likelihoods currently require a <code>for</code> loop. But generally speaking, vectorized code tends to run faster in Stan than code with <code>for</code> loops. It’s good to know both, but when possible, I always prefer vectorized code.</p>
+<p>Sometimes Stan provides variants of popular likelihood functions that are parameterized in terms of their typical link functions. In this case, we could have used the <code>poisson_log()</code> function, which obviates the need for nesting the linear model within the <code>exp()</code> function. That would look like this:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>model {</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  count ~ poisson_log(a + b * cover_std);  // This is the only line that changed</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  a ~ normal(log(1), 1);</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  b ~ normal(0, 1);</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>I’m not currently in the habit of running models with this style of syntax. If you fit the model both ways, you’ll see the overall results are very similar. However, in this case the <code>poisson_log()</code> version was a little faster, and it had slightly better HMC chain diagnostics by way of the <span class="math inline">\(\widehat R\)</span> and effective sample size estimates.</p>
+<p>There are even other functions that follow the so-called <em>generalized linear model</em> specification, such as the <code>poisson_log_glm()</code> function (see <a href="https://mc-stan.org/docs/functions-reference/unbounded_discrete_distributions.html#poisson-log-glm">here</a>). At the moment, I do not have experience with this class of functions. Perhaps I’ll give them some study and coverage in the future.</p>
+<p>Anyway, you’ll note that our prior lines follow a similar kind of syntax as our likelihood line for the <code>count</code> variable. Each prior line started with the parameter of interest on the left side, followed by the tilde <code>~</code>, and then concluded with a distribution. With the prior for <code>a</code>, you’ll notice it is legal to insert functions like <code>log()</code> into the hyperparameters. Though not shown here, it is also possible to assign vectors of parameters to a common prior, which we will see in some of the examples in the ebook (e.g., see <a href="05.html#sec-Many-categories"><span>Section&nbsp;5.3.2</span></a>).</p>
+<p>There are many many other fine points we could discuss here about the <code>model</code> block, but I think this is a fine place to stop for our basic introduction. We have the rest of the ebook for the details.</p>
+</section>
+</section>
+<section id="hmc-sampling-with-rstan" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="hmc-sampling-with-rstan"><span class="header-section-number">1.4</span> HMC sampling with <strong>rstan</strong></h2>
+<p>To my eye, there are two basic ways to draw posterior samples from <strong>rstan</strong>. We’ll cover both.</p>
+<section id="primary-method-just-use-stan." class="level3" data-number="1.4.1">
+<h3 data-number="1.4.1" class="anchored" data-anchor-id="primary-method-just-use-stan."><span class="header-section-number">1.4.1</span> Primary method: Just use <code>stan()</code>.</h3>
+<p>The first method for fitting <strong>rstan</strong> models, and the primary method we’ll be using in this ebook, is with the <code>stan()</code> function. For us, the two main arguments are the <code>data</code> argument, into which we insert our <code>stan_data</code>, and the <code>model_code</code> argument, into which we insert our <code>model_code</code> with its <code>data</code>, <code>parameters</code>, and <code>model</code> block information. There are a whole slew of other arguments with default settings you might want to change. For example, <code>stan()</code> automatically samples from four HMC chains by the default setting <code>chains = 4</code>, which I generally find reasonable. Though it by default samples from the four chains in sequence, we will instead sample from them in parallel by setting <code>cores = 4</code>. To make the results more reproducible, I will also set <code>seed = 1</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>m1<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># These two lines are necessary for us</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># These settings are optional</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Following the conventions McElreath used throughout the text, we have saved the model fit object as <code>m1.1</code>, where the <code>m</code> prefix stands for fitted model, the first numeral index indicates we are in the first chapter, and the second numerical index indicated this if the first model we have fit within this chapter. You can name your model fits whatever you want.</p>
+</section>
+<section id="secondary-method-use-stan_model-and-sampling." class="level3" data-number="1.4.2">
+<h3 data-number="1.4.2" class="anchored" data-anchor-id="secondary-method-use-stan_model-and-sampling."><span class="header-section-number">1.4.2</span> Secondary method: Use <code>stan_model()</code> and <code>sampling()</code>.</h3>
+<p>The second method splits the model fitting process into two steps. We use the <code>stan_model()</code> function to translate the code in our <code>model_code</code> object into C++, and then that C++ code is compiled into a so-called dynamic shared object (DSO), which is then loaded. Though there are many arguments within the <code>stan_model()</code> function, the only one required by us is <code>model_code</code>. Following some of McElreath’s naming conventions, we’ll save the results as <code>dso1.1</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>dso1<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">stan_model</span>(<span class="at">model_code =</span> model_code)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The resulting object is of S4 class <code>stanmodel</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(dso1<span class="fl">.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "stanmodel"
+attr(,"package")
+[1] "rstan"</code></pre>
+</div>
+</div>
+<p>Our <code>dso1.1</code> object does not contain HMC samples. We compute those in the next step with the <code>sampling()</code> function. Here we assign our <code>dso1.1</code> to the <code>object</code> argument, and assign our <code>stan_data</code> to the <code>data</code> argument. As with the <code>stan()</code> function above, we are at liberty to adjust the various technical settings, such as with the <code>cores</code> and <code>seed</code> arguments. I’ll save the output as <code>samp1.1</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>samp1<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">sampling</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">object =</span> dso1<span class="fl">.1</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> stan_data,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">1</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="compare-the-two-methods-by-output." class="level3" data-number="1.4.3">
+<h3 data-number="1.4.3" class="anchored" data-anchor-id="compare-the-two-methods-by-output."><span class="header-section-number">1.4.3</span> Compare the two methods by output.</h3>
+<p>We might compare the structures of our <code>m1.1</code> and <code>samp1.1</code> objects with <code>str()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(m1<span class="fl">.1</span>, <span class="at">max.level =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Formal class 'stanfit' [package "rstan"] with 10 slots
+  ..@ model_name: chr "anon_model"
+  ..@ model_pars: chr [1:3] "a" "b" "lp__"
+  ..@ par_dims  :List of 3
+  ..@ mode      : int 0
+  ..@ sim       :List of 12
+  ..@ inits     :List of 4
+  ..@ stan_args :List of 4
+  ..@ stanmodel :Formal class 'stanmodel' [package "rstan"] with 5 slots
+  ..@ date      : chr "Mon Sep  9 21:51:11 2024"
+  ..@ .MISC     :&lt;environment: 0x143d67e30&gt; </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(samp1<span class="fl">.1</span>, <span class="at">max.level =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Formal class 'stanfit' [package "rstan"] with 10 slots
+  ..@ model_name: chr "anon_model"
+  ..@ model_pars: chr [1:3] "a" "b" "lp__"
+  ..@ par_dims  :List of 3
+  ..@ mode      : int 0
+  ..@ sim       :List of 12
+  ..@ inits     :List of 4
+  ..@ stan_args :List of 4
+  ..@ stanmodel :Formal class 'stanmodel' [package "rstan"] with 5 slots
+  ..@ date      : chr "Tue Sep 10 09:50:46 2024"
+  ..@ .MISC     :&lt;environment: 0x141ed2eb8&gt; </code></pre>
+</div>
+</div>
+<p>They look about the same. But do they contain the same posterior draws? We can extract the posterior draws from both with the <code>posterior::as_draws_df()</code> function. If we nest that output within the <code>all.equal()</code> function, we can test whether the output is identical.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_draws_df</span>(m1<span class="fl">.1</span>),</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_draws_df</span>(samp1<span class="fl">.1</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>Yep, it is. Both methods returned the exact same HMC draws. <em>Which method is better?</em>, you say. Well, I generally prefer the 1-step <code>stan()</code> method, and that’s the method I use the most. But the 2-step <code>stan_model()</code>-to-<code>sampling()</code> method has its strengths. We’ll see examples of this in <a href="05.html#sec-Overthinking-Simulating-the-divorce-example"><span>Section&nbsp;5.1.4.1</span></a> and <a href="07.html#sec-Scoring-the-right-data"><span>Section&nbsp;7.2.5</span></a>. As the careful reader will see, there are even tricky ways to combine the two methods.</p>
+</section>
+</section>
+<section id="evaluate-the-posteior-draws" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="evaluate-the-posteior-draws"><span class="header-section-number">1.5</span> Evaluate the posteior draws</h2>
+<p>We can use the good-old <code>print()</code> function for a quick summary of the posterior.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m1<span class="fl">.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Inference for Stan model: anon_model.
+4 chains, each with iter=2000; warmup=1000; thin=1; 
+post-warmup draws per chain=1000, total post-warmup draws=4000.
+
+      mean se_mean   sd  2.5%   25%   50%   75% 97.5% n_eff Rhat
+a     0.42    0.00 0.16  0.10  0.31  0.43  0.53  0.71  1249 1.00
+b     1.16    0.01 0.19  0.81  1.03  1.15  1.28  1.55  1306 1.00
+lp__ 21.47    0.03 1.03 18.61 21.08 21.79 22.21 22.48  1138 1.01
+
+Samples were drawn using NUTS(diag_e) at Mon Sep  9 21:51:11 2024.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).</code></pre>
+</div>
+</div>
+<p>There are various ways to customize this output, and you’ll see I often use the <code>pars</code> and <code>probs</code> arguments throughout the text.</p>
+<p>Note how the <code>print()</code> output includes the <code>se_mean</code>, <code>n_eff</code>, and <code>Rhat</code> columns for basic numeric summaries of the quality of the HMC draws. If you require more detail and greater customization, consider the <code>summarise_draws()</code> function from the <strong>posterior</strong> package. Here’s what that looks like with its <code>default_convergence_measures()</code> helper function.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summarise_draws</span>(m1<span class="fl">.1</span>, <span class="fu">default_convergence_measures</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 4
+  variable  rhat ess_bulk ess_tail
+  &lt;chr&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+1 a         1.01    1281.    1251.
+2 b         1.00    1326.    1324.
+3 lp__      1.00    1332.    1720.</code></pre>
+</div>
+</div>
+<p><strong>rstan</strong> also has a <code>check_hmc_diagnostics()</code> function for checking the kinds of scary warning messages McElreath started discussing in <a href="09.html"><span>Chapter&nbsp;9</span></a>. For our little <code>m1.1</code> model, all is good.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">check_hmc_diagnostics</span>(m1<span class="fl">.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Divergences:</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>0 of 4000 iterations ended with a divergence.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Tree depth:</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>0 of 4000 iterations saturated the maximum tree depth of 10.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Energy:</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>E-BFMI indicated no pathological behavior.</code></pre>
+</div>
+</div>
+<p>The <strong>rstan</strong> package comes with several built-in plotting functions. You can make trace plots with <code>stan_trace()</code>, and overlaid density plots with <code>stan_dens()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stan_trace</span>(m1<span class="fl">.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<div class="vembedr" align="center">
-<div>
-<iframe src="https://www.youtube.com/embed/cclUd_HoRlo" width="533" height="300" frameborder="0" allowfullscreen="" data-external="1"></iframe>
+<p><img src="01_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
 </div>
-</div>
-</div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stan_dens</span>(m1<span class="fl">.1</span>, <span class="at">separate_chains =</span> <span class="cn">TRUE</span>, <span class="at">linewidth =</span> <span class="fl">0.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<div class="vembedr" align="center">
-<div>
-<iframe src="https://www.youtube.com/embed/FdnMWdICdRs" width="533" height="300" frameborder="0" allowfullscreen="" data-external="1"></iframe>
+<p><img src="01_files/figure-html/unnamed-chunk-22-2.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+<p>There are several other <code>stan_*()</code> functions for other kinds of plots, such as <code>stan_plot()</code> and <code>stan_ac()</code>. These all return <strong>ggplot2</strong> objects, which can be modified with the usual functions like <code>theme()</code>, <code>labs()</code>, and so on. For a general overview, execute <code>?stan_plot</code> in your console.</p>
+<p>There’s also a rogue <code>traceplot()</code> function that returns the same output as <code>stan_trace()</code>. I don’t know what the deal is with that, but my best guess is <code>traceplot()</code> was around before the <strong>rstan</strong> team added in the <strong>ggplot2</strong>-based plots, and they’ve just kept the function name to keep someone’s old code from breaking. If anyone knows the actual history, do share in the comments.</p>
+<p>There are many ways to pull the HMC draws from an <strong>rstan</strong> model. The <code>extract()</code> method is perhaps the most native way for the <strong>rstan</strong> package, but I generally don’t care for it as its output format is either a list or an array. I prefer data frames, and there are two tidy methods I like and use throughout the book. The first is with the <code>as_draws_df()</code> function from the <strong>posterior</strong> package, which we briefly saw above. Here’s a closer look at the output.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_draws_df</span>(m1<span class="fl">.1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 4,000
+Columns: 6
+$ a          &lt;dbl&gt; 0.4690231, 0.3492415, 0.4594558, 0.5174115, 0.3501242, 0.53…
+$ b          &lt;dbl&gt; 1.0143687, 1.2250167, 1.1399251, 1.1331068, 1.0995957, 0.90…
+$ lp__       &lt;dbl&gt; 22.15741, 22.31395, 22.47892, 22.17630, 21.75354, 21.50968,…
+$ .chain     &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…
+$ .iteration &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, …
+$ .draw      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, …</code></pre>
 </div>
 </div>
+<p>You get a data frame in the wide format where each parameter has its own column, each row is one of the HMC draws, and there are three index variables called <code>.chain</code>, <code>.iteration</code>, and <code>.draw</code>. The <code>as_draws_df()</code> function returns a special kind of data frame, which is also of class <code>draws_df</code> and <code>draws</code>. To learn more, execute <code>?as_draws_df</code> in your console.</p>
+<p>To give you a sense of how it works in action, here’s an <code>as_draws_df()</code>-based way to plot the fitted line against the sample data.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_draws_df</span>(m1<span class="fl">.1</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand_grid</span>(<span class="at">cover_std =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="sc">-</span><span class="fl">1.7</span>, <span class="at">to =</span> <span class="fl">1.5</span>, <span class="at">length.out =</span> <span class="dv">201</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">PCTCOVER =</span> cover_std <span class="sc">*</span> <span class="fu">sd</span>(d<span class="sc">$</span>PCTCOVER) <span class="sc">+</span> <span class="fu">mean</span>(d<span class="sc">$</span>PCTCOVER),</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">y_hat =</span> <span class="fu">exp</span>(a <span class="sc">+</span> b <span class="sc">*</span> cover_std)) <span class="sc">|&gt;</span> </span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(PCTCOVER <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;</span> PCTCOVER <span class="sc">&lt;=</span> <span class="dv">100</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> PCTCOVER)) <span class="sc">+</span></span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_lineribbon</span>(<span class="fu">aes</span>(<span class="at">y =</span> y_hat),</span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>                  <span class="at">.width =</span> <span class="fl">0.89</span>, </span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">color =</span> <span class="st">"blue"</span>, <span class="at">fill =</span> <span class="fu">alpha</span>(<span class="st">"blue"</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>), <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> d,</span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">y =</span> count)) <span class="sc">+</span></span>
+<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"% ground coverage per site"</span>,</span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"salamander count"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="01_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid" width="480"></p>
+</div>
+</div>
+<p>The other way I like to extract the <strong>rstan</strong>-based HMC draws is with the sister functions <code>gather_draws()</code> and <code>spread_draws()</code> from the <strong>tidybayes</strong> package. Here’s what their output looks like for <code>m1.1</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gather_draws</span>(m1<span class="fl">.1</span>, a, b) <span class="sc">|&gt;</span> </span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 8,000
+Columns: 5
+Groups: .variable [2]
+$ .chain     &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…
+$ .iteration &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, …
+$ .draw      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, …
+$ .variable  &lt;chr&gt; "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a",…
+$ .value     &lt;dbl&gt; 0.4690231, 0.3492415, 0.4594558, 0.5174115, 0.3501242, 0.53…</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">spread_draws</span>(m1<span class="fl">.1</span>, a, b) <span class="sc">|&gt;</span> </span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 4,000
+Columns: 5
+$ .chain     &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…
+$ .iteration &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, …
+$ .draw      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, …
+$ a          &lt;dbl&gt; 0.4690231, 0.3492415, 0.4594558, 0.5174115, 0.3501242, 0.53…
+$ b          &lt;dbl&gt; 1.0143687, 1.2250167, 1.1399251, 1.1331068, 1.0995957, 0.90…</code></pre>
+</div>
+</div>
+<p>Both return data frames with those <code>.chain</code>, <code>.iteration</code>, and <code>.draw</code> index variables. Whereas <code>gather_draws()</code> returned a long format with respect to our focal parameters <code>a</code> and <code>b</code>, <code>spread_draws()</code> returned them in a wide format. With a simple model like <code>m1.1</code>, these two functions don’t really shine. But they tend to work very nicely once we have models with vectors of parameters, such as showcased in <a href="05.html#sec-Many-categories"><span>Section&nbsp;5.3.2</span></a>, <a href="11.html#sec-Logistic-regression-Prosocial-chimpanzees"><span>Section&nbsp;11.1.1</span></a>, and <a href="13.html#sec-Example-Multilevel-tadpoles"><span>Section&nbsp;13.1</span></a>.</p>
+<p>Here’s an example of how the long <code>gather_draws()</code> output makes it easy to showcase both the parameters in a faceted half-eye plot.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gather_draws</span>(m1<span class="fl">.1</span>, a, b) <span class="sc">|&gt;</span> </span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> .value)) <span class="sc">+</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">.width =</span> <span class="fl">0.89</span>, <span class="at">fill =</span> <span class="fu">alpha</span>(<span class="st">"blue"</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>), <span class="at">linewidth =</span> <span class="dv">1</span>, <span class="at">shape =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"parameter space"</span>) <span class="sc">+</span></span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> .variable, <span class="at">scales =</span> <span class="st">"free"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="01_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+<p>For now, I think this should be enough to get you moving with <strong>rstan</strong>. We have the rest of the ebook to fill in the details and chase down endless tangents. Happy modeling, friends.</p>
+</section>
 <section id="session-info" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="session-info">Session info</h2>
 <p>At the end of every chapter, I use the <code>sessionInfo()</code> function to help make my results more reproducible.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.4.0 (2024-04-24)
 Platform: aarch64-apple-darwin20
@@ -303,14 +749,34 @@ tzcode source: internal
 attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
+other attached packages:
+ [1] posterior_1.6.0    rstan_2.32.6       StanHeaders_2.32.7 tidybayes_3.0.6   
+ [5] lubridate_1.9.3    forcats_1.0.0      stringr_1.5.1      dplyr_1.1.4       
+ [9] purrr_1.0.2        readr_2.1.5        tidyr_1.3.1        tibble_3.2.1      
+[13] ggplot2_3.5.1      tidyverse_2.0.0   
+
 loaded via a namespace (and not attached):
- [1] assertthat_0.2.1  digest_0.6.35     R6_2.5.1          fastmap_1.1.1    
- [5] xfun_0.43         magrittr_2.0.3    glue_1.7.0        stringr_1.5.1    
- [9] knitr_1.46        htmltools_0.5.8.1 rmarkdown_2.26    lifecycle_1.0.4  
-[13] cli_3.6.3         vctrs_0.6.5       compiler_4.4.0    httr_1.4.7       
-[17] vembedr_0.1.5     rstudioapi_0.16.0 tools_4.4.0       curl_5.2.1       
-[21] evaluate_0.23     yaml_2.3.8        rlang_1.1.4       jsonlite_1.8.8   
-[25] htmlwidgets_1.6.4 stringi_1.8.4    </code></pre>
+ [1] gtable_0.3.5         tensorA_0.36.2.1     xfun_0.43           
+ [4] QuickJSR_1.1.3       htmlwidgets_1.6.4    inline_0.3.19       
+ [7] lattice_0.22-6       tzdb_0.4.0           vctrs_0.6.5         
+[10] tools_4.4.0          generics_0.1.3       stats4_4.4.0        
+[13] curl_5.2.1           parallel_4.4.0       fansi_1.0.6         
+[16] pkgconfig_2.0.3      Matrix_1.7-0         checkmate_2.3.1     
+[19] distributional_0.4.0 RcppParallel_5.1.7   lifecycle_1.0.4     
+[22] farver_2.1.1         compiler_4.4.0       munsell_0.5.1       
+[25] codetools_0.2-20     htmltools_0.5.8.1    yaml_2.3.8          
+[28] pillar_1.9.0         arrayhelpers_1.1-0   abind_1.4-5         
+[31] tidyselect_1.2.1     digest_0.6.35        svUnit_1.0.6        
+[34] stringi_1.8.4        labeling_0.4.3       fastmap_1.1.1       
+[37] grid_4.4.0           colorspace_2.1-0     cli_3.6.3           
+[40] magrittr_2.0.3       loo_2.8.0            pkgbuild_1.4.4      
+[43] utf8_1.2.4           withr_3.0.0          scales_1.3.0        
+[46] backports_1.5.0      timechange_0.3.0     rmarkdown_2.26      
+[49] matrixStats_1.3.0    gridExtra_2.3        hms_1.1.3           
+[52] coda_0.19-4.1        evaluate_0.23        knitr_1.46          
+[55] V8_4.4.2             ggdist_3.3.2         viridisLite_0.4.2   
+[58] rlang_1.1.4          Rcpp_1.0.12          glue_1.7.0          
+[61] rstudioapi_0.16.0    jsonlite_1.8.8       R6_2.5.1            </code></pre>
 </div>
 </div>
 </section>
@@ -318,6 +784,25 @@ loaded via a namespace (and not attached):
 <h2 class="unnumbered anchored" data-anchor-id="comments">Comments</h2>
 
 
+<div id="refs" class="references csl-bib-body hanging-indent" data-line-spacing="2" role="list" style="display: none">
+<div id="ref-standevelopmentteamStanFunctionsReference2024" class="csl-entry" role="listitem">
+Stan Development Team. (2024a). <em>Stan functions reference, <span>Version</span> 2.35</em>. <a href="https://mc-stan.org/docs/functions-reference/">https://mc-stan.org/docs/functions-reference/</a>
+</div>
+<div id="ref-standevelopmentteamStanReferenceManual2024" class="csl-entry" role="listitem">
+Stan Development Team. (2024b). <em>Stan reference manual, <span>Version</span> 2.35</em>. <a href="https://mc-stan.org/docs/reference-manual/">https://mc-stan.org/docs/reference-manual/</a>
+</div>
+<div id="ref-welsh1995habitat" class="csl-entry" role="listitem">
+Welsh Jr, H. H., &amp; Lind, A. J. (1995). Habitat correlates of the del norte salamander, plethodon elongatus (caudata: <span>Plethodontidae</span>), in northwestern california. <em>Journal of Herpetology</em>, <em>29</em>, 198–210. <a href="https://doi.org/10.2307/1564557">https://doi.org/10.2307/1564557</a>
+</div>
+</div>
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>Keep in mind I do not cover practice questions in my ebooks.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Technically, there are other ways to save the blocks, such as external files. In this ebook, we will always save them as character strings.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>A possible exception is if you define a transformed version of any of your data in the <code>transformed data</code> block. However, I do not plan on using the <code>transformed data</code> approach in this ebook.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
 </section>
 
 </main> <!-- /main -->

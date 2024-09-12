@@ -147,7 +147,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./01.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></span></a>
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><del>The Golem of Prague</del> <strong>rstan</strong> overview</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -214,6 +214,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="./12.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Monsters and Mixtures</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Models With Memory</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -658,7 +664,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="fu">precis</span>(globe.qa, <span class="at">digits =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       mean        sd      5.5%     94.5%
-p 0.6666664 0.1571339 0.4155361 0.9177966</code></pre>
+p 0.6666664 0.1571338 0.4155362 0.9177967</code></pre>
 </div>
 </div>
 <p>In preparation for Figure 2.8, here’s the model with <span class="math inline">\(n = 18\)</span> and <span class="math inline">\(n = 36\)</span>.</p>
@@ -681,12 +687,12 @@ p 0.6666664 0.1571339 0.4155361 0.9177966</code></pre>
 <span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="fu">precis</span>(globe.qa<span class="fl">.18</span>, <span class="at">digits =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       mean        sd      5.5%     94.5%
-p 0.6666662 0.1111104 0.4890903 0.8442422</code></pre>
+p 0.6666662 0.1111104 0.4890902 0.8442421</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">precis</span>(globe.qa<span class="fl">.36</span>, <span class="at">digits =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>       mean         sd      5.5%     94.5%
-p 0.6666664 0.07856692 0.5411013 0.7922316</code></pre>
+<pre><code>       mean         sd     5.5%     94.5%
+p 0.6666662 0.07856695 0.541101 0.7922313</code></pre>
 </div>
 </div>
 <p>Now make Figure 2.8.</p>
@@ -734,7 +740,7 @@ p 0.6666664 0.07856692 0.5411013 0.7922316</code></pre>
 <blockquote class="blockquote">
 <p>The most popular [alternative to grid approximation and the quadratic approximation] is <strong>Markov chain Monte Carlo</strong> (MCMC), which is a family of conditioning engines capable of handling highly complex models. It is fair to say that MCMC is largely responsible for the insurgence of Bayesian data analysis that began in the 1990s. While MCMC is older than the 1990s, affordable computer power is not, so we must also thank the engineers. <del>Much later in the book (Chapter 9)</del>, you’ll meet simple and precise examples of MCMC model fitting, aimed at helping you understand the technique. (p.&nbsp;45, <strong>emphasis</strong> in the original)</p>
 </blockquote>
-<p>The <strong>rstan</strong> package uses a version of MCMC to fit Bayesian models. Since one of the main goals of this project is to highlight <strong>rstan</strong>, we may as well fit a model right here. This seems like an appropriately named subsection to do so. If you haven’t already installed <strong>rstan</strong>, you can find instructions <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started">here</a>.</p>
+<p>The <strong>rstan</strong> package uses a version of MCMC to fit Bayesian models. Since one of the main goals of this project is to highlight <strong>rstan</strong>, we may as well fit a model right here. This seems like an appropriately named subsection to do so.</p>
 <p>To avoid issues, we’ll <code>detach()</code> the <strong>rethinking</strong> package and then load <strong>rstan</strong>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">detach</span>(package<span class="sc">:</span>rethinking)</span>
@@ -760,7 +766,7 @@ p 0.6666664 0.07856692 0.5411013 0.7922316</code></pre>
 <span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> <span class="fu">list</span>(<span class="at">w =</span> <span class="dv">24</span>, <span class="at">n =</span> <span class="dv">36</span>),</span>
 <span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">model_code =</span> model_code)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>We’ll cover the details of this workflow and syntax later. For now, we can display a summary of the results with <code>print()</code>.</p>
+<p>We introduced the basics of this workflow in <a href="01.html"><span>Chapter&nbsp;1</span></a>, and we’ll continue fleshing out the details in the chapters to come. For now, we can display a summary of the results with <code>print()</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m2<span class="fl">.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -1139,7 +1145,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="./01.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></span>
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><del>The Golem of Prague</del> <strong>rstan</strong> overview</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
