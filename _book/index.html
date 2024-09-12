@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="A. Solomon Kurz">
-<meta name="dcterms.date" content="2024-08-19">
+<meta name="dcterms.date" content="2024-09-12">
 
 <title>Statistical rethinking 2 with rstan and the tidyverse</title>
 <style>
@@ -165,7 +165,7 @@ div.csl-indent {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./01.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></span></a>
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><del>The Golem of Prague</del> <strong>rstan</strong> overview</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -236,6 +236,12 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Models With Memory</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./references.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">References</span></a>
   </div>
@@ -270,7 +276,7 @@ div.csl-indent {
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title"><em>Statistical rethinking</em> 2 with rstan and the tidyverse</h1>
-<p class="subtitle lead">version 0.0.2</p>
+<p class="subtitle lead">version 0.0.3</p>
 </div>
 
 
@@ -287,7 +293,7 @@ div.csl-indent {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 19, 2024</p>
+      <p class="date">September 12, 2024</p>
     </div>
   </div>
   
@@ -301,7 +307,7 @@ div.csl-indent {
 <h1 class="unnumbered">Preface</h1>
 <section id="what-and-why" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="what-and-why">What and why</h2>
-<p>This book is based on the second edition of Richard McElreath’s <span class="citation" data-cites="mcelreathStatisticalRethinkingBayesian2020">(<a href="references.html#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>)</span> text, <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical rethinking: A Bayesian course with examples in R and Stan</em></a>. My contributions show how to fit the models he covered with <a href="https://mc-stan.org/rstan/"><strong>rstan</strong></a> <span class="citation" data-cites="R-rstan">(<a href="references.html#ref-R-rstan" role="doc-biblioref">Stan Development Team, 2024a</a>)</span>, which allows one to fit Bayesian models in <strong>R</strong> <span class="citation" data-cites="R-base">(<a href="references.html#ref-R-base" role="doc-biblioref">R Core Team, 2022</a>)</span> using Hamiltonian Monte Carlo. I also prefer plotting and data wrangling with the packages from the <a href="https://www.tidyverse.org/"><strong>tidyverse</strong></a> <span class="citation" data-cites="R-tidyverse wickhamWelcomeTidyverse2019">(<a href="references.html#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>; <a href="references.html#ref-R-tidyverse" role="doc-biblioref">Wickham, 2022</a>)</span>, so we’ll be using those methods, too.</p>
+<p>This book is based on the second edition of Richard McElreath’s <span class="citation" data-cites="mcelreathStatisticalRethinkingBayesian2020">(<a href="references.html#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>)</span> text, <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical rethinking: A Bayesian course with examples in R and Stan</em></a>. My contributions show how to fit the models he covered with <a href="https://mc-stan.org/rstan/"><strong>rstan</strong></a> <span class="citation" data-cites="R-rstan">(<a href="references.html#ref-R-rstan" role="doc-biblioref">Stan Development Team, 2024a</a>)</span>, which allows one to fit Bayesian models in <strong>R</strong> <span class="citation" data-cites="R-base">(<a href="references.html#ref-R-base" role="doc-biblioref">R Core Team, 2022</a>)</span> using the Hamiltonian Monte Carlo algorithms provided by Stan <span class="citation" data-cites="standevelopmentteamStanUserGuide2024">(<a href="references.html#ref-standevelopmentteamStanUserGuide2024" role="doc-biblioref">Stan Development Team, 2024b</a>)</span>. I also prefer plotting and data wrangling with the packages from the <a href="https://www.tidyverse.org/"><strong>tidyverse</strong></a> <span class="citation" data-cites="R-tidyverse wickhamWelcomeTidyverse2019">(<a href="references.html#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>; <a href="references.html#ref-R-tidyverse" role="doc-biblioref">Wickham, 2022</a>)</span>, so we’ll be using those methods, too.</p>
 <p>This is a sibling book of my translation of McElreath’s second edition into <strong>brms</strong> code <span class="citation" data-cites="kurzStatisticalRethinkingSecondEd2023">(<a href="references.html#ref-kurzStatisticalRethinkingSecondEd2023" role="doc-biblioref">Kurz, 2023</a>)</span>, which you can find by clicking <a href="https://bookdown.org/content/4857/">here</a>.</p>
 </section>
 <section id="how-this-compares-with-the-brms-translation-and-what-this-means-for-readers" class="level2 unnumbered">
@@ -351,11 +357,11 @@ div.csl-indent {
 <li><strong>R</strong> objects, such as data or function arguments, are in typewriter font atop gray backgrounds (e.g., <code>chimpanzees</code>, <code>.width = 0.89</code>).</li>
 <li>You can detect hyperlinks by their typical <a href="https://solomonkurz.netlify.app/">blue-colored font</a>.</li>
 </ul>
-<p>For the <strong>rstan</strong> code, I’m also taking cues from the <a href="https://mc-stan.org/docs/stan-users-guide/style-guide.html"><em>Stan Program Style Guide</em></a> section of the <em>Stan User’s Guide</em> <span class="citation" data-cites="standevelopmentteamStanUserGuide2024">(<a href="references.html#ref-standevelopmentteamStanUserGuide2024" role="doc-biblioref">Stan Development Team, 2024b</a>)</span>. However, as I’m relatively new to <strong>rstan</strong>, don’t be surprised if you find quirks an inconsistencies.</p>
+<p>For the <strong>rstan</strong> code, I’m also taking cues from the <a href="https://mc-stan.org/docs/stan-users-guide/style-guide.html"><em>Stan Program Style Guide</em></a> section of the <em>Stan User’s Guide</em>. However, as I’m relatively new to <strong>rstan</strong>, don’t be surprised if you find some quirks an inconsistencies.</p>
 </section>
 <section id="warning" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="warning">Warning</h2>
-<p>This book is a side-product of another project for which I needed to learn more about <strong>rstan</strong>. It was also a good opportunity to learn more about making a <a href="https://quarto.org/">Quarto</a>-based ebook <span class="citation" data-cites="quarto2024">(<a href="references.html#ref-quarto2024" role="doc-biblioref">Allaire et al., 2024</a>)</span>. For this second 0.0.2 release, I’m only up through Chapter 12. I will continue to chip away on this as my schedule permits, but I am setting no goals and no deadlines. On the one hand, it would be nice to have another finished book in my portfolio; on the other hand, I really don’t like using <strong>rstan</strong> and I still much prefer a <strong>brms</strong>-based workflow. The remaining chapters in this book may find themselves fleshed out in quick succession, or this whole project may lay fallow. We’ll see…</p>
+<p>This book is a side-product of another project for which I needed to learn more about <strong>rstan</strong>. It was also a good opportunity to learn more about making a <a href="https://quarto.org/">Quarto</a>-based ebook <span class="citation" data-cites="quarto2024">(<a href="references.html#ref-quarto2024" role="doc-biblioref">Allaire et al., 2024</a>)</span>. For this 0.0.3 release, I’m only up through Chapter 13. I will continue to chip away on this as my schedule permits, but I am setting no goals and no deadlines. On the one hand, it would be nice to have another finished book in my portfolio; on the other hand, I really don’t like using <strong>rstan</strong> and I still much prefer a <strong>brms</strong>-based workflow. The remaining chapters in this book may find themselves fleshed out in quick succession, or this whole project may lay fallow. We’ll see…</p>
 </section>
 <section id="comments" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="comments">Comments!</h2>
@@ -366,12 +372,13 @@ div.csl-indent {
 <p>I’d like to thank the following for their helpful contributions:</p>
 <ul>
 <li>Vincent Arel-Bundock (<a href="https://github.com/vincentarelbundock">@vincentarelbundock</a>),</li>
+<li>Francisco Garre-Frutos(<a href="https://github.com/franfrutos">@franfrutos</a>),</li>
 <li>Andrew Heiss (<a href="https://github.com/andrewheiss">@andrewheiss</a>),</li>
 <li>Andrew Johnson (<a href="https://github.com/andrjohns">@andrjohns</a>),</li>
 <li>John K. Kruschke (<a href="https://github.com/kruschke">@kruschke</a>), and</li>
 <li>Jeff Pollock (<a href="https://github.com/jeffpollock9">@jeffpollock9</a>).</li>
 </ul>
-<p>Each of these folks have shared <strong>rstan</strong> code that a directly helped make this book possible. I especially appreciate and recommend Arel-Bundock’s website <a href="https://vincentarelbundock.github.io/rethinking2/"><em>Statistical Rethinking 2 with Stan and R</em></a>, wherein you can find rendered <code>Rmarkdown</code> files with loads of <strong>rstan</strong> code on many of the same problems I’m tackling in this book. If you compare our works, you’ll see I have been heavily influenced by Arel-Bundock’s <strong>rstan</strong> style.</p>
+<p>Many of these folks have shared <strong>rstan</strong> code that a directly helped make this book possible. I especially appreciate and recommend Arel-Bundock’s website <a href="https://vincentarelbundock.github.io/rethinking2/"><em>Statistical Rethinking 2 with Stan and R</em></a>, wherein you can find rendered <code>Rmarkdown</code> files with loads of <strong>rstan</strong> code on many of the same problems I’m tackling in this book. If you compare our works, you’ll see I have been heavily influenced by Arel-Bundock’s <strong>rstan</strong> style.</p>
 </section>
 <section id="license-and-citation" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="license-and-citation">License and citation</h2>
@@ -381,8 +388,8 @@ div.csl-indent {
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  title <span class="ot">=</span> {Statistical rethinking <span class="dv">2</span> with rstan and the tidyverse},</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  author <span class="ot">=</span> {Kurz, A. Solomon},</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  year <span class="ot">=</span> {<span class="dv">2024</span>},</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  month <span class="ot">=</span> {aug},</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  edition <span class="ot">=</span> {version <span class="dv">0</span>.<span class="fl">0.2</span>},</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  month <span class="ot">=</span> {september},</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  edition <span class="ot">=</span> {version <span class="dv">0</span>.<span class="fl">0.3</span>},</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  url <span class="ot">=</span> {https<span class="sc">:</span><span class="er">//</span>solomon.quarto.pub<span class="sc">/</span>sr2rstan<span class="sc">/</span>},</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  doi <span class="ot">=</span> {https<span class="sc">:</span><span class="er">//</span>doi.org<span class="sc">/</span><span class="fl">10.5281</span><span class="sc">/</span>zenodo<span class="fl">.13343828</span>}</span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -665,7 +672,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   </div>
   <div class="nav-page nav-page-next">
       <a href="./01.html" class="pagination-link">
-        <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Golem of Prague</span></span> <i class="bi bi-arrow-right-short"></i>
+        <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><del>The Golem of Prague</del> <strong>rstan</strong> overview</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
