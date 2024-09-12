@@ -505,7 +505,7 @@ stan_data <- d |>
 str(stan_data)
 ```
 
-Define the new `model_code` and fit `m11.5`. Note how this time we're defining the log likelihood values in the `generated quantities` block with `binomial_lpmf()`.
+Next we define the new `model_code` and fit `m11.5`. In the `model` block, note we're using the `binomial_logit()` function for the likelihood, rather than the `binomial()` function, as in the last few models. As we covered back in @sec-Our-model-block, sometimes Stan provides variants of popular likelihood functions parameterized in terms of their typical link functions. By using the `binomial_logit()` function, we don't need to nest the linear model within the `inv_logit()` function. The logit link is presumed. In a similar way, we have used the `binomial_logit_lpmf()` within the `generated quantities` block, rather than the `binomial_lpmf()` function. Both methods work just fine. In this case, the `binomial_logit()` function resulted in a faster computation time, and slightly better ESS diagnostics.
 
 ```{r}
 #| echo: false
@@ -534,7 +534,9 @@ parameters {
   vector[n_cond] b2;
 }
 model {
-  pulled_left ~ binomial(1, inv_logit(a[actor] + b1[side] + b2[cond]));
+  pulled_left ~ binomial_logit(1, a[actor] + b1[side] + b2[cond]);
+  // This also works
+  // pulled_left ~ binomial(1, inv_logit(a[actor] + b1[side] + b2[cond]));
   a ~ normal(0, 1.5);
   b1 ~ normal(0, 0.5);
   b2 ~ normal(0, 0.5);
@@ -544,7 +546,9 @@ generated quantities {
   vector[n] log_lik;
   
   eta = a[actor] + b1[side] + b2[cond];
-  for (i in 1:n) log_lik[i] = binomial_lpmf(pulled_left[i] | 1, inv_logit(eta[i]));
+  for (i in 1:n) log_lik[i] = binomial_logit_lpmf(pulled_left[i] | 1, eta[i]);
+  // This also works
+  // for (i in 1:n) log_lik[i] = binomial_lpmf(pulled_left[i] | 1, inv_logit(eta[i]));
   
   // This also works for the `log_lik`, and it negates the need for `eta` from above
   // for (i in 1:n) log_lik[i] = binomial_lpmf(pulled_left[i] | 1, inv_logit(a[actor[i]] + b1[side[i]] + b2[cond[i]]));
@@ -620,7 +624,7 @@ stan_data <- d_aggregated |>
 str(stan_data)
 ```
 
-Define `model_code_11.6` and fit the model.
+Define `model_code_11.6` and fit the model. As an alternative, try fitting the model with the `binomial_logit()` and `binomial_logit_lpmf()` functions like we did for `m11.5`, above. Which method has better HMC chain diagnostics?
 
 ```{r}
 #| echo: false
@@ -647,6 +651,7 @@ parameters {
 }
 model {
   left_pulls ~ binomial(18, inv_logit(a[actor] + b[treatment]));
+  // left_pulls ~ binomial_logit(18, a[actor] + b[treatment]);
   a ~ normal(0, 1.5);
   b ~ normal(0, 0.5);
 }
@@ -655,6 +660,7 @@ generated quantities {
   vector[n] log_lik;
   eta = a[actor] + b[treatment];
   for (i in 1:n) log_lik[i] = binomial_lpmf(left_pulls[i] | 18, inv_logit(eta[i]));
+  // for (i in 1:n) log_lik[i] = binomial_logit_lpmf(left_pulls[i] | 18, eta[i]);
 }
 '
 
@@ -998,7 +1004,7 @@ pairs(m11.8, pars = c("a", "d"), gap = 0.25)
 
 #### Rethinking: Simpson's paradox is not a paradox.
 
-## Poisson regression
+## Poisson regression {#sec-Poisson-regression}
 
 ### Example: Oceanic tool complexity.
 
@@ -1236,7 +1242,9 @@ generated quantities {
 '
 ```
 
-Sample from the two posteriors with `stan()`.
+As we discussed back in @sec-Our-model-block, we also could have fit these models with the `poisson_log()` function in place of `poisson()`, and computed the `log_lik` values  with the `poisson_log_lpmf()` function in place of `poisson_lpmf()`. Those functions would have obviated our use of the `exp()` function for the linear model. Consider fitting the model both ways to see which is faster or returns better HMC diagnostics.
+
+For now, we sample from the two posteriors as they've been currently defined with `stan()`.
 
 ```{r}
 #| echo: false
