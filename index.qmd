@@ -98,7 +98,7 @@ This book is licensed under the Creative Commons Zero v1.0 Universal license, th
   month = {september},
   edition = {version 0.0.3},
   url = {https://solomon.quarto.pub/sr2rstan/},
-  doi = {https://doi.org/10.5281/zenodo.13343828}
+  doi = {https://doi.org/10.5281/zenodo.13755933}
 }
 ```
 
