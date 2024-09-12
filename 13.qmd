@@ -24,27 +24,19 @@ theme_set(
 
 #### Rethinking: A model by any other name.
 
-## Example: Multilevel tadpoles
+## Example: Multilevel tadpoles {#sec-Example-Multilevel-tadpoles}
 
 Let's load the `reedfrogs` data [see @voneshCompensatoryLarvalResponses2005].
 
 ```{r}
 data(reedfrogs, package = "rethinking")
-d <- reedfrogs
-rm(reedfrogs)
-```
-
-Go ahead and acquaint yourself with the `reedfrogs`.
-
-```{r}
-glimpse(d)
-```
-
-Making the `tank` cluster variable is easy.
-
-```{r}
-d <- d |>
+d <- reedfrogs |>
+  # Add a the `tank` cluster variable
   mutate(tank = 1:n())
+rm(reedfrogs)
+
+# What?
+glimpse(d)
 ```
 
 Here's the formula for the un-pooled model in which each `tank` gets its own intercept:
@@ -122,7 +114,7 @@ Check the model summary.
 print(m13.1, pars = c("a[1]", "a[48]"), probs = c(0.055, 0.945))
 ```
 
-Note how with the `pars` argument, I restricted the output to the first and last intercept. You can adjust that code to inspect more or fewer of the intercepts, as desired.
+Note how I restricted the output to the first and last intercept with the `pars` argument. You can adjust that code to inspect more or fewer of the intercepts, as desired.
 
 Now consider the multilevel alternative. Its formula is
 
@@ -131,8 +123,8 @@ $$
 \text{surv}_i             & \sim \operatorname{Binomial}(n_i, p_i) \\
 \operatorname{logit}(p_i) & = \alpha_{\text{tank}[i]} \\
 \alpha_j                  & \sim \operatorname{Normal}(\color{blue}{\bar \alpha}, \color{blue} \sigma) \\
-\color{blue}{\bar \alpha} & \color{blue} \sim \color{blue}{\operatorname{Normal}(0, 1.5)} \\
-\color{blue} \sigma       & \color{blue} \sim \color{blue}{\operatorname{Exponential}(1)},
+\color{blue}{\bar \alpha} & \sim \color{blue}{\operatorname{Normal}(0, 1.5)} \\
+\color{blue} \sigma       & \sim \color{blue}{\operatorname{Exponential}(1)},
 \end{align*}
 $$
 
@@ -220,7 +212,7 @@ Here we use a little `bind_rows()` and `spread_draws()` magic to make a version 
 
 ```{r}
 #| fig-width: 6
-#| fig-height: 5.5
+#| fig-height: 5.25
 
 bind_rows(
   m13.1 |> spread_draws(a[tank]),
@@ -346,7 +338,8 @@ bind_rows(as_draws_df(m13.2), as_draws_df(m13.2b)) |>
   
   # Plot
   ggplot(aes(x = sigma, y = prior)) +
-  stat_halfeye(point_interval = mean_qi, .width = 0.89) +
+  stat_halfeye(point_interval = mean_qi, .width = 0.89,
+               linewidth = 1, shape = 1) +
   scale_y_discrete(NULL, expand = expansion(mult = 0.1), 
                    labels = ggplot2:::parse_safe) +
   xlab(expression(sigma[posterior]))
@@ -387,10 +380,10 @@ dsim <- tibble(
   true_a = rnorm(n = n_ponds, mean = a_bar, sd = sigma))
 
 # What?
-head(dsim)
+glimpse(dsim)
 ```
 
-McElreath twice urged us to inspect the contents of this simulation. In addition to looking at the data with `head()`, we might well plot.
+McElreath twice urged us to inspect the contents of this simulation. In addition to looking at the data with `glimpse()`, we might well plot.
 
 ```{r}
 #| fig-width: 5
@@ -579,6 +572,15 @@ stan_data <- new_dsim |>
 Now update the fit with the `sampling()` function, saving the results as `m13.3new`.
 
 ```{r}
+#| echo: false
+
+# save(m13.3new, file = "fits/m13.3new.rda")
+load(file = "fits/m13.3new.rda")
+```
+
+```{r}
+#| eval: false
+
 m13.3new <- sampling(
     object = m13.3@stanmodel,
     data = stan_data,
@@ -612,7 +614,7 @@ draws_means_new <- draws_new |>
   group_by(pooling, ni) |> 
   summarise(mean = mean(error))
 
-# Ploe
+# Plot
 draws_new |> 
   ggplot(aes(x = pond, y = error)) +
   geom_point(aes(color = pooling, shape = pooling)) +
@@ -626,7 +628,7 @@ draws_new |>
   facet_wrap(~ ni, labeller = label_both, nrow = 1, scales = "free_x")
 ```
 
-## More than one type of cluster
+## More than one type of cluster {#sec-More-than-one-type-of-cluster}
 
 #### Rethinking: Cross-classification and hierarchy.
 
@@ -648,10 +650,10 @@ $$
 \operatorname{logit} (p_i) & = \alpha_{\text{actor}[i]} + \beta_{\text{treatment}[i]} + \color{blue}{\gamma_{\text{block}[i]}} \\
 \alpha_j & \sim \operatorname{Normal}(\bar \alpha, \sigma_\alpha), \;\;\; \text{for } j = 1, \dots, 7 \\
 \beta_j  & \sim \operatorname{Normal}(0, 0.5), \;\;\; \text{for } j = 1, \dots, 4 \\
-\color{blue}{\gamma_j} & \color{blue} \sim \color{blue}{\operatorname{Normal}(0, \sigma_\gamma), \;\;\; \text{for } j = 1, \dots, 6} \\
+\color{blue}{\gamma_j} & \sim \color{blue}{\operatorname{Normal}(0, \sigma_\gamma), \;\;\; \text{for } j = 1, \dots, 6} \\
 \bar \alpha   & \sim \operatorname{Normal}(0, 1.5) \\
 \sigma_\alpha & \sim \operatorname{Exponential}(1) \\
-\color{blue}{\sigma_\gamma} & \color{blue} \sim \color{blue}{\operatorname{Exponential}(1)}.
+\color{blue}{\sigma_\gamma} & \sim \color{blue}{\operatorname{Exponential}(1)}.
 \end{align*}
 $$
 
@@ -734,10 +736,10 @@ m13.4 <- stan(
   cores = 4, seed = 13)
 ```
 
-Like in the text, this model returned warnings about divergent transitions, which isn't great. As we learned back in @sec-Non-identifiable-parameters, we can check for the HMC diagnostic warnings with the `check_hmc_diagnostics()` function.
+Like in the text, this model returned warnings about divergent transitions, which isn't great. As we learned back in @sec-Non-identifiable-parameters, we can check for the divergent-transition warnings with the `check_divergences()` function.
 
 ```{r}
-check_hmc_diagnostics(m13.4)
+check_divergences(m13.4)
 ```
 
 Here's the parameter summary.
@@ -942,7 +944,7 @@ In place of McElreath's `coeftab()` approach, let's just make a coefficient plot
 
 ```{r}
 #| fig-width: 7
-#| fig-height: 2
+#| fig-height: 1.75
 
 bind_rows(spread_draws(m13.4, b[j]), 
           spread_draws(m13.6, b[j])) |> 
@@ -954,7 +956,7 @@ bind_rows(spread_draws(m13.4, b[j]),
                      linewidth = 1, shape = 1,
                      position = position_dodge(width = -0.4)) +
   scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
-  scale_color_viridis_d(option = "D", end = 0.4) +
+  scale_color_viridis_d(NULL, option = "D", end = 0.4) +
   xlab("posterior")
 ```
 
@@ -975,6 +977,8 @@ as_draws_df(m13.6) |>
   xlab(expression(sigma[beta]))
 ```
 
+That's an impressively jagged posterior.
+
 Compare the two models `m13.4` and `m13.6` by the LOO and you'll see they're almost the same.
 
 ```{r}
@@ -987,10 +991,10 @@ loo_compare(
   print(simplify = FALSE)
 ```
 
-If you check the `check_hmc_diagnostics()` output, you'll see we still have several divergent transitions with `m13.6`.
+If you check the `check_divergences()` output, you'll see we still have several divergent transitions with `m13.6`.
 
 ```{r}
-check_hmc_diagnostics(m13.6)
+check_divergences(m13.6)
 ```
 
 ## Divergent transitions and non-centered priors
@@ -1021,9 +1025,6 @@ load(file = "fits/m13.7.rda")
 #| eval: false
 
 model_code_13.7 <- '
-data {
-  int<lower=1> n;
-}
 parameters {
   real v;
   real x;
@@ -1036,7 +1037,6 @@ model {
 
 m13.7 <- stan(
   model_code = model_code_13.7, 
-  data = list(n = 1L),
   cores = 4, seed = 13)
 ```
 
@@ -1065,7 +1065,7 @@ as_draws_df(m13.7) |>
        y = expression(italic(v)))
 ```
 
-This is something of a version of McElreath's Figure 13.5a.
+This is something of a sample version of McElreath's Figure 13.5a.
 
 Here are the trace plots via `mcmc_trace()`. They're a mess.
 
@@ -1088,7 +1088,7 @@ x & = z \exp(v),
 \end{align*}
 $$
 
-where $x$ is now the product of two independent distributions, $v$ and $z$. For our `stan()`-based workflow, this means defining `v` and `z` in the `parameters` block, and then defining `x` as a function of the two in the `generated quantities`. But because `x` is a deterministic function of `v` and `z`, only `v` and `z` get assigned priors in the `model` block.
+where $x$ is now a deterministic function of two independent distributions, $v$ and $z$. For our `stan()`-based workflow, this means defining `v` and `z` in the `parameters` block, and then defining `x` as a function of the two in the `generated quantities`. But because `x` is a deterministic function of `v` and `z`, only `v` and `z` get assigned priors in the `model` block.
 
 ```{r}
 #| echo: false
@@ -1101,9 +1101,6 @@ load(file = "fits/m13.7nc.rda")
 #| eval: false
 
 model_code_13.7nc <- '
-data {
-  int<lower=1> n;
-}
 parameters {
   real v;
   real z;
@@ -1113,14 +1110,12 @@ model {
   z ~ normal(0, 1);
 }
 generated quantities {
-  real x;
-  x = z * exp(v);
+  real x = z * exp(v);
 }
 '
 
 m13.7nc <- stan(
   model_code = model_code_13.7nc, 
-  data = list(n = 1L),
   cores = 4, seed = 13)
 ```
 
@@ -1149,20 +1144,24 @@ The trace plots for $v$ and $z$ look pretty great, too.
 
 ```{r}
 #| fig-width: 6
-#| fig-height: 3
+#| fig-height: 4.5
 
 mcmc_trace(m13.7nc, 
-           pars = vars(v:z),
+           pars = vars(v, z, x),
            facet_args = list(ncol = 1))
 ```
 
-### Non-centered chimpanzees.
+The trace plot for $x$, however, is a mess. This isn't necessarily a problem, because we're only really interested in $v$ and $z$. $x$ is a means to an end.
+
+### Non-centered chimpanzees. {#sec-Non-centered-chimpanzees}
 
 At the top of the section, McElreath reported the `rethinking::ulam()` default is to set `adapt_delta = 0.95`. Readers should be aware that the `rstan::stan()` default is `adapt_delta = 0.80`. See the `stan` section of the *rstan reference manual* (link [here](https://CRAN.R-project.org/package=rstan/rstan.pdf)). A consequence of this difference is `rethinking::ulam()` will tend to take smaller step sizes than `rstan::stan()`, at the cost of slower exploration of the posterior. I don't know that one is inherently better than the other. They're just defaults.
 
-We can just use the `sampling()` to revisit `m13.4`. This time, we increase the `adapt_delta` parameter in a list fed to the `control` argument.
+We can just use the `sampling()` function to revisit `m13.4`. This time, we increase the `adapt_delta` parameter in a list fed to the `control` argument.
 
 ```{r}
+#| warning: false
+
 m13.4b <- sampling(
   object = m13.4@stanmodel,
   data = stan_data,
@@ -1170,11 +1169,11 @@ m13.4b <- sampling(
   control = list(adapt_delta = 0.99))
 ```
 
-Rather than using the full `check_hmc_diagnostics()` function like above, we can get a more divergent-transition-focused perspective with the `check_divergences()` function. Here we compare the results from both `m13.4` and `m13.4b`.
+We've been using the `check_divergences()` function to check for divergent-transitions. In addition to the number of divergent transitions, that function also returns recommendations for next steps, such as increasing the `adapt_delta` parameter. If all you want is a more focused output with just the number of divergent transitions, you might use the `get_num_divergent()` function instead. Here we compare the `get_num_divergent()` output from both `m13.4` and `m13.4b`.
 
 ```{r}
-check_divergences(m13.4)
-check_divergences(m13.4b)
+get_num_divergent(m13.4)
+get_num_divergent(m13.4b)
 ```
 
 We dropped from 108 to 4, which isn't nothing.
@@ -1192,13 +1191,11 @@ For `m13.4nc`, we first update the statistical model to
 
 $$
 \begin{align*}
-\text{pulled-left}_i         & \sim \operatorname{Binomial}(n_i = 1, p_i) \\
-
+\text{pulled-left}_i & \sim \operatorname{Binomial}(n_i = 1, p_i) \\
 \operatorname{logit} (p_i) & = \color{blue}{\underbrace{\bar \alpha + z_{\text{actor}[i]} \sigma_\alpha}_{\alpha_{\text{actor}[i]}}} + \beta_{\text{treatment}[i]} \color{blue} + \color{blue}{\underbrace{x_{\text{block}[i]} \sigma_\gamma}_{\gamma_{\text{block}[i]}}} \\
-
 \beta_j  & \sim \operatorname{Normal}(0, 0.5), \;\;\; \text{for } j = 1, \dots, 4 \\
-\color{blue}{x_j} & \color{blue} \sim \color{blue}{\operatorname{Normal}(0, 1)} \\
-\color{blue}{z_j} & \color{blue} \sim \color{blue}{\operatorname{Normal}(0, 1)} \\
+\color{blue}{x_j} & \sim \color{blue}{\operatorname{Normal}(0, 1)} \\
+\color{blue}{z_j} & \sim \color{blue}{\operatorname{Normal}(0, 1)} \\
 \bar \alpha   & \sim \operatorname{Normal}(0, 1.5) \\
 \sigma_\alpha, \sigma_\gamma & \sim \operatorname{Exponential}(1),
 \end{align*}
@@ -1229,7 +1226,7 @@ parameters {
   real<lower=0> sigma_g;
 }
 model {
-  vector[n] eta;  \\ To simplify the likelihood line
+  vector[n] eta;  // To simplify the likelihood line
   eta = a_bar + z[actor] * sigma_a + x[block] * sigma_g + b[treatment];
   
   pulled_left ~ binomial(1, inv_logit(eta));
@@ -1241,11 +1238,8 @@ model {
   b ~ normal(0, 0.5);
 }
 generated quantities {
-  vector[n_actor] a;
-  vector[n_block] g;
-  
-  a = a_bar + z * sigma_a;
-  g = x * sigma_g;
+  vector[n_actor] a = a_bar + z * sigma_a;
+  vector[n_block] g = x * sigma_g;
 }
 '
 ```
@@ -1280,12 +1274,13 @@ print(m13.4nc,
 We use the `summarise_draws()` function and the `parameter_vec` from a while back to make a version of McElreath's Figure 13.6. Here we replace the old-fashioned `n_eff` values with the newer `ess_bulk` and `ess_tail`.
 
 ```{r}
-#| fig-width: 5.5
+#| fig-height: 3
 
 bind_rows(
-  summarise_draws(m13.4, ess_bulk, ess_tail) |> filter(variable %in% parameter_vec),
-  summarise_draws(m13.4nc, ess_bulk, ess_tail) |> filter(variable %in% parameter_vec)
+  summarise_draws(m13.4, ess_bulk, ess_tail),
+  summarise_draws(m13.4nc, ess_bulk, ess_tail)
 ) |> 
+  filter(variable %in% parameter_vec) |> 
   mutate(fit = rep(c("m13.4", "m13.4nc"), each = n() / 2)) |> 
   pivot_longer(cols = contains("ess_")) |> 
   pivot_wider(names_from = fit, values_from = value) |> 
@@ -1300,11 +1295,13 @@ bind_rows(
   facet_wrap(~ name)
 ```
 
+Big difference.
+
 ## Multilevel posterior predictions
 
 ### Posterior prediction for same clusters.
 
-If you are using by-hand approach for computing model-based expectations for a multilevel model of this kind, `spread_draws()` seems like a good solution for a tidy workflow. Here's what that can look like for `actor == 2`, in `block == 1`. We just display the results in a plot resembling Figure 13.7a.
+If you are using a by-hand approach for computing model-based expectations for a multilevel model of this kind, `spread_draws()` seems like a good solution for a tidy workflow. Here's what that can look like for `actor == 2`, in `block == 1`. We just display the results in a plot resembling Figure 13.7a.
 
 ```{r}
 #| fig-width: 2
@@ -1367,19 +1364,23 @@ m13.4 |>
 We could, of course, just make a faceted plot of all actors, in all blocks, and all treatments. For such a plot, we don't even need the `d_pred` data.
 
 ```{r}
-#| fig-width: 7
-#| fig-height: 6
+#| fig-width: 8
+#| fig-height: 2.75
 
 m13.4 |>
   spread_draws(a[actor], b[treatment], g[block]) |> 
-  mutate(p = plogis(a + b + g)) |> 
+  mutate(p = plogis(a + b + g),
+         block = factor(block)) |> 
   
-  ggplot(aes(x = treatment, y = p)) +
+  ggplot(aes(x = treatment, y = p,
+             color = block, fill = block, group = block)) +
   stat_lineribbon(point_interval = mean_qi, .width = 0.80, 
-                  fill = "gray67") +
-  scale_x_continuous(labels = treatment_labels_vec) +
+                  alpha = 1/3, linewidth = 1) +
+  scale_x_continuous(labels = treatment_labels_vec, expand = expansion(mult = 0.1)) +
   scale_y_continuous("proportion pulled left", breaks = 0:2 / 2, limits = 0:1) +
-  facet_grid(actor ~ block, labeller = label_both)
+  scale_color_viridis_d(option = "A") +
+  scale_fill_viridis_d(option = "A") +
+  facet_wrap(~ actor, labeller = label_both, nrow = 1)
 ```
 
 This is yet another reminder there was very little variation across blocks.
@@ -1436,7 +1437,7 @@ p2 <- m13.4 |>
 p2
 ```
 
-To simulate actors for the left panel of Figure 13.7, our basic data-wrangling workflow will be similar to what we just did. This time we'll use the `ndraws` argument within `spread_draws()` to randomly sample a subset of the 4,000 post-warmup posterior draws in the posterior, rather than use them all. When we plot, instead of summarizing the results with `stat_lineribbon()` we instead just plot individual lines with `geom_line()`, and we used the `.draw` index as a stand-in for simulated actors.
+To simulate actors for the left panel of Figure 13.7, our basic data-wrangling workflow will be similar to what we just did. This time we'll use the `ndraws` argument within `spread_draws()` to randomly sample a subset of the 4,000 post-warmup posterior draws in the posterior, rather than use them all. When we plot, instead of summarizing the results with `stat_lineribbon()`, we just plot individual lines with `geom_line()`, and we use the `.draw` index as a stand-in for simulated actors.
 
 ```{r}
 #| fig-width: 2
@@ -1453,7 +1454,7 @@ p3 <- m13.4 |>
   mutate(p = plogis(a_sim + b))  |> 
   
   ggplot(aes(x = treatment, y = p, group = .draw)) +
-  geom_line(alpha = 1/2) +
+  geom_line(alpha = 1/2, linewidth = 1/4) +
   scale_x_continuous(NULL, labels = treatment_labels_vec) +
   scale_y_continuous(NULL, breaks = NULL, limits = 0:1) +
   facet_wrap(~ "100 simulated actors")
@@ -1472,7 +1473,253 @@ p1 | p2 | p3
 
 ### Post-stratification.
 
-## Summary
+## ~~Summary~~ Centered, non-centered, and the secret third parameterization
+
+I'd like to spend some more time talking about how we parameterize multilevel models. To that end, let's load the `reedfrogs` data once more.
+
+```{r}
+data(reedfrogs, package = "rethinking")
+d <- reedfrogs |>
+  # Add a the `tank` cluster variable
+  mutate(tank = 1:n())
+rm(reedfrogs)
+
+# What?
+glimpse(d)
+```
+
+Again we make the `stan_data` version of the data for **rstan**.
+
+```{r}
+stan_data <- d |>
+  select(surv, density, tank) |> 
+  compose_data()
+
+# What?
+str(stan_data)
+```
+
+In @sec-Example-Multilevel-tadpoles when we fit the multilevel reedfrogs model, we used the centered parameterization. The equation for that model was
+
+$$
+\begin{align*}
+\text{surv}_i & \sim \operatorname{Binomial}(n_i, p_i) \\
+\operatorname{logit}(p_i) & = \alpha_i \\
+\alpha_i    & \sim \operatorname{Normal}(\bar \alpha, \sigma) \\
+\bar \alpha & \sim \operatorname{Normal}(0, 1.5) \\
+\sigma      & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+where this time for simplicity sake I'm just calling what McElreath denoted $\alpha_{\text{tank}[i]}$ as $\alpha_i$, and I'm also replacing McElreath's somewhat unnecessarily confusing prior notation $\alpha_j$ with $\alpha_i$.^[I should acknowledge there are many other cases where McElreath's more elaborate notation would be necessary. But in this special case, it's not and I'm concerned it would get in the way of the basic points I'm trying to make in this section.] We didn't fit a non-centered version of this model, but if we had, I believe we could have described it in statistical notation as
+
+$$
+\begin{align*}
+\text{surv}_i & \sim \operatorname{Binomial}(n_i, p_i) \\
+\operatorname{logit}(p_i) & = \alpha_i \\
+\alpha_i & = \color{blue}{\bar \alpha + z_i \sigma} \\
+\bar \alpha       & \sim \operatorname{Normal}(0, 1.5) \\
+\color{blue}{z_i} & \sim \color{blue}{\operatorname{Normal}(0, 1)} \\
+\sigma            & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+for which we have taken cues from the statistical notation McElreath used for `m13.4nc` on page 424 in the text, and I then repeated in @sec-Non-centered-chimpanzees, above. We'll fit this version of the model with **rstan** in a bit.
+
+There are other ways to parameterize the model, though. For a nice exposition, Gelman and Hill discussed at least five in Section 12.5 their [-@gelmanDataAnalysisUsing2006] text. The one I'd like to introduce comes most directly from the notation used throughout @singerAppliedLongitudinalData2003, which is the text from which I first learned about multilevel models.^[You can also find this notation in Equation 12.6 in @gelmanDataAnalysisUsing2006.] I don't know what to call this parameterization, but to stick with the language McElreath has used in this chapter, we'll tentatively dub it the *semi-centered* parameterization,^[Go [here](https://x.com/SolomonKurz/status/1833922891588796644) for a nice Twitter discussion on this parameterization. Doctoral candidate [Francisco Garre-Frutos](https://franfrutos.github.io/) was the first person to suggest the term. We even got the official Stan account to weigh in on the topic (e.g., [here](https://x.com/mcmc_stan/status/1833941708112789872)).] which is
+
+$$
+\begin{align*}
+\text{surv}_i & \sim \operatorname{Binomial}(n_i, p_i) \\
+\operatorname{logit}(p_i) & = \alpha_i \\
+\alpha_i & = \bar \alpha + \color{blue}{u_i} \\
+\color{blue}{u_i} & \sim \color{blue}{\operatorname{Normal}(0, \sigma)} \\
+\bar \alpha       & \sim \operatorname{Normal}(0, 1.5) \\
+\sigma            & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+where the new $\color{blue}{u_i}$ terms are deviations around the grand mean $\bar \alpha$, but unlike the $z_i$ deviation terms in the previous model, the $\color{blue}{u_i}$ terms are not given a unit-normal prior. Rather, they are distributed as Gaussian with a fixed mean at zero, but a standard deviation $\color{blue} \sigma$, which is itself estimated from the data. In the language of Singer and Willett, you might think of the first two lines of the equation at the level-1 likelihood, and the third and fourth lines as the level-2 likelihood. The rest are priors.
+
+Since we're going to be comparing these three parameterizations, I'm going to first sample more draws from the original centered `m13.2` to help reduce the effect of MCMC sampling variation.
+
+```{r}
+#| message: false
+#| results: "hide"
+
+m13.2 <- sampling(
+    object = m13.2@stanmodel,
+    data = stan_data,
+    iter = 8500, warmup = 1000,
+    cores = 4, seed = 13)
+```
+
+Here we make the `model_code_13.2nc` and `model_code_13.2sc` strings for the non-centered and semi-centered version of the model.
+
+```{r}
+model_code_13.2nc <- '
+data {
+  int<lower=1> n;                       
+  array[n] int tank;
+  array[n] int density;
+  array[n] int surv;
+}
+parameters {
+  real abar;
+  vector[n] z;
+  real<lower=0> sigma;
+}
+model {
+  surv ~ binomial(density, inv_logit(abar + z[tank] * sigma));
+  
+  abar ~ normal(0, 1.5);
+  z ~ normal(0, 1);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = binomial_lpmf(surv[i] | density[i], inv_logit(abar + z[tank[i]] * sigma));
+  
+  vector[n] a;
+  a = abar + z * sigma;
+}
+'
+
+model_code_13.2sc <- '
+data {
+  int<lower=1> n;                       
+  array[n] int tank;
+  array[n] int density;
+  array[n] int surv;
+}
+parameters {
+  real abar;
+  vector[n] u;
+  real<lower=0> sigma;
+}
+model {
+  vector[n] a = abar + u;
+  surv ~ binomial(density, inv_logit(a));  // Level-1 likelihood
+  u ~ normal(0, sigma);                    // Level-2 likelihood
+  
+  abar ~ normal(0, 1.5);
+  sigma ~ exponential(1);
+}
+generated quantities {
+  vector[n] a;
+  a = abar + u;
+  
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = binomial_lpmf(surv[i] | density[i], inv_logit(a[i]));
+}
+'
+```
+
+Now sample from the non-centered and semi-centered posteriors with `stan()`.
+
+```{r}
+#| echo: false
+
+# save(m13.2nc, file = "fits/m13.2nc.rda")
+# save(m13.2sc, file = "fits/m13.2sc.rda")
+load(file = "fits/m13.2nc.rda")
+load(file = "fits/m13.2sc.rda")
+```
+    
+```{r}
+#| eval: false
+
+m13.2nc <- stan(
+  model_code = model_code_13.2nc, 
+  data = stan_data,
+  iter = 8500, warmup = 1000,
+  cores = 4, seed = 13)
+
+m13.2sc <- stan(
+  model_code = model_code_13.2sc, 
+  data = stan_data,
+  iter = 8500, warmup = 1000,
+  cores = 4, seed = 13)
+```
+
+For the sake of space, I'm not going to show the `print()` output for these. But if you're following along on your computer, it's work giving a look.
+
+```{r}
+#| eval: false
+
+print(m13.2, pars = c("abar", "sigma", "a[1]", "a[48]"), probs = c(0.055, 0.945))
+print(m13.2nc, pars = c("abar", "sigma", "a[1]", "a[48]"), probs = c(0.055, 0.945))
+print(m13.2sc, pars = c("abar", "sigma", "a[1]", "a[48]"), probs = c(0.055, 0.945))
+```
+
+Here instead we'll compare the three parameterizations by the major model parameters, $\bar a$, $\sigma$ and $a_i$, with a coefficient plot.
+
+```{r}
+#| fig-width: 6
+#| fig-height: 7
+#| warning: false
+
+par_vec <- c("abar", "sigma", str_c("a[", 1:9, "]"), str_c("a[", 10:48, "]"))
+
+bind_rows(
+  as_draws_df(m13.2),
+  as_draws_df(m13.2nc),
+  as_draws_df(m13.2sc)
+) |> 
+  select(par_vec) |> 
+  mutate(parameterization = rep(c("centered", "non-centered", "semi-centered"), each = n() / 3)) |> 
+  pivot_longer(-parameterization, names_to = "par") |> 
+  mutate(par = factor(par, levels = par_vec)) |> 
+  
+  ggplot(aes(x = value, y = par, color = parameterization)) +
+  stat_pointinterval(.width = 0.89, 
+                     linewidth = 1/4, point_size = 1/2, position = position_dodge(-0.7)) +
+  scale_color_viridis_d(option = "C", end = 0.7) +
+  labs(x = "posterior",
+       y = NULL)
+```
+
+They're all the same with MCMC simulation error.
+
+Here we compare the three versions of the model by their HMC convergence statistics in a faceted dot plot.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 3
+
+bind_rows(
+  summarise_draws(m13.2, default_convergence_measures()),
+  summarise_draws(m13.2nc, default_convergence_measures()),
+  summarise_draws(m13.2sc, default_convergence_measures())
+) |> 
+  filter(variable %in% par_vec) |> 
+  mutate(parameterization = rep(c("centered", "non-centered", "semi-centered"), each = n() / 3)) |> 
+  pivot_longer(rhat:ess_tail, names_to = "stat") |> 
+  
+  ggplot(aes(x = value, y = fct_rev(parameterization), 
+             color = parameterization, fill = parameterization)) +
+  stat_dots() +
+  scale_y_discrete(NULL, expand = expansion(mult = 0.1)) +
+  scale_color_viridis_d(option = "C", end = 0.7, breaks = NULL) +
+  scale_fill_viridis_d(option = "C", end = 0.7, breaks = NULL) +
+  facet_wrap(~ stat, scales = "free_x")
+```
+
+I'm not interested in making claims about one being better than the others, but it's good to have options, and I'm glad to add one more to the mix. I've been low-key chewing on this for like five years, and it feels good to finally clarify my thoughts in words and code.
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+
+# They're almost identical by WAIC
+loo_compare(
+  extract_log_lik(m13.2) |> waic(),
+  extract_log_lik(m13.2nc) |> waic(),
+  extract_log_lik(m13.2sc) |> waic()
+) |> 
+  print(simplify = FALSE)
+```
 
 ## Session info {-}
 
