@@ -1225,7 +1225,7 @@ parameters {
 model {
   happiness ~ normal(b0[mid] + b1 * a, sigma);
   
-  b0 ~ normal(0, 1);
+  b0 ~ std_normal();  // normal(0, 1)
   b1 ~ normal(0, 2);
   sigma ~ exponential(1);
 }
@@ -1245,14 +1245,16 @@ parameters {
 model {
   happiness ~ normal(b0 + b1 * a, sigma);
   
-  b0 ~ normal(0, 1);
+  b0 ~ std_normal();  // normal(0, 1)
   b1 ~ normal(0, 2);
   sigma ~ exponential(1);
 }
 '
 ```
 
-Fit the models with `stan()`.
+Did you catch our use of the `std_normal()` function for some of the priors? When you have a standard-normal prior, you can use `std_normal()` in place of `normal(0, 1)`. In the [*Standard normal distribution*](https://mc-stan.org/docs/functions-reference/unbounded_continuous_distributions.html#standard-normal-distribution) section of the *Stan Functions Reference*, we learn the `std_normal()` can be quite a bit faster than `normal(0, 1)`, so it's worth giving a try. In my experience, though, that extra speed sometimes seem to come at the cost of lower ESS values. For the sake of practice, we'll use `std_normal()` wherever we can throughout this chapter.
+
+Anyway, now fit the models with `stan()`.
 
 ```{r}
 #| echo: false
@@ -1376,7 +1378,7 @@ parameters {
 model {
   c ~ normal(b0 + b1 * p + b2 * g, sigma);
   
-  [b0, b1, b2] ~ normal(0, 1);
+  [b0, b1, b2] ~ std_normal();  // normal(0, 1)
   sigma ~ exponential(1);
 }
 '
@@ -1399,7 +1401,7 @@ parameters {
 model {
   c ~ normal(b0 + b1 * p + b2 * g + b3 * u, sigma);
   
-  [b0, b1, b2, b3] ~ normal(0, 1);
+  [b0, b1, b2, b3] ~ std_normal();  // normal(0, 1)
   sigma ~ exponential(1);
 }
 '
@@ -1526,7 +1528,7 @@ parameters {
 model {
   c ~ normal(X * b, sigma);  // Linear model defined in matrix algebra notation Xb
   
-  b ~ normal(0, 1);
+  b ~ std_normal();  // normal(0, 1)
   sigma ~ exponential(1);
 }
 '
