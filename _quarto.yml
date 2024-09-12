@@ -3,7 +3,7 @@ project:
 
 book:
   title: "*Statistical rethinking* 2 with rstan and the tidyverse"
-  subtitle: "version 0.0.2"
+  subtitle: "version 0.0.3"
   author: "A. Solomon Kurz"
   date: now
   search: true
@@ -23,6 +23,7 @@ book:
     - 10.qmd
     - 11.qmd
     - 12.qmd
+    - 13.qmd
     - references.qmd
 
 toc: true
