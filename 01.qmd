@@ -16,9 +16,7 @@ vembedr::use_align(vembedr::embed_url("https://youtu.be/FdnMWdICdRs?si=U9Bivx2f0
                    "center")
 ```
 
-There's really nothing in this chapter of the text for us to translate into **tidyverse** and **rstan** code. I'm going to repurpose it, instead. Though the chapters and sections in this ebook usually follow those in McElreath's source text pretty closely, this chapter will be an exception.
-
-As I've been putting together this ebook, I have settled on a general workflow for fitting models with **rstan**. In this section, I will briefly introduce the **rstan** interface for Stan through the lens of that general workflow. As you become more acquainted with **rstan**, you may well find you prefer a different workflow. To each their own. Here we introduce mine.
+There's really nothing in this chapter of the text for us to translate into **tidyverse** and **rstan** code. I'm going to repurpose it, instead. Though the chapters and sections in this ebook usually follow those in McElreath's source text pretty closely, this chapter will be an exception. As I've been putting together this ebook, I have settled on a general workflow for fitting models with **rstan**. In this section, I will briefly introduce the **rstan** interface for Stan through the lens of that general workflow.
 
 *Why here?*, you ask. For the sake of this project, I don't think it works well to wait until @sec-Markov-Chain-Monte-Carlo before we properly introduce the basic work flow for **rstan**. I do explain a lot of the fine points starting in @sec-Geocentric-Models, but that still doesn't quite get the job done. The way you define and fit models with **rstan** is sufficiently different from McElreath's `quap()` and `ulam()` functions that it really needs a different kind of introduction, especially for how we format the data (what we call `stan_data` below), and how we set up the Stan program (what we call `model_code` below).
 
@@ -41,9 +39,9 @@ theme_set(
 )
 ```
 
-## Salamanders have data
+## We have salamanders data
 
-For this run-through, we'll be using the `salamanders` data [@welsh1995habitat] from McElreath's **rethinking** package. McElreath introduced these data briefly in the practice questions at the end of Chapter 11.^[Keep in mind I do not cover practice questions in my ebooks.] As is the custom throughout the text, we'll save the data frame as `d`.
+For this run-through, we'll be using the `salamanders` data [@welsh1995habitat] from McElreath's **rethinking** package. McElreath introduced these data briefly in the practice questions at the end of Chapter 11.^[Keep in mind I do not cover practice questions in my ebooks.] As is the custom throughout the text, we'll save the primary data frame as `d`.
 
 ```{r}
 data(package = "rethinking", salamanders)
@@ -54,7 +52,7 @@ rm(salamanders)
 glimpse(d)
 ```
 
-Our focal variable will be `SALAMAN`, which is the number of salamanders from 47 different sites in California. For predictor variable will be `PCTCOVER`, which is the percentage of ground cover at a given site. Here's a scatter plot of the two variables.
+Our focal variable will be `SALAMAN`, which is the number of salamanders found in 47 different sites in California. Our predictor variable will be `PCTCOVER`, which is the percentage of ground cover at a given site. Here's what those two variables look like in a scatter plot.
 
 ```{r}
 #| fig-width: 5
@@ -66,7 +64,7 @@ d |>
   xlim(0, 100)
 ```
 
-For the code to come, we'll add two variables to the data frame. The `count` variable will be the same as `SALAMAN`, but just with a simpler name. Following conventions McElreath used throughout the text, the `cover_std` variable will be a standardized version of `PCTCOVER`.
+For the code to come, we'll add two variables to the `d` data frame. The `count` variable will be the same as `SALAMAN`, but just with a simpler name. Following conventions McElreath used throughout the text, the `cover_std` variable will be a standardized version of `PCTCOVER`.
 
 ```{r}
 d <- d |> 
@@ -77,7 +75,7 @@ d <- d |>
 head(d)
 ```
 
-Our model will follow the equation
+Our practice model will follow the equation
 
 ```{r}
 #| eval: false
@@ -96,13 +94,13 @@ b & \sim \operatorname{Normal}(0, 1),
 \end{align*}
 $$
 
-the priors of which I've designed as weakly-regularizing on the scale of the data.
+the priors of which I've designed as weakly-regularizing on the scale of the data. Since I'm writing this ebook with an experience readership in mind, I'm assuming it's okay to start with a Poisson model. For any readers unacquainted with Poisson regression, McElreath covered the basics in @sec-Poisson-regression.
 
 ## Stan likes data in lists
 
 Many model-fitting functions in **R** allow for a variety of data types, including data frames (of which tibbles are a special case), lists, free-floating vectors, and so on. Stan expects data in lists, and the primary model-fitting functions in the **rstan** package expect data lists, too.
 
-The **tidybayes** package includes a `compose_data()`, which makes it easy to convert data frames into the list format expected by **rstan**. We will use the `compose_data()` function throughout this ebook, and our convention will be to save the output as an object called `stan_data`. Here's what this can look like for our simple example.
+The **tidybayes** package includes a `compose_data()`, which makes it easy to convert data frames into the list format expected by **rstan**. We will use the `compose_data()` function throughout this ebook, and our convention will be to save the output as an object called `stan_data`. Here's what this can look like for our salamanders example.
 
 ```{r}
 stan_data <- d |> 
@@ -117,7 +115,7 @@ The `compose_data()` function automatically added a scalar value `n`, which defi
 
 ## `model_code` and its blocks
 
-Stan programs are organized into a series of program blocks, and those blocks are saved as a character string for the primary **rstan** functions. Following the schematic in the [*Program Blocks*](https://mc-stan.org/docs/reference-manual/blocks.html) section in the *Stan Reference Manual* [@standevelopmentteamStanReferenceManual2024], those blocks are:
+Stan programs are organized into a series of program blocks, and those blocks are saved as a character string for the primary **rstan** functions.^[Technically, there are other ways to save the blocks, such as external files. In this ebook, we will always save them as character strings.] Following the schematic in the [*Program Blocks*](https://mc-stan.org/docs/reference-manual/blocks.html) section in the *Stan Reference Manual* [@standevelopmentteamStanReferenceManual2024], those blocks are:
 
 ```default
 functions {
@@ -168,7 +166,7 @@ In Stan program blocks, each line ends with a `;`. As you can see in the `model`
 
 ### Our `data` block.
 
-Data declarations are a big deal with Stan. We'll cover a few of the fine points in this section, but the primary information source is the [*Data Types and Declarations*](https://mc-stan.org/docs/reference-manual/types.html) section of the *Stan Reference Manual*. At some time or another, you'll want to invest in studying that material.
+Data declarations are a *big deal* with Stan. We'll cover a few of the fine points in this section, but the primary information source is the [*Data Types and Declarations*](https://mc-stan.org/docs/reference-manual/types.html) section of the *Stan Reference Manual*. At some time or another, you'll want to study that material.
 
 Here's a focused look at our `data` block.
 
@@ -180,9 +178,9 @@ data {
 }
 ```
 
-All the data required by the model must be declared in the `data` block^[A possible exception is if you define a transformed version of any of your data in the `transformed data` block. However, I do not plan on using the `transformed data` approach in this ebook.]. One generally defines one variable per line, but it is possible to declare multiple variables in a single line (see [here](https://mc-stan.org/docs/reference-manual/types.html#declaring-multiple-variables-at-once)).
+All the data required by the model must be declared in the `data` block.^[A possible exception is if you define a transformed version of any of your data in the `transformed data` block. However, I do not plan on using the `transformed data` approach in this ebook.] One generally defines one variable per line, but it is possible to declare multiple variables in a single line (see [here](https://mc-stan.org/docs/reference-manual/types.html#declaring-multiple-variables-at-once)).
 
-It's important to understand that Stan programs are read in order, top to bottom. Thus the first line in a `data` block is often used to define any scalar values being used to define dimensions. Recall how earlier we learned how the `compose_data()` function automatically makes an `n` scalar, which defines the number of rows in the original data set. We will be using that `n` scalar, and its ilk, a lot in this ebook.
+It's important to understand that Stan programs are read in order, top to bottom. Thus the first line in a `data` block is often used to define any scalar values being used to define dimensions. Recall how earlier we learned the `compose_data()` function automatically makes an `n` scalar, which defines the number of rows in the original data set. We will be using that `n` scalar, and its ilk, a lot in this ebook.
 
 With the syntax of `int` in this first line, we have declared that `n` scalar value is a integer. Stan can accept two primitive number types, which are `int` for integers and `real` for continuous numbers. There are other special types, such as `complex`, but I believe we will just be using `int` and `real` in this ebook.
 
@@ -194,7 +192,7 @@ Note how by `int<lower=0>`, we declared the `count` variable is constrained to n
 
 ### Our `parameters` block.
 
-A good initial place to learn the technical details for the `parameters` block is in the [*Program block: `parameters`*](https://mc-stan.org/docs/reference-manual/blocks.html#program-block-parameters) section of the *Stan Reference Manual*. Otherwise you can glean a lot of applied insights from the [*Regression Models*](https://mc-stan.org/docs/stan-users-guide/regression.html) section of the *Stan User's Guide*.
+A good initial place to learn the technical details for the `parameters` block is in the [*Program block: `parameters`*](https://mc-stan.org/docs/reference-manual/blocks.html#program-block-parameters) section of the *Stan Reference Manual* [@standevelopmentteamStanReferenceManual2024]. Otherwise you can glean a lot of applied insights from the [*Regression Models*](https://mc-stan.org/docs/stan-users-guide/regression.html) section of the *Stan User's Guide*.
 
 Here's a focused look at our `parameters` block.
 
@@ -209,7 +207,7 @@ Both our intercept `a` and slope `b` have been declared as unconstrained `real` 
 
 Importantly, the parameters declared in the `parameters` block are the ones sampled by Stan's HMC sampler.
 
-### Our `model` block.
+### Our `model` block. {#sec-Our-model-block}
 
 In the above sections were we detailed the contents of our `data` and `parameters` blocks, all of their contents were what are called *declarations*.  We named data elements and model parameters. Whereas `model` blocks do allow for declarations, they also allow for *statements*. A great place to learn all about statements is the [*Statements*](https://mc-stan.org/docs/reference-manual/statements.html) section of the *Stan Reference Manual*. You might also read the brief [*Program block: `model`*](https://mc-stan.org/docs/reference-manual/blocks.html#program-block-model) section of the *Stan Reference Manual*, or soak in all the applied examples in the [*Regression Models*](https://mc-stan.org/docs/stan-users-guide/regression.html) section of the *Stan User's Guide*. When you're really ready to get serious, you could browse though pretty much the whole of the [*Stan Functions Reference*](https://mc-stan.org/docs/functions-reference/) [@standevelopmentteamStanFunctionsReference2024].
 
@@ -223,11 +221,11 @@ model {
 }
 ```
 
-My preference is to define the likelihood first, and then add the priors. I've seen many examples of the reverse, and some times they're even shuffled all around. You pick whatever convention that makes sense for you and your collaborators.
+My preference is to define the likelihood first, and then add the priors. I've seen many examples of the reverse, and sometimes they're even shuffled all around. You pick whatever convention that makes sense for you and your collaborators, but I do recommend you're consistent with your choice.
 
-In our first line, we have defined the `count` response variable as Poisson distributed, with the syntax of `count ~ poisson()`. The sole parameter within the `poisson()` likelihood is `lambda`, which we have defined as `exp(a + b * cover_std)`. Note how in our syntax, we explicitly multiplied the `b` parameter with the `cover_std` data vector by way of the `*` operator. Also note that by nesting the linear equation within the `exp()` function, we have implicitly used the log link.
+With the syntax of `count ~ poisson()` in our first line, we have defined the `count` response variable as Poisson distributed. The sole parameter within the `poisson()` likelihood is `lambda`, which we have defined as `exp(a + b * cover_std)`. Note how in our syntax, we explicitly multiplied the `b` parameter with the `cover_std` data vector by way of the `*` operator. Also note that by nesting the linear equation within the `exp()` function, we have implicitly used the log link.
 
-Throughout this ebook, I will usually use likelihood syntax following this same basic format. But it's important to understand there are many other options. For example, some people prefer `for` loops to our vectorized code.  That could look like this:
+Throughout this ebook, I will usually use likelihood syntax following this same basic format. But it's important to understand there are many other options. For example, some people might prefer `for` loops to our vectorized code.  That could look like this:
 
 ```default
 model {
@@ -263,7 +261,7 @@ To my eye, there are two basic ways to draw posterior samples from **rstan**. We
 
 ### Primary method: Just use `stan()`.
 
-The first method for fitting **rstan** models, and the primary method we'll be using in this ebook, is with the `stan()` function. For us, the two main arguments are the `data` argument, into which we insert our `stan_data`, and the `model_code` argument, into which we insert our `model_code` with its `data`, `parameters`, and `model` block information. There are a whole slew of other arguments with default settings you might want to change. For example, `stan()` automatically samples from 4 HMC chains by the default setting `chains = 4`, which I generally find reasonable. Though it by default samples from the four chains in sequence, we will instead sample from them in parallel by setting `cores = 4`. To make the results more reproducible, I will also set `seed = 1`.
+The first method for fitting **rstan** models, and the primary method we'll be using in this ebook, is with the `stan()` function. For us, the two main arguments are the `data` argument, into which we insert our `stan_data`, and the `model_code` argument, into which we insert our `model_code` with its `data`, `parameters`, and `model` block information. There are a whole slew of other arguments with default settings you might want to change. For example, `stan()` automatically samples from four HMC chains by the default setting `chains = 4`, which I generally find reasonable. Though it by default samples from the four chains in sequence, we will instead sample from them in parallel by setting `cores = 4`. To make the results more reproducible, I will also set `seed = 1`.
 
 ```{r}
 #| echo: false
@@ -276,7 +274,7 @@ load(file = "fits/m1.1.rda")
 #| eval: false
 
 m1.1 <- stan(
-  # These two lines are necessary
+  # These two lines are necessary for us
   data = stan_data,
   model_code = model_code,
   # These settings are optional
@@ -338,17 +336,32 @@ str(samp1.1, max.level = 2)
 They look about the same. But do they contain the same posterior draws? We can extract the posterior draws from both with the `posterior::as_draws_df()` function. If we nest that output within the `all.equal()` function, we can test whether the output is identical.
 
 ```{r}
+#| echo: false
+#| eval: false
+
+# Interestingly, the `extract()` output is NOT identical for the two versions
+
+extract(m1.1) |> str()
+extract(samp1.1) |> str()
+
+all.equal(
+  extract(m1.1),
+  extract(samp1.1)
+)
+```
+
+```{r}
 all.equal(
   as_draws_df(m1.1),
   as_draws_df(samp1.1)
 )
 ```
 
-Yep, it is. Both methods returned the exact same HMC draws. *Which method is better?*, you say. Well, I generally prefer the 1-step `stan()` method, and that's the method I use the most. But the 2-step `stan_model()`-to-`sampling()` method has its strengths. We'll see examples of this in @sec-Overthinking-Simulating-the-divorce-example and @sec-Scoring-the-right-data. As the careful reader will see, there are even ways to combine the two methods.
+Yep, it is. Both methods returned the exact same HMC draws. *Which method is better?*, you say. Well, I generally prefer the 1-step `stan()` method, and that's the method I use the most. But the 2-step `stan_model()`-to-`sampling()` method has its strengths. We'll see examples of this in @sec-Overthinking-Simulating-the-divorce-example and @sec-Scoring-the-right-data. As the careful reader will see, there are even tricky ways to combine the two methods.
 
 ## Evaluate the posteior draws
 
-We can use good-old `print()` for a quick summary of the posterior. Here we'll just focus on `m1.1`.
+We can use the good-old `print()` function for a quick summary of the posterior.
 
 ```{r}
 print(m1.1)
@@ -392,7 +405,15 @@ all.equal(
 )
 ```
 
-As for pulling the actual HMC draws, there are two methods I like and use throughout the book. The first is with the `as_draws_df()` function from the **posterior** package, which we briefly saw above. Here's a closer look at the output.
+There are many ways to pull the HMC draws from an **rstan** model. The `extract()` method is perhaps the most native way for the **rstan** package, but I generally don't care for it as its output format is either a list or an array. I prefer data frames, and there are two tidy methods I like and use throughout the book. The first is with the `as_draws_df()` function from the **posterior** package, which we briefly saw above. Here's a closer look at the output.
+
+```{r}
+#| echo: false
+#| eval: false
+
+extract(m1.1) |> str()
+extract(m1.1, permuted = FALSE) |> str()
+```
 
 ```{r}
 as_draws_df(m1.1) |>
@@ -432,7 +453,7 @@ spread_draws(m1.1, a, b) |>
   glimpse()
 ```
 
-Both return data frames with those `.chain`, `.iteration`, and `.draw` index variables. Whereas `gather_draws()` returned a long format with respect to our focal parameters `a` and `b`, `spread_draws()` returned them in a wide format. With a simple model like `m1.1`, these two functions don't really shine. But they tend to work very nicely once we have models with vectors of parameters, such as showcased in @sec-Many-categories and @sec-Logistic-regression-Prosocial-chimpanzees. 
+Both return data frames with those `.chain`, `.iteration`, and `.draw` index variables. Whereas `gather_draws()` returned a long format with respect to our focal parameters `a` and `b`, `spread_draws()` returned them in a wide format. With a simple model like `m1.1`, these two functions don't really shine. But they tend to work very nicely once we have models with vectors of parameters, such as showcased in @sec-Many-categories, @sec-Logistic-regression-Prosocial-chimpanzees, and @sec-Example-Multilevel-tadpoles.
 
 Here's an example of how the long `gather_draws()` output makes it easy to showcase both the parameters in a faceted half-eye plot.
 
