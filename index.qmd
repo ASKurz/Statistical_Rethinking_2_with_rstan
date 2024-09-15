@@ -76,7 +76,7 @@ This is my first ebook with comments sections! Please play nice. I don't plan on
 I'd like to thank the following for their helpful contributions:
 
 * Vincent Arel-Bundock ([\@vincentarelbundock](https://github.com/vincentarelbundock)),
-* Francisco Garre-Frutos([\@franfrutos](https://github.com/franfrutos)),
+* Francisco Garre-Frutos ([\@franfrutos](https://github.com/franfrutos)),
 * Andrew Heiss ([\@andrewheiss](https://github.com/andrewheiss)),
 * Andrew Johnson ([\@andrjohns](https://github.com/andrjohns)),
 * John K. Kruschke ([\@kruschke](https://github.com/kruschke)), and
