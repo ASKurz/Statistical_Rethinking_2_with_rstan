@@ -997,7 +997,7 @@ If you check the `check_divergences()` output, you'll see we still have several 
 check_divergences(m13.6)
 ```
 
-## Divergent transitions and non-centered priors
+## Divergent transitions and non-centered priors {#sec-Divergent-transitions-and-non-centered-priors}
 
 ### Rethinking: No free samples.
 
