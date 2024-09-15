@@ -1598,10 +1598,8 @@ parameters {
   real<lower=0> sigma;
 }
 model {
-  vector[n] a = abar + u;
-  surv ~ binomial(density, inv_logit(a));  // Level-1 likelihood
-  u ~ normal(0, sigma);                    // Level-2 likelihood
-  
+  surv ~ binomial(density, inv_logit(abar + u));  // Level-1 likelihood
+  u ~ normal(0, sigma);                           // Level-2 likelihood
   abar ~ normal(0, 1.5);
   sigma ~ exponential(1);
 }
