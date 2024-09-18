@@ -1473,7 +1473,7 @@ p1 | p2 | p3
 
 ### Post-stratification.
 
-## ~~Summary~~ Centered, non-centered, and the secret third parameterization
+## ~~Summary~~ Centered, non-centered, and the secret third parameterization {#sec-Centered-non-centered-and-the-secret-third-parameterization}
 
 I'd like to spend some more time talking about how we parameterize multilevel models. To that end, let's load the `reedfrogs` data once more.
 
