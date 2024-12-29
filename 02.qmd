@@ -426,7 +426,7 @@ as_draws_df(m2.1) |>
   facet_wrap(~ "italic(n)==36", labeller = label_parsed)
 ```
 
-If you're still confused, cool. This is just a preview. We'll start walking through fitting models with **brms** in @sec-Geocentric-Models and we'll learn a lot about regression with the binomial likelihood in Chapter 11.
+If you're still confused, cool. This is just a preview. We'll start walking through fitting models with **brms** in @sec-Geocentric-Models and we'll learn a lot about regression with the binomial likelihood in @sec-god-spiked-the-integers.
 
 #### Overthinking: Monte Carlo globe tossing.
 
@@ -448,7 +448,7 @@ for (i in 2:n_samples) {
     if (p_new < 0) p_new <- abs(p_new)
     if (p_new > 1) p_new <- 2 - p_new
     q0 <- dbinom(x = w, size = w + l, prob = p[i - 1])
-    q1 <- dbinom(x = w, size = w + l, prob = p_new )
+    q1 <- dbinom(x = w, size = w + l, prob = p_new)
     p[i] <- ifelse(runif(1) < q1 / q0, p_new, p[i - 1])
 }
 ```
