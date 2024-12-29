@@ -492,7 +492,7 @@ $$
 
 I generally do not like this style of notation, and I rarely use it. It's not common to see it in papers in my field, and I suspect it many of my colleagues would find it actively discouraging. However, this style of notation will come in handy for some of the `stan()` code to come, starting with the models in @sec-A-second-method.
 
-### Approximating the posterior.
+### Approximating the posterior. {#sec-approximating-the-posterior}
 
 Define `model_code_5.3`.
 
