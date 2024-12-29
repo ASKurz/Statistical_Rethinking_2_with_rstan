@@ -518,7 +518,7 @@ data {
 }
 parameters {
   real mu;
-  real<lower=0,upper=50> sigma;
+  real<lower=0, upper=50> sigma;
 }
 model {
   height ~ normal(mu, sigma);  // Likelihood
@@ -590,7 +590,7 @@ data {
 }
 parameters {
   real mu;
-  real<lower=0,upper=50> sigma;
+  real<lower=0, upper=50> sigma;
 }
 model {
   height ~ normal(mu, sigma);
@@ -944,7 +944,7 @@ data {
 parameters {
   real a;
   real<lower=0> b;
-  real<lower=0,upper=50> sigma;
+  real<lower=0, upper=50> sigma;
 }
 model {
   vector[n] mu;
@@ -1022,7 +1022,7 @@ data {
 parameters {
   real a;
   real<lower=0> log_b;
-  real<lower=0,upper=50> sigma;
+  real<lower=0, upper=50> sigma;
 }
 model {
   vector[n] mu;
@@ -1192,7 +1192,7 @@ data {
 parameters {
   real a;
   real<lower=0> b;
-  real<lower=0,upper=50> sigma;
+  real<lower=0, upper=50> sigma;
 }
 model {
   vector[n] mu;
@@ -1430,7 +1430,7 @@ With a **brms**-based workflow, we can use functions like base-**R** `predict()`
 
 ## Curves from lines
 
-### Polynomial regression.
+### Polynomial regression. {#sec-polynomial-regression}
 
 Remember `d`?
 
@@ -1486,7 +1486,7 @@ parameters {
   real a;
   real<lower=0> b1;
   real b2;
-  real<lower=0,upper=50> sigma;
+  real<lower=0, upper=50> sigma;
 }
 model {
   vector[n] mu;
@@ -1595,7 +1595,7 @@ parameters {
   real<lower=0> b1;
   real b2;
   real b3;
-  real<lower=0,upper=50> sigma;
+  real<lower=0, upper=50> sigma;
 }
 model {
   vector[n] mu;
@@ -1675,7 +1675,7 @@ data {
 parameters {
   real a;
   real<lower=0> b1;
-  real<lower=0,upper=50> sigma;
+  real<lower=0, upper=50> sigma;
 }
 model {
   vector[n] mu;
