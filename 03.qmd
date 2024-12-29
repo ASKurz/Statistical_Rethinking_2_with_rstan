@@ -123,7 +123,7 @@ draws |>
   mutate(name = factor(name, levels = partion_vector)) |> 
   
   ggplot(aes(x = p, fill = value)) +
-  geom_histogram(boundary = 0, binwidth = 0.01) +
+  geom_histogram(binwidth = 0.01, boundary = 0) +
   scale_x_continuous(expression(proportion~water~(italic(p))), limits = 0:1) +
   scale_y_continuous(NULL, breaks = NULL) +
   scale_fill_viridis_d(end = 0.6, breaks = NULL) +
@@ -227,7 +227,7 @@ draws |>
 hdi(draws$p)
 ```
 
-Though it's easy to compute percentile-based intervals with base-**R** `quantile()`, it not so easy to compute HDIs that way. But we can with the various convenience functions from the **tidybayes** package. If all we want are the 50% HDI's for `p`, we can use the `hdi()` function. Unless the HDI is multimodal, `hdi()` will return a 1X2 numeric matrix. Here we'll save that matrix as `p_hdi`.
+Though it's easy to compute percentile-based intervals with base-**R** `quantile()`, it not so easy to compute HDIs that way. But we can compute them with the various convenience functions from the **tidybayes** package. If all we want are the 50% HDIs for `p`, we can use the `hdi()` function. Unless the HDI is multimodal, `hdi()` will return a 1X2 numeric matrix. Here we'll save that matrix as `p_hdi`.
 
 ```{r}
 p_hdi <- hdi(draws$p, .width = 0.5)
@@ -252,7 +252,7 @@ draws |>
                            labels = c("50% Percentile Interval", "50% HPDI"))) |> 
   
   ggplot(aes(x = p, fill = value)) +
-  geom_histogram(boundary = 0, binwidth = 0.01) +
+  geom_histogram(binwidth = 0.01, boundary = 0) +
   scale_x_continuous(expression(proportion~water~(italic(p))), limits = 0:1) +
   scale_y_continuous(NULL, breaks = NULL) +
   scale_fill_viridis_d(end = 0.6, breaks = NULL) +
@@ -285,7 +285,7 @@ Here they are in a plot like the left panel of Figure 3.4.
 
 draws |> 
   ggplot(aes(x = p)) +
-  geom_histogram(boundary = 0, binwidth = 0.01) +
+  geom_histogram(binwidth = 0.01, boundary = 0) +
   geom_vline(data = point_estimates,
              aes(xintercept = estimate, color = point)) +
   scale_x_continuous(expression(proportion~water~(italic(p))), limits = 0:1) +
@@ -316,7 +316,7 @@ To start of with how we might plot an HMC-derived posterior density like McElrea
 # Left
 p1 <- as_draws_df(m3.1) |> 
   ggplot(aes(x = p)) +
-  geom_histogram(boundary = 0, binwidth = 0.01)
+  geom_histogram(binwidth = 0.01, boundary = 0)
 
 # Save the breaks as a vector
 p_breaks <- seq(from = 0, to = 1, by = 0.01)
@@ -333,7 +333,7 @@ p2 <- as_draws_df(m3.1) |>
 p1 | p2
 ```
 
-The left histogram is made with the usual `geom_histogram()` code, with adjustments to the `boundary` and `binwidth` arguments. The histogram on the right was made with `geom_bar()`, which we might usually use to make bar charts. In our data-wrangling code, we used the base-**R** `cut()` function to discretize the HMC draws for `p` into bins. We defined those bins using the `breaks` argument, into which we inserted our `p_breaks` sequence. Note how that sequence of breaks via `cut()` produced the exact same bins as `geom_histogram()` with our custom `boundary` and `binwidth` settings.
+The left histogram is made with the usual `geom_histogram()` code, with adjustments to the `binwidth` and `boundary` arguments. The histogram on the right was made with `geom_bar()`, which we might usually use to make bar charts. In our data-wrangling code, we used the base-**R** `cut()` function to discretize the HMC draws for `p` into bins. We defined those bins using the `breaks` argument, into which we inserted our `p_breaks` sequence. Note how that sequence of breaks via `cut()` produced the exact same bins as `geom_histogram()` with our custom `binwidth` and `boundary` settings.
 
 The reason we'd go through all this extra labor with `cut()` is because we can use those bins to compute the counts for the bins containing the nine example parameter values McElreath showcased with his vertical lines. Here are those counts.
 
@@ -370,7 +370,7 @@ p1 <- as_draws_df(m3.1) |>
   
   ggplot(aes(x = p)) +
   geom_histogram(aes(fill = line),
-                 boundary = 0, binwidth = 0.01) +
+                 binwidth = 0.01, boundary = 0) +
   scale_x_continuous("probability of water", breaks = 0:2 / 2, limits = 0:1) +
   scale_y_continuous(NULL, breaks = NULL) +
   scale_fill_manual(values = c("gray65", "gray35"), breaks = NULL) +
