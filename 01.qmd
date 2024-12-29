@@ -64,7 +64,7 @@ d |>
   xlim(0, 100)
 ```
 
-For the code to come, we'll add two variables to the `d` data frame. The `count` variable will be the same as `SALAMAN`, but just with a simpler name. Following conventions McElreath used throughout the text, the `cover_std` variable will be a standardized version of `PCTCOVER`.
+For the code to come, we'll add two variables to the `d` data frame. The `count` variable will be the same as `SALAMAN`, but just with a simpler name. Following conventions McElreath used throughout the text, the `cover_std` variable will be a standardized version of `PCTCOVER`.^[I'm assuming readers of this ebook are familiar with what it means to *standardize* a variable. If you're not, McElreath introduced that in @sec-polynomial-regression.]
 
 ```{r}
 d <- d |> 
@@ -98,9 +98,9 @@ the priors of which I've designed as weakly-regularizing on the scale of the dat
 
 ## Stan likes data in lists
 
-Many model-fitting functions in **R** allow for a variety of data types, including data frames, lists, free-floating vectors, and so on. Stan expects data in lists, and the primary model-fitting functions in the **rstan** package expect data lists, too.
+Many model-fitting functions in **R** allow for a variety of data types, including data frames, lists, free-floating vectors, and so on. Stan expects data in lists, and the primary model-fitting functions in the **rstan** package expect data lists, too.^[One exception is if your data are simple aggregated counts to be modeled in a binomial model. In that case, it's possible to just pass your data summaries directly in the `data` block, which we'll be introducing shortly. I don't believe we'll be showing that kind of work flow in this ebook, however.]
 
-The **tidybayes** package includes a `compose_data()`, which makes it easy to convert data frames into the list format expected by **rstan**. We will use the `compose_data()` function throughout this ebook, and our convention will be to save the output as an object called `stan_data`. Here's what this can look like for our salamanders example.
+The **tidybayes** package includes a `compose_data()` function, which makes it easy to convert data frames into the list format expected by **rstan**. We will use the `compose_data()` function throughout this ebook, and our convention will be to save the output as an object called `stan_data`. Here's what this can look like for our salamanders example.
 
 ```{r}
 stan_data <- d |> 
@@ -180,7 +180,7 @@ data {
 
 All the data required by the model must be declared in the `data` block.^[A possible exception is if you define a transformed version of any of your data in the `transformed data` block. However, I do not plan on using the `transformed data` approach in this ebook.] One generally defines one variable per line, but it is possible to declare multiple variables in a single line (see [here](https://mc-stan.org/docs/reference-manual/types.html#declaring-multiple-variables-at-once)).
 
-It's important to understand that Stan programs are read in order, top to bottom. Thus the first line in a `data` block is often used to define any scalar values being used to define dimensions. Recall how earlier we learned the `compose_data()` function automatically makes an `n` scalar, which defines the number of rows in the original data set. We will be using that `n` scalar, and its ilk, a lot in this ebook.
+It's important to understand that Stan programs are read in order, top to bottom. Thus the first line in a `data` block often defines a scalar value we later use to define a data dimension. Recall how earlier we learned the `compose_data()` function automatically makes an `n` scalar, which defines the number of rows in the original data set. We will be using that `n` scalar and its ilk a lot in this ebook.
 
 With the syntax of `int` in this first line, we have declared that `n` scalar value is a integer. Stan can accept two primitive number types, which are `int` for integers and `real` for continuous numbers. There are other special types, such as `complex`, but I believe we will just be using `int` and `real` in this ebook.
 
@@ -253,7 +253,7 @@ There are even other functions that follow the so-called *generalized linear mod
 
 Anyway, you'll note that our prior lines follow a similar kind of syntax as our likelihood line for the `count` variable. Each prior line started with the parameter of interest on the left side, followed by the tilde `~`, and then concluded with a distribution. With the prior for `a`, you'll notice it is legal to insert functions like `log()` into the hyperparameters. Though not shown here, it is also possible to assign vectors of parameters to a common prior, which we will see in some of the examples in the ebook (e.g., see @sec-Many-categories).
 
-There are many many other fine points we could discuss here about the `model` block, but I think this is a fine place to stop for our basic introduction. We have the rest of the ebook for the details.
+There are many many other fine points we could discuss here about the `model` block, but I think this is a good place to stop for our basic introduction. We have the rest of the ebook for the details.
 
 ## HMC sampling with **rstan**
 
@@ -367,7 +367,7 @@ We can use the good-old `print()` function for a quick summary of the posterior.
 print(m1.1)
 ```
 
-There are various ways to customize this output, and you'll see I often use the `pars` and `probs` arguments throughout the text.
+There are various ways to customize this output, and you'll see I often use the `pars` and `probs` arguments throughout the text (e.g., @sec-approximating-the-posterior).
 
 Note how the `print()` output includes the `se_mean`, `n_eff`, and `Rhat` columns for basic numeric summaries of the quality of the HMC draws. If you require more detail and greater customization, consider the `summarise_draws()` function from the **posterior** package. Here's what that looks like with its `default_convergence_measures()` helper function.
 
