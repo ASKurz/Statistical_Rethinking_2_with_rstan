@@ -2200,7 +2200,7 @@ data {
 }
 parameters {
   vector[n_sex] a;
-  real<lower=0,upper=50> sigma;
+  real<lower=0, upper=50> sigma;
 }
 model {
   height ~ normal(a[sex], sigma);
@@ -2229,7 +2229,7 @@ data {
 parameters {
   real b0;
   real b1;
-  real<lower=0,upper=50> sigma;
+  real<lower=0, upper=50> sigma;
 }
 model {
   height ~ normal(b0 + b1 * male, sigma);
