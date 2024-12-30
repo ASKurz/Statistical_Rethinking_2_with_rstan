@@ -1640,7 +1640,7 @@ m13.2sc <- stan(
   cores = 4, seed = 13)
 ```
 
-For the sake of space, I'm not going to show the `print()` output for these. But if you're following along on your computer, it's work giving a look.
+For the sake of space, I'm not going to show the `print()` output for these. But if you're following along on your computer, it's worth giving a look.
 
 ```{r}
 #| eval: false
