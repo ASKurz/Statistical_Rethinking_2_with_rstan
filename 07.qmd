@@ -560,9 +560,10 @@ Now compute the `model.matrix()` output for each using the `formula` column as i
 
 ```{r}
 d_fits <- d_fits |> 
-  mutate(mm = map(.x = formula, .f =~ model.matrix(data = d, object = .x)),
-         d_pred = map(.x = predictors, .f =~ d_pred |> 
-                         select(mass_std1:str_c("mass_std", .x))))
+  mutate(mm = map(.x = formula, 
+                  .f = \(.x) model.matrix(data = d, object = .x)),
+         d_pred = map(.x = predictors, 
+                      .f = \(.x) d_pred |> select(mass_std1:str_c("mass_std", .x))))
 
 # What?
 print(d_fits)
@@ -573,11 +574,13 @@ Next we compute the `stan_data` using the `mm`, `d_pred`, and `formula` columns 
 ```{r}
 d_fits <- d_fits |> 
   mutate(stan_data = pmap(.l = list(mm, d_pred, formula), 
-                          .f =~ d |> 
-                            select(brain_std:mass_std6) |> 
-                            compose_data(X = ..1,
-                                         Xpred = model.matrix(data = ..2, object = ..3),
-                                         k = ncol(..1))))
+                          .f = function(.x, .y, .z) {
+                            d |> 
+                              select(brain_std:mass_std6) |> 
+                              compose_data(X = .x,
+                                           Xpred = model.matrix(data = .y, object = .z),
+                                           k = ncol(.x))
+                          }))
 
 # What?
 print(d_fits)
@@ -636,7 +639,7 @@ load(file = "fits/m7.1_through_m7.6.rda")
 
 d_fits <- d_fits |> 
   mutate(sampling = map(.x = stan_data, 
-                        .f =~ sampling(
+                        .f = \(.x) sampling(
                           object = stan_dso, 
                           data = .x,
                           seed = 7)))
@@ -878,29 +881,30 @@ Add a `mm` column based on `model.matrix()` output.
 
 ```{r}
 d_fits_subset <- d_fits_subset |> 
-  mutate(mm = map2(.x = row,
-                   .y = formula,
-                   .f =~ model.matrix(data = d |> 
-                                        filter(row_number() != .x),
-                                      object = .y)))
+  mutate(mm = map2(
+    .x = row,
+    .y = formula,
+    .f = \(.x, .y) model.matrix(data = d |> filter(row_number() != .x), object = .y)))
 
 # What?
 print(d_fits_subset)
 ```
 
 Next we add the `d_pred` column like before. When we define the `stan_data` this time, we also include the `row` column as one of the inputs in `pmap()`, which will allow us to subset the `d` data we input to `compose_data()`.
-
+                                         
 ```{r}
 d_fits_subset <- d_fits_subset |> 
-  mutate(d_pred = map(.x = predictors, .f =~ d_pred |> 
-                         select(mass_std1:str_c("mass_std", .x)))) |> 
+  mutate(d_pred = map(.x = predictors, 
+                      .f = \(.x) select(d_pred, mass_std1:str_c("mass_std", .x)))) |> 
   mutate(stan_data = pmap(.l = list(row, mm, d_pred, formula), 
-                          .f =~ d |> 
-                            filter(row_number() != ..1) |> 
-                            select(brain_std:mass_std6) |> 
-                            compose_data(X = ..2,
-                                         Xpred = model.matrix(data = ..3, object = ..4),
-                                         k = ncol(..2))))
+                          .f = function(.a, .b, .c, .d) {
+                            d |> 
+                              filter(row_number() != .a) |> 
+                              select(brain_std:mass_std6) |> 
+                              compose_data(X = .b,
+                                           Xpred = model.matrix(data = .c, object = .d),
+                                           k = ncol(.b))
+                          }))
 
 # What?
 print(d_fits_subset)
@@ -920,10 +924,7 @@ load(file = "fits/m7.1s_through_m7.6s.rda")
 
 d_fits_subset <- d_fits_subset |> 
   mutate(sampling = map(.x = stan_data, 
-                        .f =~ sampling(
-                          object = stan_dso, 
-                          data = .x,
-                          seed = 7)))
+                        .f = \(.x) sampling(object = stan_dso, data = .x, seed = 7)))
 ```
 
 Extract the `as_draws_df()` output from each model.
@@ -1158,9 +1159,9 @@ That is the log-pointwise-predictive-density, $\text{lppd}(y, \Theta)$, computed
 
 ### Scoring the right data. {#sec-Scoring-the-right-data}
 
-Since our `stan()` models from above do not have log-likelihood values saved from each, we have to options to make an alternative to McElreath's R code 7.15:
+Since our `stan()` models from above do not have log-likelihood values saved from each, we have two options to make an alternative to McElreath's R code 7.15:
 
-* we can compute each by hand, like in the last section, but with a custom-defined linear function within `dnorm()`, or
+* we can compute each by hand, like in the last section, but with a custom-defined linear function within `dnorm()`; or
 * we can refit the models after adding `log_lik[i]` definitions in the `generated quantities` block of the model program.
 
 I'm opting for the latter. To that end, define the `model_code_7.1to6ll` object with a `generated quantities` block.
@@ -1218,20 +1219,17 @@ d_fits_ll <- d_fits |>
   select(model, stan_data) |> 
   # Sample from each model
   mutate(sampling = map(.x = stan_data, 
-                        .f =~ sampling(
-                          object = stan_dso_ll, 
-                          data = .x,
-                          seed = 7))) |> 
+                        .f = \(.x) sampling(object = stan_dso_ll, data = .x, seed = 7))) |> 
   # Extract the posterior draws for the `log_lik` estimates 
   mutate(spread_draws = map(.x = sampling, 
-                            .f =~ spread_draws(
-                              model = .x,
-                              log_lik[i])))
+                            .f = \(.x) spread_draws(model = .x, log_lik[i])))
 ```
 
 Compute the `total_log_probability_score` for each model.
 
 ```{r}
+#| message: false
+
 d_fits_ll |> 
   select(model, spread_draws) |> 
   unnest(spread_draws) |> 
