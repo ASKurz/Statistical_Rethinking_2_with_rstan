@@ -1161,8 +1161,8 @@ As far as the workflow in McElreath's R code 4.48 and 4.49 goes, we'll do this i
 
 ```{r}
 n_df <- tibble(n = c(10, 50, 150, 352)) |> 
-  mutate(data = map(.x = n, .f =~ d2 |> 
-                      slice(1:.x)))
+  mutate(data = map(.x = n, 
+                    .f = \(.x) slice(d2, 1:.x)))
 
 # What?
 print(n_df)
@@ -1172,8 +1172,8 @@ Now make a `stan_data` column with the data in a list for **rstan**. Note how we
 
 ```{r}
 n_df <- n_df |> 
-  mutate(stan_data = map(.x = data, .f =~ .x |> 
-                           compose_data(xbar = mean(.x$weight))))
+  mutate(stan_data = map(.x = data, 
+                         .f = \(.x) .x |> compose_data(xbar = mean(.x$weight))))
 
 # What?
 print(n_df)
@@ -1224,10 +1224,12 @@ For the second step, we sample from the `stan_dso` object with the `sampling()` 
 
 n_df <- n_df |> 
   mutate(sampling = map(.x = stan_data, 
-                        .f =~ sampling(
-                          data = .x,
-                          object = stan_dso, 
-                          seed = 4)))
+                        .f = function(.x) {
+                          sampling(
+                            data = .x,
+                            object = stan_dso, 
+                            seed = 4)
+                        }))
 ```
 
 Now extract 20 rows from the model fits with `as_draws_df()` and `slice_sample()`.
@@ -1237,8 +1239,10 @@ set.seed(1)
 
 n_df <- n_df |> 
   mutate(as_draws_df = map(.x = sampling,
-                           .f =~ as_draws_df(.x) |> 
-                             slice_sample(n = 20)))
+                           .f = function(.x) {
+                             as_draws_df(.x) |> 
+                               slice_sample(n = 20)
+                             }))
 
 # What?
 print(n_df)
@@ -1249,7 +1253,7 @@ We'll need to extract the `xbar` values for easy **tidyverse** wrangling, and th
 ```{r}
 n_df <- n_df |> 
   mutate(xbar = map_dbl(.x = stan_data,
-                        .f =~ .x[["xbar"]]),
+                        .f = \(.x) .x[["xbar"]]),
          n = str_c("italic(n)==", n) |> 
            factor(levels = str_c("italic(n)==", c(10, 50, 150, 352))))
 
