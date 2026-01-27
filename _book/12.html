@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.450">
+<meta name="generator" content="quarto-1.7.32">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Statistical rethinking 2 with rstan and the tidyverse - 12&nbsp; Monsters and Mixtures</title>
+<title>12&nbsp; Monsters and Mixtures – *Statistical rethinking* 2 with rstan and the tidyverse</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -21,6 +21,7 @@ ul.task-list li input[type="checkbox"] {
   vertical-align: middle;
 }
 /* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
@@ -58,6 +59,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 div.csl-bib-body { }
 div.csl-entry {
   clear: both;
+  margin-bottom: 0em;
 }
 .hanging-indent div.csl-entry {
   margin-left:2em;
@@ -85,22 +87,29 @@ div.csl-indent {
 <meta name="quarto:offset" content="./">
 <link href="./13.html" rel="next">
 <link href="./11.html" rel="prev">
-<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-7d082c015fa132ca880f975003d7bf2f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -109,30 +118,58 @@ div.csl-indent {
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
   }
 }</script>
 
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
-<body class="nav-sidebar floating">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav">
     <div class="container-fluid d-flex">
-      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./12.html"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Monsters and Mixtures</span></a></li></ol></nav>
-      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-      </a>
-      <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./12.html"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Monsters and Mixtures</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
         <i class="bi bi-search"></i>
       </button>
     </div>
@@ -141,12 +178,12 @@ div.csl-indent {
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./"><em>Statistical rethinking</em> 2 with rstan and the tidyverse</a> 
         <div class="sidebar-tools-main">
-    <a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+    <a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
 </div>
     </div>
       </div>
@@ -250,7 +287,7 @@ div.csl-indent {
     </ul>
     </div>
 </nav>
-<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" class="toc-active">
@@ -259,28 +296,28 @@ div.csl-indent {
   <ul>
   <li><a href="#over-dispersed-counts" id="toc-over-dispersed-counts" class="nav-link active" data-scroll-target="#over-dispersed-counts"><span class="header-section-number">12.1</span> Over-dispersed counts</a>
   <ul>
-  <li><a href="#sec-Beta-binomial" id="toc-sec-Beta-binomial" class="nav-link" data-scroll-target="#sec-Beta-binomial"><span class="header-section-number">12.1.1</span> Beta-binomial.</a></li>
-  <li><a href="#negative-binomial-or-gamma-poisson." id="toc-negative-binomial-or-gamma-poisson." class="nav-link" data-scroll-target="#negative-binomial-or-gamma-poisson."><span class="header-section-number">12.1.2</span> Negative-binomial or gamma-Poisson.</a></li>
-  <li><a href="#over-dispersion-entropy-and-information-criteria." id="toc-over-dispersion-entropy-and-information-criteria." class="nav-link" data-scroll-target="#over-dispersion-entropy-and-information-criteria."><span class="header-section-number">12.1.3</span> Over-dispersion, entropy, and information criteria.</a>
+  <li><a href="#sec-Beta-binomial" id="toc-sec-Beta-binomial" class="nav-link" data-scroll-target="#sec-Beta-binomial"><span class="header-section-number">12.1.1</span> Beta-binomial</a></li>
+  <li><a href="#negative-binomial-or-gamma-poisson" id="toc-negative-binomial-or-gamma-poisson" class="nav-link" data-scroll-target="#negative-binomial-or-gamma-poisson"><span class="header-section-number">12.1.2</span> Negative-binomial or gamma-Poisson</a></li>
+  <li><a href="#over-dispersion-entropy-and-information-criteria" id="toc-over-dispersion-entropy-and-information-criteria" class="nav-link" data-scroll-target="#over-dispersion-entropy-and-information-criteria"><span class="header-section-number">12.1.3</span> Over-dispersion, entropy, and information criteria</a>
   <ul>
-  <li><a href="#overthinking-continuous-mixtures." id="toc-overthinking-continuous-mixtures." class="nav-link" data-scroll-target="#overthinking-continuous-mixtures."><span class="header-section-number">12.1.3.1</span> Overthinking: Continuous mixtures.</a></li>
+  <li><a href="#overthinking-continuous-mixtures" id="toc-overthinking-continuous-mixtures" class="nav-link" data-scroll-target="#overthinking-continuous-mixtures"><span class="header-section-number">12.1.3.1</span> Overthinking: Continuous mixtures</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#zero-inflated-outcomes" id="toc-zero-inflated-outcomes" class="nav-link" data-scroll-target="#zero-inflated-outcomes"><span class="header-section-number">12.2</span> Zero-inflated outcomes</a>
   <ul>
-  <li><a href="#rethinking-breaking-the-law." id="toc-rethinking-breaking-the-law." class="nav-link" data-scroll-target="#rethinking-breaking-the-law."><span class="header-section-number">12.2.0.1</span> Rethinking: Breaking the law.</a></li>
-  <li><a href="#example-zero-inflated-poisson." id="toc-example-zero-inflated-poisson." class="nav-link" data-scroll-target="#example-zero-inflated-poisson."><span class="header-section-number">12.2.1</span> Example: Zero-inflated Poisson.</a>
+  <li><a href="#rethinking-breaking-the-law" id="toc-rethinking-breaking-the-law" class="nav-link" data-scroll-target="#rethinking-breaking-the-law"><span class="header-section-number">12.2.0.1</span> Rethinking: Breaking the law</a></li>
+  <li><a href="#example-zero-inflated-poisson" id="toc-example-zero-inflated-poisson" class="nav-link" data-scroll-target="#example-zero-inflated-poisson"><span class="header-section-number">12.2.1</span> Example: Zero-inflated Poisson</a>
   <ul>
-  <li><a href="#overthinking-zero-inflated-poisson-calculations-in-stan." id="toc-overthinking-zero-inflated-poisson-calculations-in-stan." class="nav-link" data-scroll-target="#overthinking-zero-inflated-poisson-calculations-in-stan."><span class="header-section-number">12.2.1.1</span> Overthinking: Zero-inflated Poisson calculations in Stan.</a></li>
+  <li><a href="#overthinking-zero-inflated-poisson-calculations-in-stan" id="toc-overthinking-zero-inflated-poisson-calculations-in-stan" class="nav-link" data-scroll-target="#overthinking-zero-inflated-poisson-calculations-in-stan"><span class="header-section-number">12.2.1.1</span> Overthinking: Zero-inflated Poisson calculations in Stan</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#ordered-categorical-outcomes" id="toc-ordered-categorical-outcomes" class="nav-link" data-scroll-target="#ordered-categorical-outcomes"><span class="header-section-number">12.3</span> Ordered categorical outcomes</a>
   <ul>
-  <li><a href="#example-moral-intuition." id="toc-example-moral-intuition." class="nav-link" data-scroll-target="#example-moral-intuition."><span class="header-section-number">12.3.1</span> Example: Moral intuition.</a></li>
-  <li><a href="#describing-an-ordered-distribution-with-intercepts." id="toc-describing-an-ordered-distribution-with-intercepts." class="nav-link" data-scroll-target="#describing-an-ordered-distribution-with-intercepts."><span class="header-section-number">12.3.2</span> Describing an ordered distribution with intercepts.</a></li>
-  <li><a href="#adding-predictor-variables." id="toc-adding-predictor-variables." class="nav-link" data-scroll-target="#adding-predictor-variables."><span class="header-section-number">12.3.3</span> Adding predictor variables.</a>
+  <li><a href="#example-moral-intuition" id="toc-example-moral-intuition" class="nav-link" data-scroll-target="#example-moral-intuition"><span class="header-section-number">12.3.1</span> Example: Moral intuition</a></li>
+  <li><a href="#describing-an-ordered-distribution-with-intercepts" id="toc-describing-an-ordered-distribution-with-intercepts" class="nav-link" data-scroll-target="#describing-an-ordered-distribution-with-intercepts"><span class="header-section-number">12.3.2</span> Describing an ordered distribution with intercepts</a></li>
+  <li><a href="#adding-predictor-variables" id="toc-adding-predictor-variables" class="nav-link" data-scroll-target="#adding-predictor-variables"><span class="header-section-number">12.3.3</span> Adding predictor variables</a>
   <ul>
-  <li><a href="#rethinking-staring-into-the-abyss." id="toc-rethinking-staring-into-the-abyss." class="nav-link" data-scroll-target="#rethinking-staring-into-the-abyss."><span class="header-section-number">12.3.3.1</span> Rethinking: Staring into the abyss.</a></li>
+  <li><a href="#rethinking-staring-into-the-abyss" id="toc-rethinking-staring-into-the-abyss" class="nav-link" data-scroll-target="#rethinking-staring-into-the-abyss"><span class="header-section-number">12.3.3.1</span> Rethinking: Staring into the abyss</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#sec-Ordered-categorical-predictors" id="toc-sec-Ordered-categorical-predictors" class="nav-link" data-scroll-target="#sec-Ordered-categorical-predictors"><span class="header-section-number">12.4</span> Ordered categorical predictors</a></li>
@@ -288,7 +325,7 @@ div.csl-indent {
   <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info">Session info</a></li>
   <li><a href="#comments" id="toc-comments" class="nav-link" data-scroll-target="#comments">Comments</a></li>
   </ul>
-<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -308,7 +345,9 @@ div.csl-indent {
   </div>
   
 
+
 </header>
+
 
 <p>Load the packages.</p>
 <div class="cell">
@@ -330,7 +369,7 @@ div.csl-indent {
 <section id="over-dispersed-counts" class="level2" data-number="12.1">
 <h2 data-number="12.1" class="anchored" data-anchor-id="over-dispersed-counts"><span class="header-section-number">12.1</span> Over-dispersed counts</h2>
 <section id="sec-Beta-binomial" class="level3" data-number="12.1.1">
-<h3 data-number="12.1.1" class="anchored" data-anchor-id="sec-Beta-binomial"><span class="header-section-number">12.1.1</span> Beta-binomial.</h3>
+<h3 data-number="12.1.1" class="anchored" data-anchor-id="sec-Beta-binomial"><span class="header-section-number">12.1.1</span> Beta-binomial</h3>
 <p>Here’s how we might plot the beta distribution, as discussed in McElreath’s <strong>R</strong> code 12.1. Note our use of the <code>rethinking::dbeta2()</code> function, which is parameterized in terms of <code>prob</code> (i.e., the mean, <span class="math inline">\(\alpha / (\alpha + \beta)\)</span>) and <code>theta</code> (i.e., the concentration, <span class="math inline">\(\alpha + \beta\)</span>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>pbar  <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
@@ -346,7 +385,11 @@ div.csl-indent {
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">expression</span>(The<span class="sc">~</span>beta<span class="sc">~</span>distribution),</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>          <span class="at">subtitle =</span> <span class="fu">expression</span>(<span class="st">"Defined in terms of "</span><span class="sc">*</span>mu<span class="sc">*</span><span class="st">" (i.e., pbar) and "</span><span class="sc">*</span>kappa<span class="sc">*</span><span class="st">" (i.e., theta)"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="336"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="336"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>In his <span class="citation" data-cites="kruschkeDoingBayesianData2015">(<a href="references.html#ref-kruschkeDoingBayesianData2015" role="doc-biblioref">2015</a>)</span> text, <a href="https://sites.google.com/site/doingbayesiandataanalysis/"><em>Doing Bayesian data analysis</em></a>, Kruschke provided code for a convenience function that takes <code>pbar</code> and <code>theta</code> as inputs and returns the corresponding <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span> values. Here’s the function:</p>
@@ -386,7 +429,11 @@ $b
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">expression</span>(The<span class="sc">~</span>beta<span class="sc">~</span>distribution),</span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>          <span class="at">subtitle =</span> <span class="fu">expression</span>(<span class="st">"This time defined in terms of "</span><span class="sc">*</span>alpha<span class="sc">*</span><span class="st">" and "</span><span class="sc">*</span>beta))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="336"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="336"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>McElreath encouraged us to “explore different values for <code>pbar</code> and <code>theta</code>” (p.&nbsp;371). Here’s a grid of plots with <span class="math inline">\(\bar p \in \{0.25, 0.5, 0.75 \}\)</span> and <span class="math inline">\(\theta \in \{5, 15, 30 \}\)</span>.</p>
@@ -408,7 +455,11 @@ $b
 <span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
 <span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(kappa <span class="sc">~</span> mu, <span class="at">labeller =</span> label_parsed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="384"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="384"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>The statistical model we’ll be fitting follows the form</p>
@@ -554,7 +605,11 @@ convergence, Rhat=1).</code></pre>
 <span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>p1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="312"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="312"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Here’s one way to make the right panel of Figure 12.1, and then combine it with the left panel, above, to display the full figure. Note our use of the <code>pbar[i]</code> vector in <code>spread_draws()</code>.</p>
@@ -580,13 +635,17 @@ convergence, Rhat=1).</code></pre>
 <span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine</span></span>
 <span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">|</span> p2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="648"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="648"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>As in the text, the raw data are consistent with the prediction intervals. But those intervals are so incredibly wide, they’re hardly an endorsement of the model. Once we learn about hierarchical models, we’ll be able to do much better.</p>
 </section>
-<section id="negative-binomial-or-gamma-poisson." class="level3" data-number="12.1.2">
-<h3 data-number="12.1.2" class="anchored" data-anchor-id="negative-binomial-or-gamma-poisson."><span class="header-section-number">12.1.2</span> Negative-binomial or gamma-Poisson.</h3>
+<section id="negative-binomial-or-gamma-poisson" class="level3" data-number="12.1.2">
+<h3 data-number="12.1.2" class="anchored" data-anchor-id="negative-binomial-or-gamma-poisson"><span class="header-section-number">12.1.2</span> Negative-binomial or gamma-Poisson</h3>
 <p>We might express the gamma-Poisson (negative binomial) as</p>
 <p><span class="math display">\[y_i \sim \operatorname{Gamma-Poisson}(\lambda, \phi),\]</span></p>
 <p>where <span class="math inline">\(\lambda\)</span> is the mean or rate, and <span class="math inline">\(\alpha\)</span> is the dispersion or scale.</p>
@@ -614,7 +673,7 @@ convergence, Rhat=1).</code></pre>
 10     Hawaii     275000     low          71     6.6 10   1</code></pre>
 </div>
 </div>
-<p>If you take a look at McElreath’s <code>m12.2</code>, you’ll see it’s a gamma-Poisson version of the non-linear model <code>m11.11</code> he fit back in <a href="11.html#sec-Overthinking-Modeling-tool-innovation"><span>Section&nbsp;11.2.1.1</span></a>. We can describe this new version of the model as</p>
+<p>If you take a look at McElreath’s <code>m12.2</code>, you’ll see it’s a gamma-Poisson version of the non-linear model <code>m11.11</code> he fit back in <a href="11.html#sec-Overthinking-Modeling-tool-innovation" class="quarto-xref"><span>Section 11.2.1.1</span></a>. We can describe this new version of the model as</p>
 <p><span class="math display">\[
 \begin{align*}
 \text{total-tools}_i &amp; \sim \operatorname{Gamma-Poisson} (\lambda_i, \phi) \\
@@ -806,25 +865,29 @@ model2  -0.7       5.7   -41.4      1.7         1.2   0.2     82.7   3.3   </cod
 <span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> likelihood) <span class="sc">+</span></span>
 <span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="600"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid figure-img" width="600"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
-<section id="over-dispersion-entropy-and-information-criteria." class="level3" data-number="12.1.3">
-<h3 data-number="12.1.3" class="anchored" data-anchor-id="over-dispersion-entropy-and-information-criteria."><span class="header-section-number">12.1.3</span> Over-dispersion, entropy, and information criteria.</h3>
-<section id="overthinking-continuous-mixtures." class="level4" data-number="12.1.3.1">
-<h4 data-number="12.1.3.1" class="anchored" data-anchor-id="overthinking-continuous-mixtures."><span class="header-section-number">12.1.3.1</span> Overthinking: Continuous mixtures.</h4>
+<section id="over-dispersion-entropy-and-information-criteria" class="level3" data-number="12.1.3">
+<h3 data-number="12.1.3" class="anchored" data-anchor-id="over-dispersion-entropy-and-information-criteria"><span class="header-section-number">12.1.3</span> Over-dispersion, entropy, and information criteria</h3>
+<section id="overthinking-continuous-mixtures" class="level4" data-number="12.1.3.1">
+<h4 data-number="12.1.3.1" class="anchored" data-anchor-id="overthinking-continuous-mixtures"><span class="header-section-number">12.1.3.1</span> Overthinking: Continuous mixtures</h4>
 </section>
 </section>
 </section>
 <section id="zero-inflated-outcomes" class="level2" data-number="12.2">
 <h2 data-number="12.2" class="anchored" data-anchor-id="zero-inflated-outcomes"><span class="header-section-number">12.2</span> Zero-inflated outcomes</h2>
-<section id="rethinking-breaking-the-law." class="level4" data-number="12.2.0.1">
-<h4 data-number="12.2.0.1" class="anchored" data-anchor-id="rethinking-breaking-the-law."><span class="header-section-number">12.2.0.1</span> Rethinking: Breaking the law.</h4>
+<section id="rethinking-breaking-the-law" class="level4" data-number="12.2.0.1">
+<h4 data-number="12.2.0.1" class="anchored" data-anchor-id="rethinking-breaking-the-law"><span class="header-section-number">12.2.0.1</span> Rethinking: Breaking the law</h4>
 </section>
-<section id="example-zero-inflated-poisson." class="level3" data-number="12.2.1">
-<h3 data-number="12.2.1" class="anchored" data-anchor-id="example-zero-inflated-poisson."><span class="header-section-number">12.2.1</span> Example: Zero-inflated Poisson.</h3>
-<p>Do you remember the monk data from back in <a href="11.html#sec-Example-Exposure-and-the-offset"><span>Section&nbsp;11.2.3</span></a>? Here we simulate some more. This time we’ll work in a little alcohol.</p>
+<section id="example-zero-inflated-poisson" class="level3" data-number="12.2.1">
+<h3 data-number="12.2.1" class="anchored" data-anchor-id="example-zero-inflated-poisson"><span class="header-section-number">12.2.1</span> Example: Zero-inflated Poisson</h3>
+<p>Do you remember the monk data from back in <a href="11.html#sec-Example-Exposure-and-the-offset" class="quarto-xref"><span>Section 11.2.3</span></a>? Here we simulate some more. This time we’ll work in a little alcohol.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define parameters</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>prob_drink <span class="ot">&lt;-</span> <span class="fl">0.2</span>  <span class="co"># 20% of days</span></span>
@@ -856,7 +919,11 @@ $ y     &lt;dbl&gt; 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 2, 0, 0, 0, 0, 0, 0, 
 <span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_d</span>(<span class="at">end =</span> <span class="fl">0.6</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
 <span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"Manuscripts completed"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid" width="384"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid figure-img" width="384"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>With these data, the likelihood of observing zero on <code>y</code>, (i.e., the likelihood zero manuscripts were completed on a given occasion) is</p>
@@ -973,16 +1040,16 @@ convergence, Rhat=1).</code></pre>
 2 p         0.224  0.128  0.312   0.89 mean   qi       </code></pre>
 </div>
 </div>
-<section id="overthinking-zero-inflated-poisson-calculations-in-stan." class="level4" data-number="12.2.1.1">
-<h4 data-number="12.2.1.1" class="anchored" data-anchor-id="overthinking-zero-inflated-poisson-calculations-in-stan."><span class="header-section-number">12.2.1.1</span> Overthinking: Zero-inflated Poisson calculations in Stan.</h4>
+<section id="overthinking-zero-inflated-poisson-calculations-in-stan" class="level4" data-number="12.2.1.1">
+<h4 data-number="12.2.1.1" class="anchored" data-anchor-id="overthinking-zero-inflated-poisson-calculations-in-stan"><span class="header-section-number">12.2.1.1</span> Overthinking: Zero-inflated Poisson calculations in Stan</h4>
 <p>We just did that!</p>
 </section>
 </section>
 </section>
 <section id="ordered-categorical-outcomes" class="level2" data-number="12.3">
 <h2 data-number="12.3" class="anchored" data-anchor-id="ordered-categorical-outcomes"><span class="header-section-number">12.3</span> Ordered categorical outcomes</h2>
-<section id="example-moral-intuition." class="level3" data-number="12.3.1">
-<h3 data-number="12.3.1" class="anchored" data-anchor-id="example-moral-intuition."><span class="header-section-number">12.3.1</span> Example: Moral intuition.</h3>
+<section id="example-moral-intuition" class="level3" data-number="12.3.1">
+<h3 data-number="12.3.1" class="anchored" data-anchor-id="example-moral-intuition"><span class="header-section-number">12.3.1</span> Example: Moral intuition</h3>
 <p>Let’s get the <code>Trolley</code> data <span class="citation" data-cites="cushmanRoleConsciousReasoning2006">(see <a href="references.html#ref-cushmanRoleConsciousReasoning2006" role="doc-biblioref">Cushman et al., 2006</a>)</span>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(Trolley, <span class="at">package =</span> <span class="st">"rethinking"</span>)</span>
@@ -1019,8 +1086,8 @@ $ action2   &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1,
 </div>
 </div>
 </section>
-<section id="describing-an-ordered-distribution-with-intercepts." class="level3" data-number="12.3.2">
-<h3 data-number="12.3.2" class="anchored" data-anchor-id="describing-an-ordered-distribution-with-intercepts."><span class="header-section-number">12.3.2</span> Describing an ordered distribution with intercepts.</h3>
+<section id="describing-an-ordered-distribution-with-intercepts" class="level3" data-number="12.3.2">
+<h3 data-number="12.3.2" class="anchored" data-anchor-id="describing-an-ordered-distribution-with-intercepts"><span class="header-section-number">12.3.2</span> Describing an ordered distribution with intercepts</h3>
 <p>Make our version of the simple Figure 12.4 histogram of our primary variable, <code>response</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> d <span class="sc">|&gt;</span> </span>
@@ -1030,7 +1097,11 @@ $ action2   &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1,
 <span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>        </span>
 <span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>p1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-37-1.png" class="img-fluid" width="240"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-37-1.png" class="img-fluid figure-img" width="240"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Our cumulative proportion plot, Figure 12.4.b, will require some pre-plot wrangling.</p>
@@ -1049,7 +1120,11 @@ $ action2   &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1,
 <span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>p2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-38-1.png" class="img-fluid" width="240"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-38-1.png" class="img-fluid figure-img" width="240"></p>
+</figure>
+</div>
 </div>
 </div>
 <blockquote class="blockquote">
@@ -1072,7 +1147,11 @@ $ action2   &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1,
 <span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"log-cumulative-odds"</span>)</span>
 <span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>p3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-39-1.png" class="img-fluid" width="240"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-39-1.png" class="img-fluid figure-img" width="240"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Why not combine the three subplots with patchwork?</p>
@@ -1080,7 +1159,11 @@ $ action2   &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1,
 <div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>(p1 <span class="sc">|</span> p2 <span class="sc">|</span> p3) <span class="sc">+</span> </span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">title =</span> <span class="st">"Re-describing a discrete distribution using log-cumulative-odds."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-40-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-40-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>The code for Figure 12.5 is itself something of a monster.</p>
@@ -1110,7 +1193,11 @@ $ action2   &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1,
 <span id="cb52-23"><a href="#cb52-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>) <span class="sc">+</span></span>
 <span id="cb52-24"><a href="#cb52-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="st">"cumulative proportion"</span>, <span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">2</span> <span class="sc">/</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-41-1.png" class="img-fluid" width="336"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-41-1.png" class="img-fluid figure-img" width="336"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>A compact way to express the formula for this first type of statistical model is</p>
@@ -1210,8 +1297,8 @@ convergence, Rhat=1).</code></pre>
 </div>
 </div>
 </section>
-<section id="adding-predictor-variables." class="level3" data-number="12.3.3">
-<h3 data-number="12.3.3" class="anchored" data-anchor-id="adding-predictor-variables."><span class="header-section-number">12.3.3</span> Adding predictor variables.</h3>
+<section id="adding-predictor-variables" class="level3" data-number="12.3.3">
+<h3 data-number="12.3.3" class="anchored" data-anchor-id="adding-predictor-variables"><span class="header-section-number">12.3.3</span> Adding predictor variables</h3>
 <p>Now we define the generic linear model as <span class="math inline">\(\phi_i = \beta x_i\)</span>. Accordingly, the formula for our cumulative logit model becomes</p>
 <p><span class="math display">\[
 \begin{align*}
@@ -1297,7 +1384,7 @@ convergence, Rhat=1).</code></pre>
 \beta_1, \dots, \beta_5 &amp; \sim \operatorname{Normal}(0, 0.5),
 \end{align*}
 \]</span></p>
-<p>where, because we have included predictors, <span class="math inline">\(\phi\)</span> is no longer set to 0. Using our skills from back in <a href="08.html"><span>Chapter&nbsp;8</span></a>, we might also rewrite the linear model for <span class="math inline">\(\phi\)</span> as</p>
+<p>where, because we have included predictors, <span class="math inline">\(\phi\)</span> is no longer set to 0. Using our skills from back in <a href="08.html" class="quarto-xref"><span>Chapter 8</span></a>, we might also rewrite the linear model for <span class="math inline">\(\phi\)</span> as</p>
 <p><span class="math display">\[\phi_i = \beta_1 \text{action}_i + \beta_2 \text{contact}_i + \beta_3 \text{intention}_i + \beta_4 (\text{action}_i \times \text{intention}_i) + \beta_5 (\text{contact}_i \times \text{intention}_i).\]</span></p>
 <p>Before we fit the model, we’ll want to make a data frame with predictor values for the pp-check in Figure 12.6.</p>
 <div class="cell">
@@ -1437,7 +1524,11 @@ convergence, Rhat=1).</code></pre>
 <span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"posterior"</span>,</span>
 <span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="cn">NULL</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-58-1.png" class="img-fluid" width="576"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-58-1.png" class="img-fluid figure-img" width="576"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Here’s how we can make the top row of Figure 12.6.</p>
@@ -1477,7 +1568,11 @@ convergence, Rhat=1).</code></pre>
 <span id="cb79-33"><a href="#cb79-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">5</span>, <span class="dv">1</span>), <span class="at">limits =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">1</span>) <span class="sc">+</span></span>
 <span id="cb79-34"><a href="#cb79-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> action <span class="sc">+</span> contact, <span class="at">labeller =</span> label_both)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-59-1.png" class="img-fluid" width="576"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-59-1.png" class="img-fluid figure-img" width="576"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Here’s how we might make the bottom row of Figure 12.6 using the <code>response_pred</code> posteriors from the <code>generated quantities</code> block.</p>
@@ -1498,11 +1593,15 @@ convergence, Rhat=1).</code></pre>
 <span id="cb80-14"><a href="#cb80-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>, <span class="cn">NA</span>) <span class="sc">+</span></span>
 <span id="cb80-15"><a href="#cb80-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> action <span class="sc">+</span> contact, <span class="at">labeller =</span> label_both)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-60-1.png" class="img-fluid" width="624"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-60-1.png" class="img-fluid figure-img" width="624"></p>
+</figure>
 </div>
 </div>
-<section id="rethinking-staring-into-the-abyss." class="level4" data-number="12.3.3.1">
-<h4 data-number="12.3.3.1" class="anchored" data-anchor-id="rethinking-staring-into-the-abyss."><span class="header-section-number">12.3.3.1</span> Rethinking: Staring into the abyss.</h4>
+</div>
+<section id="rethinking-staring-into-the-abyss" class="level4" data-number="12.3.3.1">
+<h4 data-number="12.3.3.1" class="anchored" data-anchor-id="rethinking-staring-into-the-abyss"><span class="header-section-number">12.3.3.1</span> Rethinking: Staring into the abyss</h4>
 </section>
 </section>
 </section>
@@ -1550,7 +1649,7 @@ convergence, Rhat=1).</code></pre>
 8      Graduate Degree      Graduate Degree</code></pre>
 </div>
 </div>
-<p>The prior often used to handle monotonic effects is the Dirichlet distribution. The Dirichlet distribution is the multivariate extension of the beta distribution, which we met back in <a href="#sec-Beta-binomial"><span>Section&nbsp;12.1.1</span></a>. Here we follow McElreath’s <strong>R</strong> code 12.32 to simulate a few draws from the Dirichlet distribution.</p>
+<p>The prior often used to handle monotonic effects is the Dirichlet distribution. The Dirichlet distribution is the multivariate extension of the beta distribution, which we met back in <a href="#sec-Beta-binomial" class="quarto-xref"><span>Section 12.1.1</span></a>. Here we follow McElreath’s <strong>R</strong> code 12.32 to simulate a few draws from the Dirichlet distribution.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1805</span>)</span>
 <span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>delta <span class="ot">&lt;-</span> gtools<span class="sc">::</span><span class="fu">rdirichlet</span>(<span class="dv">10</span>, <span class="at">alpha =</span> <span class="fu">rep</span>(<span class="dv">2</span>, <span class="at">times =</span> <span class="dv">7</span>)) </span>
@@ -1577,7 +1676,11 @@ convergence, Rhat=1).</code></pre>
 <span id="cb87-12"><a href="#cb87-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_d</span>(<span class="at">option =</span> <span class="st">"A"</span>, <span class="at">end =</span> <span class="fl">0.6</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
 <span id="cb87-13"><a href="#cb87-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"probability"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-64-1.png" class="img-fluid" width="432"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-64-1.png" class="img-fluid figure-img" width="432"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Update the <code>stan_data</code> to include <code>edu_new</code> and an <code>alpha</code> vector for the prior. Note how the <code>compose_data()</code> function converts the <code>edu_new</code> factor levels to the correct integer values.</p>
@@ -1686,7 +1789,7 @@ convergence, Rhat=1).</code></pre>
 <span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">spread_draws</span>(delta[j]) <span class="sc">|&gt;</span> </span>
 <span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
 <span id="cb94-4"><a href="#cb94-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(d <span class="sc">|&gt;</span></span>
-<span id="cb94-5"><a href="#cb94-5" aria-hidden="true" tabindex="-1"></a>              <span class="fu">mutate</span>(<span class="at">j =</span> <span class="fu">as.integer</span>(edu_new) <span class="sc">-</span> 1L) <span class="sc">|&gt;</span> </span>
+<span id="cb94-5"><a href="#cb94-5" aria-hidden="true" tabindex="-1"></a>              <span class="fu">mutate</span>(<span class="at">j =</span> <span class="fu">as.integer</span>(edu_new) <span class="sc">-</span> <span class="dv">1</span>L) <span class="sc">|&gt;</span> </span>
 <span id="cb94-6"><a href="#cb94-6" aria-hidden="true" tabindex="-1"></a>              <span class="fu">distinct</span>(edu, edu_new, j),</span>
 <span id="cb94-7"><a href="#cb94-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="fu">join_by</span>(j)) <span class="sc">|&gt;</span> </span>
 <span id="cb94-8"><a href="#cb94-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(.draw, edu, delta) <span class="sc">|&gt;</span> </span>
@@ -1697,7 +1800,11 @@ convergence, Rhat=1).</code></pre>
 <span id="cb94-13"><a href="#cb94-13" aria-hidden="true" tabindex="-1"></a>          <span class="at">lower =</span> <span class="fu">list</span>(<span class="at">continuous =</span> <span class="fu">wrap</span>(<span class="st">"points"</span>, <span class="at">alpha =</span> <span class="fl">0.1</span>, <span class="at">size =</span> <span class="fl">0.1</span>))) <span class="sc">+</span></span>
 <span id="cb94-14"><a href="#cb94-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">7</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="12_files/figure-html/unnamed-chunk-70-1.png" class="img-fluid" width="768"></p>
+<div>
+<figure class="figure">
+<p><img src="12_files/figure-html/unnamed-chunk-70-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Now we prepare for the more conventional model <code>m12.7</code>. First add a normalized version of <code>edu_new</code> called <code>edu_norm</code>.</p>
@@ -1805,13 +1912,13 @@ convergence, Rhat=1).</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb103"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>R version 4.4.0 (2024-04-24)
+<pre><code>R version 4.5.1 (2025-06-13)
 Platform: aarch64-apple-darwin20
 Running under: macOS Ventura 13.4
 
 Matrix products: default
-BLAS:   /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRblas.0.dylib 
-LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
 [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -1823,38 +1930,38 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] GGally_2.2.1       posterior_1.6.0    patchwork_1.2.0    loo_2.8.0         
- [5] rstan_2.32.6       StanHeaders_2.32.7 tidybayes_3.0.6    lubridate_1.9.3   
- [9] forcats_1.0.0      stringr_1.5.1      dplyr_1.1.4        purrr_1.0.2       
-[13] readr_2.1.5        tidyr_1.3.1        tibble_3.2.1       ggplot2_3.5.1     
-[17] tidyverse_2.0.0   
+ [1] GGally_2.4.0            posterior_1.6.1.9000    patchwork_1.3.2        
+ [4] loo_2.9.0.9000          rstan_2.36.0.9000       StanHeaders_2.36.0.9000
+ [7] tidybayes_3.0.7         lubridate_1.9.4         forcats_1.0.1          
+[10] stringr_1.6.0           dplyr_1.1.4             purrr_1.2.1            
+[13] readr_2.1.5             tidyr_1.3.2             tibble_3.3.1           
+[16] ggplot2_4.0.1           tidyverse_2.0.0        
 
 loaded via a namespace (and not attached):
- [1] shape_1.4.6.1        gtable_0.3.5         tensorA_0.36.2.1    
- [4] xfun_0.43            QuickJSR_1.1.3       htmlwidgets_1.6.4   
- [7] processx_3.8.4       inline_0.3.19        lattice_0.22-6      
-[10] tzdb_0.4.0           ps_1.7.6             vctrs_0.6.5         
-[13] tools_4.4.0          generics_0.1.3       stats4_4.4.0        
-[16] curl_5.2.1           parallel_4.4.0       fansi_1.0.6         
-[19] cmdstanr_0.8.1       pkgconfig_2.0.3      Matrix_1.7-0        
-[22] checkmate_2.3.1      RColorBrewer_1.1-3   distributional_0.4.0
-[25] RcppParallel_5.1.7   lifecycle_1.0.4      farver_2.1.1        
-[28] compiler_4.4.0       munsell_0.5.1        codetools_0.2-20    
-[31] htmltools_0.5.8.1    yaml_2.3.8           pillar_1.9.0        
-[34] MASS_7.3-60.2        arrayhelpers_1.1-0   rethinking_2.40     
-[37] abind_1.4-5          gtools_3.9.5         ggstats_0.6.0       
-[40] tidyselect_1.2.1     digest_0.6.35        svUnit_1.0.6        
-[43] mvtnorm_1.2-5        stringi_1.8.4        labeling_0.4.3      
-[46] fastmap_1.1.1        grid_4.4.0           colorspace_2.1-0    
-[49] cli_3.6.3            magrittr_2.0.3       pkgbuild_1.4.4      
-[52] utf8_1.2.4           withr_3.0.0          scales_1.3.0        
-[55] backports_1.5.0      timechange_0.3.0     rmarkdown_2.26      
-[58] matrixStats_1.3.0    gridExtra_2.3        hms_1.1.3           
-[61] coda_0.19-4.1        evaluate_0.23        knitr_1.46          
-[64] V8_4.4.2             ggdist_3.3.2         viridisLite_0.4.2   
-[67] rlang_1.1.4          Rcpp_1.0.12          glue_1.7.0          
-[70] rstudioapi_0.16.0    jsonlite_1.8.8       plyr_1.8.9          
-[73] R6_2.5.1            </code></pre>
+ [1] shape_1.4.6.1         gtable_0.3.6          tensorA_0.36.2.1     
+ [4] xfun_0.55             QuickJSR_1.8.1        htmlwidgets_1.6.4    
+ [7] processx_3.8.6        inline_0.3.21         lattice_0.22-7       
+[10] tzdb_0.5.0            ps_1.9.1              vctrs_0.7.0          
+[13] tools_4.5.1           generics_0.1.4        stats4_4.5.1         
+[16] curl_7.0.0            parallel_4.5.1        cmdstanr_0.9.0       
+[19] pkgconfig_2.0.3       Matrix_1.7-3          checkmate_2.3.3      
+[22] RColorBrewer_1.1-3    S7_0.2.1              distributional_0.5.0 
+[25] RcppParallel_5.1.11-1 lifecycle_1.0.5       compiler_4.5.1       
+[28] farver_2.1.2          codetools_0.2-20      htmltools_0.5.9      
+[31] yaml_2.3.12           pillar_1.11.1         MASS_7.3-65          
+[34] arrayhelpers_1.1-0    rethinking_2.42       abind_1.4-8          
+[37] gtools_3.9.5          ggstats_0.11.0        tidyselect_1.2.1     
+[40] digest_0.6.39         svUnit_1.0.8          mvtnorm_1.3-3        
+[43] stringi_1.8.7         labeling_0.4.3        fastmap_1.2.0        
+[46] grid_4.5.1            cli_3.6.5             magrittr_2.0.4       
+[49] utf8_1.2.6            pkgbuild_1.4.8        withr_3.0.2          
+[52] scales_1.4.0          backports_1.5.0       timechange_0.3.0     
+[55] rmarkdown_2.30        matrixStats_1.5.0     gridExtra_2.3        
+[58] hms_1.1.4             coda_0.19-4.1         evaluate_1.0.5       
+[61] knitr_1.51            V8_8.0.1              ggdist_3.3.3         
+[64] viridisLite_0.4.2     rlang_1.1.7           Rcpp_1.1.0           
+[67] glue_1.8.0            rstudioapi_0.17.1     jsonlite_2.0.0       
+[70] R6_2.6.1             </code></pre>
 </div>
 </div>
 </section>
@@ -1862,7 +1969,7 @@ loaded via a namespace (and not attached):
 <h2 class="unnumbered anchored" data-anchor-id="comments">Comments</h2>
 
 
-<div id="refs" class="references csl-bib-body hanging-indent" data-line-spacing="2" role="list" style="display: none">
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" data-line-spacing="2" role="list" style="display: none">
 <div id="ref-Bürkner2022Distributional" class="csl-entry" role="listitem">
 Bürkner, P.-C. (2022). <em>Estimating distributional models with brms</em>. <a href="https://CRAN.R-project.org/package=brms/vignettes/brms_distreg.html">https://CRAN.R-project.org/package=brms/vignettes/brms_distreg.html</a>
 </div>
@@ -1877,248 +1984,441 @@ Kruschke, J. K. (2015). <em>Doing <span>Bayesian</span> data analysis: <span>A</
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
-    }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
-      }
-    }
-    return false;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button', {
-    text: function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-    }
-  });
-  clipboard.on('success', function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  });
-  function tippyHover(el, contentFn) {
-    const config = {
-      allowHTML: true,
-      content: contentFn,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start'
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
     };
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      return note.innerHTML;
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
         }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
       }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
+      return false;
     }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
           }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
       });
     }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<input type="hidden" id="giscus-base-theme" value="light">
+<input type="hidden" id="giscus-alt-theme" value="dark">
+<script>
+  function loadGiscus() {
+    // Function to get the theme based on body class
+    const getTheme = () => {
+      let baseTheme = document.getElementById('giscus-base-theme').value;
+      let altTheme = document.getElementById('giscus-alt-theme').value;
+      return document.body.classList.contains('quarto-dark') ? altTheme : baseTheme;
+    };
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.dataset.repo = "ASKurz/Statistical_Rethinking_2_with_rstan";
+    script.dataset.repoId = "R_kgDOMeljUg";
+    script.dataset.category = "General";
+    script.dataset.categoryId = "DIC_kwDOMeljUs4ChZXD";
+    script.dataset.mapping = "title";
+    script.dataset.reactionsEnabled = "1";
+    script.dataset.emitMetadata = "0";
+    script.dataset.inputPosition = "top";
+    script.dataset.theme = getTheme();
+    script.dataset.lang = "en";
+    script.crossOrigin = "anonymous";
+    // Append the script to the desired div instead of at the end of the body
+    document.getElementById("quarto-content").appendChild(script);
   }
-});
-</script>
-<script src="https://giscus.app/client.js" data-repo="ASKurz/Statistical_Rethinking_2_with_rstan" data-repo-id="R_kgDOMeljUg" data-category="General" data-category-id="DIC_kwDOMeljUs4ChZXD" data-mapping="title" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+  loadGiscus();
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="./11.html" class="pagination-link">
+      <a href="./11.html" class="pagination-link" aria-label="God Spiked the Integers">
         <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">God Spiked the Integers</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./13.html" class="pagination-link">
+      <a href="./13.html" class="pagination-link" aria-label="Models With Memory">
         <span class="nav-page-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Models With Memory</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
@@ -2127,4 +2427,5 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 
 
 
-</body></html>
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

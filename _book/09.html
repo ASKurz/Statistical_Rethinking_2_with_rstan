@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.450">
+<meta name="generator" content="quarto-1.7.32">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Statistical rethinking 2 with rstan and the tidyverse - 9&nbsp; Markov Chain Monte Carlo</title>
+<title>9&nbsp; Markov Chain Monte Carlo – *Statistical rethinking* 2 with rstan and the tidyverse</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -21,6 +21,7 @@ ul.task-list li input[type="checkbox"] {
   vertical-align: middle;
 }
 /* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
@@ -66,22 +67,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="./">
 <link href="./10.html" rel="next">
 <link href="./08.html" rel="prev">
-<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-234273d1456647dabc34a594ac50e507.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-7d082c015fa132ca880f975003d7bf2f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -90,30 +98,58 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
   }
 }</script>
 
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
-<body class="nav-sidebar floating">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav">
     <div class="container-fluid d-flex">
-      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./09.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Markov Chain Monte Carlo</span></a></li></ol></nav>
-      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-      </a>
-      <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./09.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Markov Chain Monte Carlo</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
         <i class="bi bi-search"></i>
       </button>
     </div>
@@ -122,12 +158,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./"><em>Statistical rethinking</em> 2 with rstan and the tidyverse</a> 
         <div class="sidebar-tools-main">
-    <a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+    <a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
 </div>
     </div>
       </div>
@@ -231,71 +267,71 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     </ul>
     </div>
 </nav>
-<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" class="toc-active">
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#rethinking-stan-was-a-man." id="toc-rethinking-stan-was-a-man." class="nav-link active" data-scroll-target="#rethinking-stan-was-a-man."><span class="header-section-number">9.0.0.1</span> Rethinking: Stan was a man.</a></li>
+  <li><a href="#rethinking-stan-was-a-man" id="toc-rethinking-stan-was-a-man" class="nav-link active" data-scroll-target="#rethinking-stan-was-a-man"><span class="header-section-number">9.0.0.1</span> Rethinking: Stan was a man</a></li>
   <li><a href="#good-king-markov-and-his-island-kingdom" id="toc-good-king-markov-and-his-island-kingdom" class="nav-link" data-scroll-target="#good-king-markov-and-his-island-kingdom"><span class="header-section-number">9.1</span> Good King Markov and his island kingdom</a></li>
   <li><a href="#metropolis-algorithms" id="toc-metropolis-algorithms" class="nav-link" data-scroll-target="#metropolis-algorithms"><span class="header-section-number">9.2</span> Metropolis algorithms</a>
   <ul>
-  <li><a href="#gibbs-sampling." id="toc-gibbs-sampling." class="nav-link" data-scroll-target="#gibbs-sampling."><span class="header-section-number">9.2.1</span> Gibbs sampling.</a></li>
-  <li><a href="#high-dimensional-problems." id="toc-high-dimensional-problems." class="nav-link" data-scroll-target="#high-dimensional-problems."><span class="header-section-number">9.2.2</span> High-dimensional problems.</a></li>
+  <li><a href="#gibbs-sampling" id="toc-gibbs-sampling" class="nav-link" data-scroll-target="#gibbs-sampling"><span class="header-section-number">9.2.1</span> Gibbs sampling</a></li>
+  <li><a href="#high-dimensional-problems" id="toc-high-dimensional-problems" class="nav-link" data-scroll-target="#high-dimensional-problems"><span class="header-section-number">9.2.2</span> High-dimensional problems</a></li>
   </ul></li>
   <li><a href="#hamiltonian-monte-carlo" id="toc-hamiltonian-monte-carlo" class="nav-link" data-scroll-target="#hamiltonian-monte-carlo"><span class="header-section-number">9.3</span> Hamiltonian Monte Carlo</a>
   <ul>
-  <li><a href="#another-parable." id="toc-another-parable." class="nav-link" data-scroll-target="#another-parable."><span class="header-section-number">9.3.1</span> Another parable.</a>
+  <li><a href="#another-parable" id="toc-another-parable" class="nav-link" data-scroll-target="#another-parable"><span class="header-section-number">9.3.1</span> Another parable</a>
   <ul>
-  <li><a href="#rethinking-hamiltonians." id="toc-rethinking-hamiltonians." class="nav-link" data-scroll-target="#rethinking-hamiltonians."><span class="header-section-number">9.3.1.1</span> Rethinking: Hamiltonians.</a></li>
+  <li><a href="#rethinking-hamiltonians" id="toc-rethinking-hamiltonians" class="nav-link" data-scroll-target="#rethinking-hamiltonians"><span class="header-section-number">9.3.1.1</span> Rethinking: Hamiltonians</a></li>
   </ul></li>
-  <li><a href="#particles-in-space." id="toc-particles-in-space." class="nav-link" data-scroll-target="#particles-in-space."><span class="header-section-number">9.3.2</span> Particles in space.</a>
+  <li><a href="#particles-in-space" id="toc-particles-in-space" class="nav-link" data-scroll-target="#particles-in-space"><span class="header-section-number">9.3.2</span> Particles in space</a>
   <ul>
-  <li><a href="#overthinking-hamiltonian-monte-carlo-in-the-raw." id="toc-overthinking-hamiltonian-monte-carlo-in-the-raw." class="nav-link" data-scroll-target="#overthinking-hamiltonian-monte-carlo-in-the-raw."><span class="header-section-number">9.3.2.1</span> Overthinking: Hamiltonian Monte Carlo in the raw.</a></li>
+  <li><a href="#overthinking-hamiltonian-monte-carlo-in-the-raw" id="toc-overthinking-hamiltonian-monte-carlo-in-the-raw" class="nav-link" data-scroll-target="#overthinking-hamiltonian-monte-carlo-in-the-raw"><span class="header-section-number">9.3.2.1</span> Overthinking: Hamiltonian Monte Carlo in the raw</a></li>
   </ul></li>
-  <li><a href="#limitations." id="toc-limitations." class="nav-link" data-scroll-target="#limitations."><span class="header-section-number">9.3.3</span> Limitations.</a>
+  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations"><span class="header-section-number">9.3.3</span> Limitations</a>
   <ul>
-  <li><a href="#rethinking-the-mcmc-horizon." id="toc-rethinking-the-mcmc-horizon." class="nav-link" data-scroll-target="#rethinking-the-mcmc-horizon."><span class="header-section-number">9.3.3.1</span> Rethinking: The MCMC horizon.</a></li>
+  <li><a href="#rethinking-the-mcmc-horizon" id="toc-rethinking-the-mcmc-horizon" class="nav-link" data-scroll-target="#rethinking-the-mcmc-horizon"><span class="header-section-number">9.3.3.1</span> Rethinking: The MCMC horizon</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#easy-hmc-ulam-stan" id="toc-easy-hmc-ulam-stan" class="nav-link" data-scroll-target="#easy-hmc-ulam-stan"><span class="header-section-number">9.4</span> Easy HMC: <del>ulam</del> <code>stan()</code></a>
   <ul>
-  <li><a href="#preparation." id="toc-preparation." class="nav-link" data-scroll-target="#preparation."><span class="header-section-number">9.4.1</span> Preparation.</a></li>
-  <li><a href="#sampling-from-the-posterior." id="toc-sampling-from-the-posterior." class="nav-link" data-scroll-target="#sampling-from-the-posterior."><span class="header-section-number">9.4.2</span> Sampling from the posterior.</a></li>
-  <li><a href="#sampling-again-in-parallel." id="toc-sampling-again-in-parallel." class="nav-link" data-scroll-target="#sampling-again-in-parallel."><span class="header-section-number">9.4.3</span> Sampling again, in parallel.</a></li>
-  <li><a href="#visualization." id="toc-visualization." class="nav-link" data-scroll-target="#visualization."><span class="header-section-number">9.4.4</span> Visualization.</a></li>
-  <li><a href="#checking-the-chain." id="toc-checking-the-chain." class="nav-link" data-scroll-target="#checking-the-chain."><span class="header-section-number">9.4.5</span> Checking the chain.</a>
+  <li><a href="#preparation" id="toc-preparation" class="nav-link" data-scroll-target="#preparation"><span class="header-section-number">9.4.1</span> Preparation</a></li>
+  <li><a href="#sampling-from-the-posterior" id="toc-sampling-from-the-posterior" class="nav-link" data-scroll-target="#sampling-from-the-posterior"><span class="header-section-number">9.4.2</span> Sampling from the posterior</a></li>
+  <li><a href="#sampling-again-in-parallel" id="toc-sampling-again-in-parallel" class="nav-link" data-scroll-target="#sampling-again-in-parallel"><span class="header-section-number">9.4.3</span> Sampling again, in parallel</a></li>
+  <li><a href="#visualization" id="toc-visualization" class="nav-link" data-scroll-target="#visualization"><span class="header-section-number">9.4.4</span> Visualization</a></li>
+  <li><a href="#checking-the-chain" id="toc-checking-the-chain" class="nav-link" data-scroll-target="#checking-the-chain"><span class="header-section-number">9.4.5</span> Checking the chain</a>
   <ul>
-  <li><a href="#overthinking-raw-stan-model-code." id="toc-overthinking-raw-stan-model-code." class="nav-link" data-scroll-target="#overthinking-raw-stan-model-code."><span class="header-section-number">9.4.5.1</span> Overthinking: Raw Stan model code.</a></li>
+  <li><a href="#overthinking-raw-stan-model-code" id="toc-overthinking-raw-stan-model-code" class="nav-link" data-scroll-target="#overthinking-raw-stan-model-code"><span class="header-section-number">9.4.5.1</span> Overthinking: Raw Stan model code</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#care-and-feeding-of-your-markov-chain" id="toc-care-and-feeding-of-your-markov-chain" class="nav-link" data-scroll-target="#care-and-feeding-of-your-markov-chain"><span class="header-section-number">9.5</span> Care and feeding of your Markov chain</a>
   <ul>
   <li><a href="#how-many-samples-do-you-need" id="toc-how-many-samples-do-you-need" class="nav-link" data-scroll-target="#how-many-samples-do-you-need"><span class="header-section-number">9.5.1</span> How many samples do you need?</a>
   <ul>
-  <li><a href="#rethinking-warmup-is-not-burn-in." id="toc-rethinking-warmup-is-not-burn-in." class="nav-link" data-scroll-target="#rethinking-warmup-is-not-burn-in."><span class="header-section-number">9.5.1.1</span> Rethinking: Warmup is not burn-in.</a></li>
+  <li><a href="#rethinking-warmup-is-not-burn-in" id="toc-rethinking-warmup-is-not-burn-in" class="nav-link" data-scroll-target="#rethinking-warmup-is-not-burn-in"><span class="header-section-number">9.5.1.1</span> Rethinking: Warmup is not burn-in</a></li>
   </ul></li>
   <li><a href="#how-many-chains-do-you-need" id="toc-how-many-chains-do-you-need" class="nav-link" data-scroll-target="#how-many-chains-do-you-need"><span class="header-section-number">9.5.2</span> How many chains do you need?</a>
   <ul>
-  <li><a href="#rethinking-convergence-diagnostics." id="toc-rethinking-convergence-diagnostics." class="nav-link" data-scroll-target="#rethinking-convergence-diagnostics."><span class="header-section-number">9.5.2.1</span> Rethinking: Convergence diagnostics.</a></li>
+  <li><a href="#rethinking-convergence-diagnostics" id="toc-rethinking-convergence-diagnostics" class="nav-link" data-scroll-target="#rethinking-convergence-diagnostics"><span class="header-section-number">9.5.2.1</span> Rethinking: Convergence diagnostics</a></li>
   </ul></li>
-  <li><a href="#taming-a-wild-chain." id="toc-taming-a-wild-chain." class="nav-link" data-scroll-target="#taming-a-wild-chain."><span class="header-section-number">9.5.3</span> Taming a wild chain.</a>
+  <li><a href="#taming-a-wild-chain" id="toc-taming-a-wild-chain" class="nav-link" data-scroll-target="#taming-a-wild-chain"><span class="header-section-number">9.5.3</span> Taming a wild chain</a>
   <ul>
-  <li><a href="#rethinking-the-folk-theorem-of-statistical-computing." id="toc-rethinking-the-folk-theorem-of-statistical-computing." class="nav-link" data-scroll-target="#rethinking-the-folk-theorem-of-statistical-computing."><span class="header-section-number">9.5.3.1</span> Rethinking: The folk theorem of statistical computing.</a></li>
-  <li><a href="#overthinking-divergent-transitions-are-your-friend." id="toc-overthinking-divergent-transitions-are-your-friend." class="nav-link" data-scroll-target="#overthinking-divergent-transitions-are-your-friend."><span class="header-section-number">9.5.3.2</span> Overthinking: Divergent transitions are your friend.</a></li>
+  <li><a href="#rethinking-the-folk-theorem-of-statistical-computing" id="toc-rethinking-the-folk-theorem-of-statistical-computing" class="nav-link" data-scroll-target="#rethinking-the-folk-theorem-of-statistical-computing"><span class="header-section-number">9.5.3.1</span> Rethinking: The folk theorem of statistical computing</a></li>
+  <li><a href="#overthinking-divergent-transitions-are-your-friend" id="toc-overthinking-divergent-transitions-are-your-friend" class="nav-link" data-scroll-target="#overthinking-divergent-transitions-are-your-friend"><span class="header-section-number">9.5.3.2</span> Overthinking: Divergent transitions are your friend</a></li>
   </ul></li>
-  <li><a href="#sec-Non-identifiable-parameters" id="toc-sec-Non-identifiable-parameters" class="nav-link" data-scroll-target="#sec-Non-identifiable-parameters"><span class="header-section-number">9.5.4</span> Non-identifiable parameters.</a>
+  <li><a href="#sec-Non-identifiable-parameters" id="toc-sec-Non-identifiable-parameters" class="nav-link" data-scroll-target="#sec-Non-identifiable-parameters"><span class="header-section-number">9.5.4</span> Non-identifiable parameters</a>
   <ul>
-  <li><a href="#rethinking-hamiltonian-warnings-and-gibbs-overconfidence." id="toc-rethinking-hamiltonian-warnings-and-gibbs-overconfidence." class="nav-link" data-scroll-target="#rethinking-hamiltonian-warnings-and-gibbs-overconfidence."><span class="header-section-number">9.5.4.1</span> Rethinking: Hamiltonian warnings and Gibbs overconfidence.</a></li>
+  <li><a href="#rethinking-hamiltonian-warnings-and-gibbs-overconfidence" id="toc-rethinking-hamiltonian-warnings-and-gibbs-overconfidence" class="nav-link" data-scroll-target="#rethinking-hamiltonian-warnings-and-gibbs-overconfidence"><span class="header-section-number">9.5.4.1</span> Rethinking: Hamiltonian warnings and Gibbs overconfidence</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">9.6</span> Summary</a></li>
   <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info">Session info</a></li>
   <li><a href="#comments" id="toc-comments" class="nav-link" data-scroll-target="#comments">Comments</a></li>
   </ul>
-<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -315,7 +351,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
   
 
+
 </header>
+
 
 <p>Load the packages.</p>
 <div class="cell">
@@ -333,39 +371,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="rethinking-stan-was-a-man." class="level4" data-number="9.0.0.1">
-<h4 data-number="9.0.0.1" class="anchored" data-anchor-id="rethinking-stan-was-a-man."><span class="header-section-number">9.0.0.1</span> Rethinking: Stan was a man.</h4>
+<section id="rethinking-stan-was-a-man" class="level4" data-number="9.0.0.1">
+<h4 data-number="9.0.0.1" class="anchored" data-anchor-id="rethinking-stan-was-a-man"><span class="header-section-number">9.0.0.1</span> Rethinking: Stan was a man</h4>
 </section>
 <section id="good-king-markov-and-his-island-kingdom" class="level2" data-number="9.1">
 <h2 data-number="9.1" class="anchored" data-anchor-id="good-king-markov-and-his-island-kingdom"><span class="header-section-number">9.1</span> Good King Markov and his island kingdom</h2>
 </section>
 <section id="metropolis-algorithms" class="level2" data-number="9.2">
 <h2 data-number="9.2" class="anchored" data-anchor-id="metropolis-algorithms"><span class="header-section-number">9.2</span> Metropolis algorithms</h2>
-<section id="gibbs-sampling." class="level3" data-number="9.2.1">
-<h3 data-number="9.2.1" class="anchored" data-anchor-id="gibbs-sampling."><span class="header-section-number">9.2.1</span> Gibbs sampling.</h3>
+<section id="gibbs-sampling" class="level3" data-number="9.2.1">
+<h3 data-number="9.2.1" class="anchored" data-anchor-id="gibbs-sampling"><span class="header-section-number">9.2.1</span> Gibbs sampling</h3>
 </section>
-<section id="high-dimensional-problems." class="level3" data-number="9.2.2">
-<h3 data-number="9.2.2" class="anchored" data-anchor-id="high-dimensional-problems."><span class="header-section-number">9.2.2</span> High-dimensional problems.</h3>
+<section id="high-dimensional-problems" class="level3" data-number="9.2.2">
+<h3 data-number="9.2.2" class="anchored" data-anchor-id="high-dimensional-problems"><span class="header-section-number">9.2.2</span> High-dimensional problems</h3>
 </section>
 </section>
 <section id="hamiltonian-monte-carlo" class="level2" data-number="9.3">
 <h2 data-number="9.3" class="anchored" data-anchor-id="hamiltonian-monte-carlo"><span class="header-section-number">9.3</span> Hamiltonian Monte Carlo</h2>
-<section id="another-parable." class="level3" data-number="9.3.1">
-<h3 data-number="9.3.1" class="anchored" data-anchor-id="another-parable."><span class="header-section-number">9.3.1</span> Another parable.</h3>
-<section id="rethinking-hamiltonians." class="level4" data-number="9.3.1.1">
-<h4 data-number="9.3.1.1" class="anchored" data-anchor-id="rethinking-hamiltonians."><span class="header-section-number">9.3.1.1</span> Rethinking: Hamiltonians.</h4>
+<section id="another-parable" class="level3" data-number="9.3.1">
+<h3 data-number="9.3.1" class="anchored" data-anchor-id="another-parable"><span class="header-section-number">9.3.1</span> Another parable</h3>
+<section id="rethinking-hamiltonians" class="level4" data-number="9.3.1.1">
+<h4 data-number="9.3.1.1" class="anchored" data-anchor-id="rethinking-hamiltonians"><span class="header-section-number">9.3.1.1</span> Rethinking: Hamiltonians</h4>
 </section>
 </section>
-<section id="particles-in-space." class="level3" data-number="9.3.2">
-<h3 data-number="9.3.2" class="anchored" data-anchor-id="particles-in-space."><span class="header-section-number">9.3.2</span> Particles in space.</h3>
-<section id="overthinking-hamiltonian-monte-carlo-in-the-raw." class="level4" data-number="9.3.2.1">
-<h4 data-number="9.3.2.1" class="anchored" data-anchor-id="overthinking-hamiltonian-monte-carlo-in-the-raw."><span class="header-section-number">9.3.2.1</span> Overthinking: Hamiltonian Monte Carlo in the raw.</h4>
+<section id="particles-in-space" class="level3" data-number="9.3.2">
+<h3 data-number="9.3.2" class="anchored" data-anchor-id="particles-in-space"><span class="header-section-number">9.3.2</span> Particles in space</h3>
+<section id="overthinking-hamiltonian-monte-carlo-in-the-raw" class="level4" data-number="9.3.2.1">
+<h4 data-number="9.3.2.1" class="anchored" data-anchor-id="overthinking-hamiltonian-monte-carlo-in-the-raw"><span class="header-section-number">9.3.2.1</span> Overthinking: Hamiltonian Monte Carlo in the raw</h4>
 </section>
 </section>
-<section id="limitations." class="level3" data-number="9.3.3">
-<h3 data-number="9.3.3" class="anchored" data-anchor-id="limitations."><span class="header-section-number">9.3.3</span> Limitations.</h3>
-<section id="rethinking-the-mcmc-horizon." class="level4" data-number="9.3.3.1">
-<h4 data-number="9.3.3.1" class="anchored" data-anchor-id="rethinking-the-mcmc-horizon."><span class="header-section-number">9.3.3.1</span> Rethinking: The MCMC horizon.</h4>
+<section id="limitations" class="level3" data-number="9.3.3">
+<h3 data-number="9.3.3" class="anchored" data-anchor-id="limitations"><span class="header-section-number">9.3.3</span> Limitations</h3>
+<section id="rethinking-the-mcmc-horizon" class="level4" data-number="9.3.3.1">
+<h4 data-number="9.3.3.1" class="anchored" data-anchor-id="rethinking-the-mcmc-horizon"><span class="header-section-number">9.3.3.1</span> Rethinking: The MCMC horizon</h4>
 </section>
 </section>
 </section>
@@ -390,8 +428,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">rugged_std_c =</span> rugged_std <span class="sc">-</span> <span class="fu">mean</span>(rugged_std))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>In the context of this chapter, it doesn’t make sense to translate McElreath’s <code>m8.3</code> <code>quap()</code> code to <code>stan()</code> code. Below, we’ll just go directly to the <code>stan()</code> variant of his <code>m9.1</code>.</p>
-<section id="preparation." class="level3" data-number="9.4.1">
-<h3 data-number="9.4.1" class="anchored" data-anchor-id="preparation."><span class="header-section-number">9.4.1</span> Preparation.</h3>
+<section id="preparation" class="level3" data-number="9.4.1">
+<h3 data-number="9.4.1" class="anchored" data-anchor-id="preparation"><span class="header-section-number">9.4.1</span> Preparation</h3>
 <p>Wrangle the data into a list with the <code>compose_data()</code> function. McElreath called his data list <code>dat_slim</code>. Here we’ll follow the conventions from earlier chapters and call the object <code>stan_data</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>stan_data <span class="ot">&lt;-</span> dd <span class="sc">|&gt;</span></span>
@@ -411,9 +449,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </section>
-<section id="sampling-from-the-posterior." class="level3" data-number="9.4.2">
-<h3 data-number="9.4.2" class="anchored" data-anchor-id="sampling-from-the-posterior."><span class="header-section-number">9.4.2</span> Sampling from the posterior.</h3>
-<p>Here our <code>model_code_9.1</code> is just a different version of <code>model_code_8.3</code> from <a href="08.html#sec-Adding-an-interaction-does-work"><span>Section&nbsp;8.1.3</span></a>. Since we don’t need the log-likelihood for this chapter, we’ve streamlined this version of the program a bit by removing the <code>transformed parameters</code> and <code>generated quantities</code>. We’ve also taken a cue from McElreath’s code by hardcoding the value <code>0.215</code> into the <code>model</code> block, rather than importing the <code>xbar</code> scalar from the data list.</p>
+<section id="sampling-from-the-posterior" class="level3" data-number="9.4.2">
+<h3 data-number="9.4.2" class="anchored" data-anchor-id="sampling-from-the-posterior"><span class="header-section-number">9.4.2</span> Sampling from the posterior</h3>
+<p>Here our <code>model_code_9.1</code> is just a different version of <code>model_code_8.3</code> from <a href="08.html#sec-Adding-an-interaction-does-work" class="quarto-xref"><span>Section 8.1.3</span></a>. Since we don’t need the log-likelihood for this chapter, we’ve streamlined this version of the program a bit by removing the <code>transformed parameters</code> and <code>generated quantities</code>. We’ve also taken a cue from McElreath’s code by hardcoding the value <code>0.215</code> into the <code>model</code> block, rather than importing the <code>xbar</code> scalar from the data list.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>model_code_9<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="st">'</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="st">data {</span></span>
@@ -469,8 +507,8 @@ convergence, Rhat=1).</code></pre>
 </div>
 </div>
 </section>
-<section id="sampling-again-in-parallel." class="level3" data-number="9.4.3">
-<h3 data-number="9.4.3" class="anchored" data-anchor-id="sampling-again-in-parallel."><span class="header-section-number">9.4.3</span> Sampling again, in parallel.</h3>
+<section id="sampling-again-in-parallel" class="level3" data-number="9.4.3">
+<h3 data-number="9.4.3" class="anchored" data-anchor-id="sampling-again-in-parallel"><span class="header-section-number">9.4.3</span> Sampling again, in parallel</h3>
 <p>Here we sample from four HMC chains in parallel by adding <code>cores = 4</code>. Though <code>chains = 4</code> is the default setting in <code>stan()</code>, here we make it explicit. This time we’ll call the object <code>m9.1b</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m9<span class="fl">.1</span>b <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
@@ -605,20 +643,28 @@ chain:4  0.041  0.042</code></pre>
 </div>
 </div>
 </section>
-<section id="visualization." class="level3" data-number="9.4.4">
-<h3 data-number="9.4.4" class="anchored" data-anchor-id="visualization."><span class="header-section-number">9.4.4</span> Visualization.</h3>
+<section id="visualization" class="level3" data-number="9.4.4">
+<h3 data-number="9.4.4" class="anchored" data-anchor-id="visualization"><span class="header-section-number">9.4.4</span> Visualization</h3>
 <p>As with McElreath’s <strong>rethinking</strong>, <strong>rstan</strong> allows users to put the fit object directly into the <code>pairs()</code> function.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pairs</span>(m9<span class="fl">.1</span>b)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="09_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="528"></p>
+<div>
+<figure class="figure">
+<p><img src="09_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="528"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>However, <code>pairs()</code> also includes the <code>lp__</code> and <code>energy</code> in the output. These can be suppressed with the <code>pars</code> argument.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pairs</span>(m9<span class="fl">.1</span>b, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"sigma"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="09_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="528"></p>
+<div>
+<figure class="figure">
+<p><img src="09_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid figure-img" width="528"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Our output is a little different in that we don’t get a lower-triangle of Pearson’s correlation coefficients. If you’d like those values, use <code>cor()</code> after extracting the desired parameter columns with <code>as_draws_df()</code> and <code>select()</code>.</p>
@@ -635,15 +681,19 @@ b[2]  0.009139623 -0.08063637 0.02856225  1.000000000 -0.03518082
 sigma 0.019971693  0.03328394 0.01808661 -0.035180821  1.00000000</code></pre>
 </div>
 </div>
-<p>If you need to customize a <code>pairs()</code>-type plot much further than this, you’re probably best off moving to a <code>GGally::ggpairs()</code>-based workflow, such as we demonstrate later in <a href="12.html#sec-Ordered-categorical-predictors"><span>Section&nbsp;12.4</span></a>.</p>
+<p>If you need to customize a <code>pairs()</code>-type plot much further than this, you’re probably best off moving to a <code>GGally::ggpairs()</code>-based workflow, such as we demonstrate later in <a href="12.html#sec-Ordered-categorical-predictors" class="quarto-xref"><span>Section 12.4</span></a>.</p>
 </section>
-<section id="checking-the-chain." class="level3" data-number="9.4.5">
-<h3 data-number="9.4.5" class="anchored" data-anchor-id="checking-the-chain."><span class="header-section-number">9.4.5</span> Checking the chain.</h3>
+<section id="checking-the-chain" class="level3" data-number="9.4.5">
+<h3 data-number="9.4.5" class="anchored" data-anchor-id="checking-the-chain"><span class="header-section-number">9.4.5</span> Checking the chain</h3>
 <p>Here we apply the <code>traceplot()</code> to <code>m9.1b</code>. The default settings are <code>inc_warmup = FALSE</code>, which means we need to change that to <code>TRUE</code> if we want to see the warmup draws, like in the plots McElreath tends to show in the text.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">traceplot</span>(m9<span class="fl">.1</span>b, <span class="at">inc_warmup =</span> <span class="cn">TRUE</span>, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="09_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="09_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>We can make similar plots with the <code>mcmc_trace()</code> function from the <strong>bayesplot</strong> package. Note that <code>mcmc_trace()</code> will accept <code>stan()</code> model objects as direct input, but it will also accept input from <code>as_draws_df()</code>, as in below. As <code>mcmc_trace()</code> returns a ggplot object, you can adjust the plot in the usual way with other functions like <code>theme()</code>.</p>
@@ -653,7 +703,11 @@ sigma 0.019971693  0.03328394 0.01808661 -0.035180821  1.00000000</code></pre>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">facet_args =</span> <span class="fu">list</span>(<span class="at">ncol =</span> <span class="dv">3</span>, <span class="at">labeller =</span> label_parsed)) <span class="sc">+</span></span>
 <span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="fu">c</span>(<span class="fl">0.85</span>, <span class="fl">0.25</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="09_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="09_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Note however that as the <code>as_draws_df()</code> function only returns post-warmup draws, this workflow will not produce traceplots like the ones in the text that show the warmup portion.</p>
@@ -665,11 +719,15 @@ sigma 0.019971693  0.03328394 0.01808661 -0.035180821  1.00000000</code></pre>
 <span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_d</span>(<span class="at">option =</span> <span class="st">"A"</span>, <span class="at">end =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
 <span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">20</span>, <span class="cn">NA</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="09_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="09_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
 </div>
 </div>
-<section id="overthinking-raw-stan-model-code." class="level4" data-number="9.4.5.1">
-<h4 data-number="9.4.5.1" class="anchored" data-anchor-id="overthinking-raw-stan-model-code."><span class="header-section-number">9.4.5.1</span> Overthinking: Raw Stan model code.</h4>
+</div>
+<section id="overthinking-raw-stan-model-code" class="level4" data-number="9.4.5.1">
+<h4 data-number="9.4.5.1" class="anchored" data-anchor-id="overthinking-raw-stan-model-code"><span class="header-section-number">9.4.5.1</span> Overthinking: Raw Stan model code</h4>
 </section>
 </section>
 </section>
@@ -677,18 +735,18 @@ sigma 0.019971693  0.03328394 0.01808661 -0.035180821  1.00000000</code></pre>
 <h2 data-number="9.5" class="anchored" data-anchor-id="care-and-feeding-of-your-markov-chain"><span class="header-section-number">9.5</span> Care and feeding of your Markov chain</h2>
 <section id="how-many-samples-do-you-need" class="level3" data-number="9.5.1">
 <h3 data-number="9.5.1" class="anchored" data-anchor-id="how-many-samples-do-you-need"><span class="header-section-number">9.5.1</span> How many samples do you need?</h3>
-<section id="rethinking-warmup-is-not-burn-in." class="level4" data-number="9.5.1.1">
-<h4 data-number="9.5.1.1" class="anchored" data-anchor-id="rethinking-warmup-is-not-burn-in."><span class="header-section-number">9.5.1.1</span> Rethinking: Warmup is not burn-in.</h4>
+<section id="rethinking-warmup-is-not-burn-in" class="level4" data-number="9.5.1.1">
+<h4 data-number="9.5.1.1" class="anchored" data-anchor-id="rethinking-warmup-is-not-burn-in"><span class="header-section-number">9.5.1.1</span> Rethinking: Warmup is not burn-in</h4>
 </section>
 </section>
 <section id="how-many-chains-do-you-need" class="level3" data-number="9.5.2">
 <h3 data-number="9.5.2" class="anchored" data-anchor-id="how-many-chains-do-you-need"><span class="header-section-number">9.5.2</span> How many chains do you need?</h3>
-<section id="rethinking-convergence-diagnostics." class="level4" data-number="9.5.2.1">
-<h4 data-number="9.5.2.1" class="anchored" data-anchor-id="rethinking-convergence-diagnostics."><span class="header-section-number">9.5.2.1</span> Rethinking: Convergence diagnostics.</h4>
+<section id="rethinking-convergence-diagnostics" class="level4" data-number="9.5.2.1">
+<h4 data-number="9.5.2.1" class="anchored" data-anchor-id="rethinking-convergence-diagnostics"><span class="header-section-number">9.5.2.1</span> Rethinking: Convergence diagnostics</h4>
 </section>
 </section>
-<section id="taming-a-wild-chain." class="level3" data-number="9.5.3">
-<h3 data-number="9.5.3" class="anchored" data-anchor-id="taming-a-wild-chain."><span class="header-section-number">9.5.3</span> Taming a wild chain.</h3>
+<section id="taming-a-wild-chain" class="level3" data-number="9.5.3">
+<h3 data-number="9.5.3" class="anchored" data-anchor-id="taming-a-wild-chain"><span class="header-section-number">9.5.3</span> Taming a wild chain</h3>
 <p>Define the new very-small <code>stan_data</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>stan_data <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">y =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>)) <span class="sc">|&gt;</span>  </span>
@@ -788,7 +846,11 @@ convergence, Rhat=1).</code></pre>
 <span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>(p1 <span class="sc">/</span> p2) <span class="sc">&amp;</span> </span>
 <span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="09_files/figure-html/unnamed-chunk-30-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="09_files/figure-html/unnamed-chunk-30-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Okay, that’s enough disaster. Let’s try a model that adds just a little information by way of weakly-regularizing priors:</p>
@@ -868,7 +930,11 @@ convergence, Rhat=1).</code></pre>
 <span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>(p1 <span class="sc">/</span> p2) <span class="sc">&amp;</span> </span>
 <span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="09_files/figure-html/unnamed-chunk-35-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="09_files/figure-html/unnamed-chunk-35-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Now behold our version of Figure 9.10.</p>
@@ -906,18 +972,22 @@ convergence, Rhat=1).</code></pre>
 <span id="cb47-31"><a href="#cb47-31" aria-hidden="true" tabindex="-1"></a>(p1 <span class="sc">|</span> p2) <span class="sc">&amp;</span></span>
 <span id="cb47-32"><a href="#cb47-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="09_files/figure-html/unnamed-chunk-36-1.png" class="img-fluid" width="576"></p>
+<div>
+<figure class="figure">
+<p><img src="09_files/figure-html/unnamed-chunk-36-1.png" class="img-fluid figure-img" width="576"></p>
+</figure>
 </div>
 </div>
-<section id="rethinking-the-folk-theorem-of-statistical-computing." class="level4" data-number="9.5.3.1">
-<h4 data-number="9.5.3.1" class="anchored" data-anchor-id="rethinking-the-folk-theorem-of-statistical-computing."><span class="header-section-number">9.5.3.1</span> Rethinking: The folk theorem of statistical computing.</h4>
+</div>
+<section id="rethinking-the-folk-theorem-of-statistical-computing" class="level4" data-number="9.5.3.1">
+<h4 data-number="9.5.3.1" class="anchored" data-anchor-id="rethinking-the-folk-theorem-of-statistical-computing"><span class="header-section-number">9.5.3.1</span> Rethinking: The folk theorem of statistical computing</h4>
 </section>
-<section id="overthinking-divergent-transitions-are-your-friend." class="level4" data-number="9.5.3.2">
-<h4 data-number="9.5.3.2" class="anchored" data-anchor-id="overthinking-divergent-transitions-are-your-friend."><span class="header-section-number">9.5.3.2</span> Overthinking: Divergent transitions are your friend.</h4>
+<section id="overthinking-divergent-transitions-are-your-friend" class="level4" data-number="9.5.3.2">
+<h4 data-number="9.5.3.2" class="anchored" data-anchor-id="overthinking-divergent-transitions-are-your-friend"><span class="header-section-number">9.5.3.2</span> Overthinking: Divergent transitions are your friend</h4>
 </section>
 </section>
 <section id="sec-Non-identifiable-parameters" class="level3" data-number="9.5.4">
-<h3 data-number="9.5.4" class="anchored" data-anchor-id="sec-Non-identifiable-parameters"><span class="header-section-number">9.5.4</span> Non-identifiable parameters.</h3>
+<h3 data-number="9.5.4" class="anchored" data-anchor-id="sec-Non-identifiable-parameters"><span class="header-section-number">9.5.4</span> Non-identifiable parameters</h3>
 <p>Update the <code>stan_data</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">41</span>)</span>
@@ -1111,11 +1181,15 @@ Energy:</code></pre>
 <span id="cb71-31"><a href="#cb71-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">&amp;</span></span>
 <span id="cb71-32"><a href="#cb71-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_d</span>(<span class="at">option =</span> <span class="st">"D"</span>, <span class="at">end =</span> <span class="fl">0.8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="09_files/figure-html/unnamed-chunk-47-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="09_files/figure-html/unnamed-chunk-47-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
 </div>
 </div>
-<section id="rethinking-hamiltonian-warnings-and-gibbs-overconfidence." class="level4" data-number="9.5.4.1">
-<h4 data-number="9.5.4.1" class="anchored" data-anchor-id="rethinking-hamiltonian-warnings-and-gibbs-overconfidence."><span class="header-section-number">9.5.4.1</span> Rethinking: Hamiltonian warnings and Gibbs overconfidence.</h4>
+</div>
+<section id="rethinking-hamiltonian-warnings-and-gibbs-overconfidence" class="level4" data-number="9.5.4.1">
+<h4 data-number="9.5.4.1" class="anchored" data-anchor-id="rethinking-hamiltonian-warnings-and-gibbs-overconfidence"><span class="header-section-number">9.5.4.1</span> Rethinking: Hamiltonian warnings and Gibbs overconfidence</h4>
 </section>
 </section>
 </section>
@@ -1127,13 +1201,13 @@ Energy:</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>R version 4.4.0 (2024-04-24)
+<pre><code>R version 4.5.1 (2025-06-13)
 Platform: aarch64-apple-darwin20
 Running under: macOS Ventura 13.4
 
 Matrix products: default
-BLAS:   /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRblas.0.dylib 
-LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
 [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -1145,34 +1219,36 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] bayesplot_1.11.1   tidybayes_3.0.6    posterior_1.6.0    rstan_2.32.6      
- [5] StanHeaders_2.32.7 patchwork_1.2.0    lubridate_1.9.3    forcats_1.0.0     
- [9] stringr_1.5.1      dplyr_1.1.4        purrr_1.0.2        readr_2.1.5       
-[13] tidyr_1.3.1        tibble_3.2.1       ggplot2_3.5.1      tidyverse_2.0.0   
+ [1] bayesplot_1.15.0.9000   tidybayes_3.0.7         posterior_1.6.1.9000   
+ [4] rstan_2.36.0.9000       StanHeaders_2.36.0.9000 patchwork_1.3.2        
+ [7] lubridate_1.9.4         forcats_1.0.1           stringr_1.6.0          
+[10] dplyr_1.1.4             purrr_1.2.1             readr_2.1.5            
+[13] tidyr_1.3.2             tibble_3.3.1            ggplot2_4.0.1          
+[16] tidyverse_2.0.0        
 
 loaded via a namespace (and not attached):
- [1] gtable_0.3.5         tensorA_0.36.2.1     xfun_0.43           
- [4] QuickJSR_1.1.3       htmlwidgets_1.6.4    inline_0.3.19       
- [7] lattice_0.22-6       tzdb_0.4.0           vctrs_0.6.5         
-[10] tools_4.4.0          generics_0.1.3       stats4_4.4.0        
-[13] curl_5.2.1           parallel_4.4.0       fansi_1.0.6         
-[16] pkgconfig_2.0.3      KernSmooth_2.23-22   Matrix_1.7-0        
-[19] checkmate_2.3.1      distributional_0.4.0 RcppParallel_5.1.7  
-[22] lifecycle_1.0.4      farver_2.1.1         compiler_4.4.0      
-[25] munsell_0.5.1        codetools_0.2-20     htmltools_0.5.8.1   
-[28] yaml_2.3.8           pillar_1.9.0         arrayhelpers_1.1-0  
-[31] abind_1.4-5          tidyselect_1.2.1     digest_0.6.35       
-[34] svUnit_1.0.6         stringi_1.8.4        reshape2_1.4.4      
-[37] labeling_0.4.3       fastmap_1.1.1        grid_4.4.0          
-[40] colorspace_2.1-0     cli_3.6.3            magrittr_2.0.3      
-[43] loo_2.8.0            pkgbuild_1.4.4       utf8_1.2.4          
-[46] withr_3.0.0          scales_1.3.0         backports_1.5.0     
-[49] timechange_0.3.0     rmarkdown_2.26       matrixStats_1.3.0   
-[52] gridExtra_2.3        hms_1.1.3            coda_0.19-4.1       
-[55] evaluate_0.23        knitr_1.46           ggdist_3.3.2        
-[58] V8_4.4.2             viridisLite_0.4.2    rlang_1.1.4         
-[61] Rcpp_1.0.12          glue_1.7.0           rstudioapi_0.16.0   
-[64] jsonlite_1.8.8       plyr_1.8.9           R6_2.5.1            </code></pre>
+ [1] gtable_0.3.6          tensorA_0.36.2.1      xfun_0.55            
+ [4] QuickJSR_1.8.1        htmlwidgets_1.6.4     inline_0.3.21        
+ [7] lattice_0.22-7        tzdb_0.5.0            vctrs_0.7.0          
+[10] tools_4.5.1           generics_0.1.4        stats4_4.5.1         
+[13] curl_7.0.0            parallel_4.5.1        pkgconfig_2.0.3      
+[16] KernSmooth_2.23-26    Matrix_1.7-3          checkmate_2.3.3      
+[19] RColorBrewer_1.1-3    S7_0.2.1              distributional_0.5.0 
+[22] RcppParallel_5.1.11-1 lifecycle_1.0.5       compiler_4.5.1       
+[25] farver_2.1.2          codetools_0.2-20      htmltools_0.5.9      
+[28] yaml_2.3.12           pillar_1.11.1         arrayhelpers_1.1-0   
+[31] abind_1.4-8           tidyselect_1.2.1      digest_0.6.39        
+[34] svUnit_1.0.8          stringi_1.8.7         reshape2_1.4.5       
+[37] labeling_0.4.3        fastmap_1.2.0         grid_4.5.1           
+[40] cli_3.6.5             magrittr_2.0.4        loo_2.9.0.9000       
+[43] utf8_1.2.6            pkgbuild_1.4.8        withr_3.0.2          
+[46] scales_1.4.0          backports_1.5.0       timechange_0.3.0     
+[49] rmarkdown_2.30        matrixStats_1.5.0     gridExtra_2.3        
+[52] hms_1.1.4             coda_0.19-4.1         evaluate_1.0.5       
+[55] knitr_1.51            V8_8.0.1              ggdist_3.3.3         
+[58] viridisLite_0.4.2     rlang_1.1.7           Rcpp_1.1.0           
+[61] glue_1.8.0            rstudioapi_0.17.1     jsonlite_2.0.0       
+[64] plyr_1.8.9            R6_2.6.1             </code></pre>
 </div>
 </div>
 </section>
@@ -1184,248 +1260,441 @@ loaded via a namespace (and not attached):
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
-    }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
-      }
-    }
-    return false;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button', {
-    text: function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-    }
-  });
-  clipboard.on('success', function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  });
-  function tippyHover(el, contentFn) {
-    const config = {
-      allowHTML: true,
-      content: contentFn,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start'
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
     };
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      return note.innerHTML;
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
         }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
       }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
+      return false;
     }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
           }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
       });
     }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<input type="hidden" id="giscus-base-theme" value="light">
+<input type="hidden" id="giscus-alt-theme" value="dark">
+<script>
+  function loadGiscus() {
+    // Function to get the theme based on body class
+    const getTheme = () => {
+      let baseTheme = document.getElementById('giscus-base-theme').value;
+      let altTheme = document.getElementById('giscus-alt-theme').value;
+      return document.body.classList.contains('quarto-dark') ? altTheme : baseTheme;
+    };
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.dataset.repo = "ASKurz/Statistical_Rethinking_2_with_rstan";
+    script.dataset.repoId = "R_kgDOMeljUg";
+    script.dataset.category = "General";
+    script.dataset.categoryId = "DIC_kwDOMeljUs4ChZXD";
+    script.dataset.mapping = "title";
+    script.dataset.reactionsEnabled = "1";
+    script.dataset.emitMetadata = "0";
+    script.dataset.inputPosition = "top";
+    script.dataset.theme = getTheme();
+    script.dataset.lang = "en";
+    script.crossOrigin = "anonymous";
+    // Append the script to the desired div instead of at the end of the body
+    document.getElementById("quarto-content").appendChild(script);
   }
-});
-</script>
-<script src="https://giscus.app/client.js" data-repo="ASKurz/Statistical_Rethinking_2_with_rstan" data-repo-id="R_kgDOMeljUg" data-category="General" data-category-id="DIC_kwDOMeljUs4ChZXD" data-mapping="title" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+  loadGiscus();
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="./08.html" class="pagination-link">
+      <a href="./08.html" class="pagination-link" aria-label="Conditional Manatees">
         <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Conditional Manatees</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./10.html" class="pagination-link">
+      <a href="./10.html" class="pagination-link" aria-label="Big Entropy and the Generalized Linear Model">
         <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Big Entropy and the Generalized Linear Model</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
@@ -1434,4 +1703,5 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 
 
 
-</body></html>
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/ASKurz/Statistical_Rethinking_2_with_rstan/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

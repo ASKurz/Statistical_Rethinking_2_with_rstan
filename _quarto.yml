@@ -3,7 +3,7 @@ project:
 
 book:
   title: "*Statistical rethinking* 2 with rstan and the tidyverse"
-  subtitle: "version 0.0.3"
+  subtitle: "version 0.0.3.1"
   author: "A. Solomon Kurz"
   date: now
   search: true
