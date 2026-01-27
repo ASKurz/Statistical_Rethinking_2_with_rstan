@@ -164,7 +164,7 @@ model {
 
 In Stan program blocks, each line ends with a `;`. As you can see in the `model` block, we can annotate the code with `//` marks. We'll focus on each of the three program blocks in the subsections below.
 
-### Our `data` block.
+### Our `data` block
 
 Data declarations are a *big deal* with Stan. We'll cover a few of the fine points in this section, but the primary information source is the [*Data Types and Declarations*](https://mc-stan.org/docs/reference-manual/types.html) section of the *Stan Reference Manual*. At some time or another, you'll want to study that material.
 
@@ -190,7 +190,7 @@ By the second line `vector[n] cover_std;`, we have defined our `cover_std` predi
 
 Note how by `int<lower=0>`, we declared the `count` variable is constrained to non-negative integer values. The model would have fit fine without the `<lower=0>` constraint, but that constraint serves as an error check ensuring none of our salamander counts are out-of bounds values like -1. Don't try fitting Poisson models with negative counts, friends.
 
-### Our `parameters` block.
+### Our `parameters` block
 
 A good initial place to learn the technical details for the `parameters` block is in the [*Program block: `parameters`*](https://mc-stan.org/docs/reference-manual/blocks.html#program-block-parameters) section of the *Stan Reference Manual*. Otherwise you can glean a lot of applied insights from the [*Regression Models*](https://mc-stan.org/docs/stan-users-guide/regression.html) section of the *Stan User's Guide*.
 
@@ -207,7 +207,7 @@ Both our intercept `a` and slope `b` have been declared as unconstrained `real` 
 
 Importantly, the parameters declared in the `parameters` block are the ones sampled by Stan's HMC sampler.
 
-### Our `model` block. {#sec-Our-model-block}
+### Our `model` block {#sec-Our-model-block}
 
 In the above sections were we detailed the contents of our `data` and `parameters` blocks, all of their contents were what are called *declarations*.  We named data elements and model parameters. Whereas `model` blocks do allow for declarations, they also allow for *statements*. A great place to learn all about statements is the [*Statements*](https://mc-stan.org/docs/reference-manual/statements.html) section of the *Stan Reference Manual*. You might also read the brief [*Program block: `model`*](https://mc-stan.org/docs/reference-manual/blocks.html#program-block-model) section of the *Stan Reference Manual*, or soak in all the applied examples in the [*Regression Models*](https://mc-stan.org/docs/stan-users-guide/regression.html) section of the *Stan User's Guide*. When you're really ready to get serious, you could browse though pretty much the whole of the [*Stan Functions Reference*](https://mc-stan.org/docs/functions-reference/) [@standevelopmentteamStanFunctionsReference2024].
 
@@ -259,7 +259,7 @@ There are many many other fine points we could discuss here about the `model` bl
 
 To my eye, there are two basic ways to draw posterior samples from **rstan**. We'll cover both.
 
-### Primary method: Just use `stan()`.
+### Primary method: Just use `stan()`
 
 The first method for fitting **rstan** models, and the primary method we'll be using in this ebook, is with the `stan()` function. For us, the two main arguments are the `data` argument, into which we insert our `stan_data`, and the `model_code` argument, into which we insert our `model_code` with its `data`, `parameters`, and `model` block information. There are a whole slew of other arguments with default settings you might want to change. For example, `stan()` automatically samples from four HMC chains by the default setting `chains = 4`, which I generally find reasonable. Though it by default samples from the four chains in sequence, we will instead sample from them in parallel by setting `cores = 4`. To make the results more reproducible, I will also set `seed = 1`.
 
@@ -283,7 +283,7 @@ m1.1 <- stan(
 
 Following the conventions McElreath used throughout the text, we have saved the model fit object as `m1.1`, where the `m` prefix stands for fitted model, the first numeral index indicates we are in the first chapter, and the second numerical index indicated this if the first model we have fit within this chapter. You can name your model fits whatever you want.
 
-### Secondary method: Use `stan_model()` and `sampling()`.
+### Secondary method: Use `stan_model()` and `sampling()`
 
 The second method splits the model fitting process into two steps. We use the `stan_model()` function to translate the code in our `model_code` object into C++, and then that C++ code is compiled into a so-called dynamic shared object (DSO), which is then loaded. Though there are many arguments within the `stan_model()` function, the only one required by us is `model_code`. Following some of McElreath's naming conventions, we'll save the results as `dso1.1`.
 
@@ -324,7 +324,7 @@ samp1.1 <- sampling(
     cores = 4, seed = 1) 
 ```
 
-### Compare the two methods by output.
+### Compare the two methods by output
 
 We might compare the structures of our `m1.1` and `samp1.1` objects with `str()`.
 

@@ -22,7 +22,7 @@ theme_set(
 )
 ```
 
-#### Rethinking: A model by any other name.
+#### Rethinking: A model by any other name
 
 ## Example: Multilevel tadpoles {#sec-Example-Multilevel-tadpoles}
 
@@ -273,11 +273,11 @@ p2 <- as_draws_df(m13.2) |>
 p1 | p2
 ```
 
-#### Overthinking: QUAP fails, MCMC succeeds.
+#### Overthinking: QUAP fails, MCMC succeeds
 
-#### Rethinking: Varying intercepts as over-dispersion.
+#### Rethinking: Varying intercepts as over-dispersion
 
-#### Overthinking: Prior for variance components.
+#### Overthinking: Prior for variance components
 
 Here's how we define and fit the model with the half-normal prior on $\sigma$.
 
@@ -349,7 +349,7 @@ In this case, the prior didn't matter much.
 
 ## Varying effects and the underfitting/overfitting trade-off
 
-### The model.
+### The model
 
 The simulation formula should look familiar.
 
@@ -363,7 +363,7 @@ $$
 \end{align*}
 $$
 
-### Assign values to the parameters.
+### Assign values to the parameters
 
 Here we follow along with McElreath and "assign specific values representative of the actual tadpole data" (p. 409). Because he included a `set.seed()` line in his **R** code 13.8, our results should match his exactly.
 
@@ -398,7 +398,7 @@ dsim |>
   theme(plot.title = element_text(size = 14))
 ```
 
-#### Overthinking: Data types and Stan models.
+#### Overthinking: Data types and Stan models
 
 > There are two basic types of numerical data in R, in- tegers and real values. A number like "3" could be either. Inside your computer, integers and real ("numeric") values are represented differently. For example, here is the same vector of values generated as both:
 
@@ -409,7 +409,7 @@ class(c(1, 2, 3))
 
 > Usually, you don't have to manage these types, because R manages them for you. But when you pass values to Stan, or another external program, often the internal representation does matter. In particular, Stan and ~~`ulam`~~ [`stan()`] sometimes require explicit integers. For example, in a binomial model, the "size" variable that specifies the number of trials must be of integer type. Stan may provide a mysterious warning message about a function not being found, when the size variable is instead of "real" type, or what R calls `numeric`. Using `as.integer` before passing the data to Stan or ~~`ulam`~~ [`stan()`] will resolve the issue. (p. 410)
 
-### Sumulate survivors.
+### Sumulate survivors
 
 > Each pond $i$ has $n_i$ potential survivors, and nature flips each tadpole's coin, so to speak, with probability of survival $p_i$. This probability $p_i$ is implied by the model definition, and is equal to:
 >
@@ -429,7 +429,7 @@ dsim <- dsim |>
 glimpse(dsim)
 ```
 
-### Compute the no-pooling estimates.
+### Compute the no-pooling estimates
 
 The no-pooling estimates (i.e., $\alpha_{\text{tank}[i]}$) are the results of simple algebra.
 
@@ -443,7 +443,7 @@ glimpse(dsim)
 
 "These are the same no-pooling estimates you'd get by fitting a model with a dummy variable for each pond and flat priors that induce no regularization" (p. 411). That is, these are the same kinds of estimates we got back when we fit `m13.1`.
 
-### Compute the partial-pooling estimates.
+### Compute the partial-pooling estimates
 
 Now we make the `stan_data` with the `compose_data()` function.
 
@@ -550,7 +550,7 @@ draws |>
   facet_wrap(~ ni, labeller = label_both, nrow = 1, scales = "free_x")
 ```
 
-#### Overthinking: Repeating the pond simulation.
+#### Overthinking: Repeating the pond simulation
 
 Make the new `new_dsim` data frame, and them update the `stan_data`.
 
@@ -630,9 +630,9 @@ draws_new |>
 
 ## More than one type of cluster {#sec-More-than-one-type-of-cluster}
 
-#### Rethinking: Cross-classification and hierarchy.
+#### Rethinking: Cross-classification and hierarchy
 
-### Multilevel chimpanzees.
+### Multilevel chimpanzees
 
 The initial multilevel update from model `m11.4` from @sec-Logistic-regression-Prosocial-chimpanzees follows the statistical formula
 
@@ -884,7 +884,7 @@ The stacking weights more heavily favor the simpler model `m13.5`, than the WAIC
 
 > There is nothing to gain here by selecting either model. The comparison of the two models tells a richer story... Since this is an experiment, there is nothing to really select. The experimental design tells us the relevant causal model to inspect. (pp. 418--419)
 
-### Even more clusters.
+### Even more clusters
 
 The next model `m13.6` is a minor generalization of `m13.4`, where the $\beta$ parameters are also partially pooled.
 
@@ -999,9 +999,9 @@ check_divergences(m13.6)
 
 ## Divergent transitions and non-centered priors {#sec-Divergent-transitions-and-non-centered-priors}
 
-### Rethinking: No free samples.
+### Rethinking: No free samples
 
-### The Devil's Funnel.
+### The Devil's Funnel
 
 McElreath posed a joint distribution
 
@@ -1153,7 +1153,7 @@ mcmc_trace(m13.7nc,
 
 The trace plot for $x$, however, is a mess. This isn't necessarily a problem, because we're only really interested in $v$ and $z$. $x$ is a means to an end.
 
-### Non-centered chimpanzees. {#sec-Non-centered-chimpanzees}
+### Non-centered chimpanzees {#sec-Non-centered-chimpanzees}
 
 At the top of the section, McElreath reported the `rethinking::ulam()` default is to set `adapt_delta = 0.95`. Readers should be aware that the `rstan::stan()` default is `adapt_delta = 0.80`. See the `stan` section of the *rstan reference manual* (link [here](https://CRAN.R-project.org/package=rstan/rstan.pdf)). A consequence of this difference is `rethinking::ulam()` will tend to take smaller step sizes than `rstan::stan()`, at the cost of slower exploration of the posterior. I don't know that one is inherently better than the other. They're just defaults.
 
@@ -1299,7 +1299,7 @@ Big difference.
 
 ## Multilevel posterior predictions
 
-### Posterior prediction for same clusters.
+### Posterior prediction for same clusters
 
 If you are using a by-hand approach for computing model-based expectations for a multilevel model of this kind, `spread_draws()` seems like a good solution for a tidy workflow. Here's what that can look like for `actor == 2`, in `block == 1`. We just display the results in a plot resembling Figure 13.7a.
 
@@ -1385,7 +1385,7 @@ m13.4 |>
 
 This is yet another reminder there was very little variation across blocks.
 
-### Posterior prediction for new clusters.
+### Posterior prediction for new clusters
 
 Here's how we might make Figure 13.7, left. Note how we've dropped the `a[actor]` and `g[block]` terms from `spread_draws()`, and added in `a_bar`. For this plot, we didn't need `d_pred` either.
 
@@ -1471,7 +1471,7 @@ Here's the complete version of Figure 13.7.
 p1 | p2 | p3
 ```
 
-### Post-stratification.
+### Post-stratification
 
 ## ~~Summary~~ Centered, non-centered, and the secret third parameterization {#sec-Centered-non-centered-and-the-secret-third-parameterization}
 

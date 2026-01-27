@@ -24,7 +24,7 @@ theme_set(
 
 ## Over-dispersed counts
 
-### Beta-binomial. {#sec-Beta-binomial}
+### Beta-binomial {#sec-Beta-binomial}
 
 Here's how we might plot the beta distribution, as discussed in McElreath's **R** code 12.1. Note our use of the `rethinking::dbeta2()` function, which is parameterized in terms of `prob` (i.e., the mean, $\alpha / (\alpha + \beta)$) and `theta` (i.e., the concentration, $\alpha + \beta$).
 
@@ -284,7 +284,7 @@ p1 | p2
 
 As in the text, the raw data are consistent with the prediction intervals. But those intervals are so incredibly wide, they're hardly an endorsement of the model. Once we learn about hierarchical models, we'll be able to do much better.
 
-### Negative-binomial or gamma-Poisson.
+### Negative-binomial or gamma-Poisson
 
 We might express the gamma-Poisson (negative binomial) as
 
@@ -488,15 +488,15 @@ bind_rows(
   theme(legend.position = "none")
 ```
 
-### Over-dispersion, entropy, and information criteria.
+### Over-dispersion, entropy, and information criteria
 
-#### Overthinking: Continuous mixtures.
+#### Overthinking: Continuous mixtures
 
 ## Zero-inflated outcomes
 
-#### Rethinking: Breaking the law.
+#### Rethinking: Breaking the law
 
-### Example: Zero-inflated Poisson.
+### Example: Zero-inflated Poisson
 
 Do you remember the monk data from back in @sec-Example-Exposure-and-the-offset? Here we simulate some more. This time we'll work in a little alcohol.
 
@@ -645,13 +645,13 @@ as_draws_df(m12.3) |>
   mean_qi(.width = 0.89)
 ```
 
-#### Overthinking: Zero-inflated Poisson calculations in Stan.
+#### Overthinking: Zero-inflated Poisson calculations in Stan
 
 We just did that!
 
 ## Ordered categorical outcomes
 
-### Example: Moral intuition.
+### Example: Moral intuition
 
 Let's get the `Trolley` data [see @cushmanRoleConsciousReasoning2006].
 
@@ -674,7 +674,7 @@ d |>
   summarise(n = n_distinct(id))
 ```
 
-### Describing an ordered distribution with intercepts.
+### Describing an ordered distribution with intercepts
 
 Make our version of the simple Figure 12.4 histogram of our primary variable, `response`.
 
@@ -859,7 +859,7 @@ m12.4 |>
   mean_qi(cum_p, .width = 0.89)
 ```
 
-### Adding predictor variables.
+### Adding predictor variables
 
 Now we define the generic linear model as $\phi_i = \beta x_i$. Accordingly, the formula for our cumulative logit model becomes
 
@@ -1128,7 +1128,7 @@ m12.5 |>
   facet_wrap(~ action + contact, labeller = label_both)
 ```
 
-#### Rethinking: Staring into the abyss.
+#### Rethinking: Staring into the abyss
 
 ## Ordered categorical predictors {#sec-Ordered-categorical-predictors}
 

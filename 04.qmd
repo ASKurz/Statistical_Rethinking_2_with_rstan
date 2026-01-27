@@ -22,23 +22,23 @@ theme_set(
 
 ## Why normal distributions are normal
 
-### Normal by addition.
+### Normal by addition
 
-### Normal by multiplication.
+### Normal by multiplication
 
-### Normal by log-multiplication.
+### Normal by log-multiplication
 
-### Using Gaussian distributions.
+### Using Gaussian distributions
 
-#### Rethinking: Heavy tails.
+#### Rethinking: Heavy tails
 
-#### Overthinking: Gaussian distribution.
+#### Overthinking: Gaussian distribution
 
 ## A language for describing models
 
-### Re-describing the globe tossing model.
+### Re-describing the globe tossing model
 
-#### Overthinking: From model definition to Bayes' theorem.
+#### Overthinking: From model definition to Bayes' theorem
 
 We can use grid approximation to work through our globe-tossing model.
 
@@ -78,7 +78,7 @@ d |>
 
 ## A Gaussian model of height
 
-### The data.
+### The data
 
 Load the `Howell1` data [@howell2001demography; @howell2010life].
 
@@ -149,9 +149,9 @@ d2 |>
   count()
 ```
 
-#### Overthinking: Data frames and indexes.
+#### Overthinking: Data frames and indexes
 
-### The model.
+### The model
 
 The likelihood for our model is
 
@@ -300,11 +300,11 @@ sim |>
   mutate(percent = 100 * n / sum(n))
 ```
 
-#### Rethinking: A farewell to epsilon.
+#### Rethinking: A farewell to epsilon
 
-#### Overthinking: Model definition to Bayes' theorem again.
+#### Overthinking: Model definition to Bayes' theorem again
 
-### Grid approximation of the posterior distribution.
+### Grid approximation of the posterior distribution
 
 This can be a handy preparatory step before we fit the model with `stan()`.
 
@@ -374,7 +374,7 @@ d_grid |>
        y = expression(sigma))
 ```
 
-### Sampling from the posterior.
+### Sampling from the posterior
 
 We can use `dplyr::sample_n()` to sample rows, with replacement, from `d_grid`.
 
@@ -420,7 +420,7 @@ d_grid_samples |>
   mode_hdi(value)
 ```
 
-#### Overthinking: Sample size and the normality of $\sigma$'s posterior.
+#### Overthinking: Sample size and the normality of $\sigma$'s posterior
 
 Here's `d3`.
 
@@ -496,7 +496,7 @@ d_grid_samples |>
   facet_wrap(~ name, labeller = label_parsed, scales = "free")
 ```
 
-### Finding the posterior distribution with ~~`quap()`~~ `stan()`.
+### Finding the posterior distribution with ~~`quap()`~~ `stan()`
 
 Here we rewrite the statistical model, this time using font color to help differentiate the likelihood from the prior(s).
 
@@ -612,11 +612,11 @@ Here's the model summary.
 print(m4.2, probs = c(0.055, 0.945))
 ```
 
-#### Overthinking: Start values for ~~quap~~ `rstan()`.
+#### Overthinking: Start values for ~~quap~~ `rstan()`
 
 The Stan folks generally use the language of *initial* values, rather than *start* values. But I believe these are basically the same thing. Within the `stan()` function, you can set these with the `init` argument, about which you can learn more by executing `?stan` in your console, or perhaps looking through [this thread](https://discourse.mc-stan.org/t/how-to-define-initial-values-in-stan-in-r/16855) on the Stan forums.
 
-### Sampling from a ~~`quap()`~~ `stan()`.
+### Sampling from a ~~`quap()`~~ `stan()`
 
 The `vcov()` function does not work for models fit with `stan()`.
 
@@ -736,7 +736,7 @@ draws |>
   mean_qi(value)
 ```
 
-#### Overthinking: Under the hood with multivariate sampling.
+#### Overthinking: Under the hood with multivariate sampling
 
 ## Linear prediction
 
@@ -753,7 +753,7 @@ d2 |>
 
 #### Rethinking: What is "regression"? 
 
-### The linear model strategy.
+### The linear model strategy
 
 Like we did for our first model without a predictor, we'll use font color to help differentiate between the likelihood and prior(s) of our new univariable model,
 
@@ -767,15 +767,15 @@ $$
 \end{align*}
 $$
 
-#### Probability of the data.
+#### Probability of the data
 
-#### Linear model.
+#### Linear model
 
-##### Rethinking: Nothing special or natural about linear models.
+##### Rethinking: Nothing special or natural about linear models
 
-##### Overthinking: Units and regression models.
+##### Overthinking: Units and regression models
 
-#### Priors.
+#### Priors
 
 Instead of using a loop to make our data for Figure 4.5, we'll stay within the **tidyverse**.
 
@@ -915,9 +915,9 @@ Thus we now have the full Figure 4.5.
 
 ##### Rethinking: What's the correct prior?
 
-##### Rethinking: Prior predictive simulation and $p$-hacking.
+##### Rethinking: Prior predictive simulation and $p$-hacking
 
-### Finding the posterior distribution.
+### Finding the posterior distribution
 
 Now we get ready to actually fit the model
 
@@ -992,9 +992,9 @@ Look at the `print()` summary.
 print(m4.3, probs = c(0.055, 0.945))
 ```
 
-#### Rethinking: Everything that depends upon parameters has a posterior distribution.
+#### Rethinking: Everything that depends upon parameters has a posterior distribution
 
-#### Overthinking: Logs and exps, oh my.
+#### Overthinking: Logs and exps, oh my
 
 With `stan()`, you can include `exp()` and other defined functions right in the `model` formula.
 
@@ -1057,11 +1057,11 @@ as_draws_df(m4.3b) |>
   mean_qi(b)
 ```
 
-### Interpreting the posterior distribution.
+### Interpreting the posterior distribution
 
 ##### Rethinking: What do parameters mean?
 
-#### Tables of marginal distributions.
+#### Tables of marginal distributions
   
 We can get an exhaustive summary by simply inputting the `stan()` model fit object directly into `summarise_draws()`.
 
@@ -1115,7 +1115,7 @@ pairs(m4.3,
       pch = 19)  
 ```
 
-#### Plotting posterior inference against the data.
+#### Plotting posterior inference against the data
 
 Here is the code for Figure 4.6. Note how we extract the posterior means first, save the values, and input those into the arguments within `geom_abline()`.
 
@@ -1148,7 +1148,7 @@ d2 |>
 ```
 
 
-#### Adding uncertainty around the mean.
+#### Adding uncertainty around the mean
 
 It's easy to extract all the posterior draws from a `stan()` model with `as_draws_df()`.
 
@@ -1298,7 +1298,7 @@ n_df |>
   facet_wrap(~ n, labeller = label_parsed)
 ```
 
-#### Plotting regression intervals and contours.
+#### Plotting regression intervals and contours
 
 Since we used `weight_c` to fit our model, we might first want to understand what exactly the mean value is for `weight`.
 
@@ -1385,13 +1385,13 @@ p2 <- d2 |>
                   ylim = range(d2$height))
 ```
 
-##### Rethinking: Overconfident intervals.
+##### Rethinking: Overconfident intervals
 
-##### Overthinking: How `link` works.
+##### Overthinking: How `link` works
 
 With a **brms**-based workflow, we can use functions like base-**R** `fitted()` and **tidybayes** convenience functions like `add_epred_draws()` in places where McElreath used `link()` in the text. Sadly, those functions aren't available for models fit with **rstan**. Either we hand-compute the expected values with a workflow like above, or in later chapters we'll see how to build them into the Stan model via the `generated quantities` block.
 
-#### Prediction intervals.
+#### Prediction intervals
 
 We can add posterior-predictions to `draws_fitted_df` by way of the `rnorm()` function.
 
@@ -1426,15 +1426,15 @@ d2 |>
                   ylim = range(d2$height))
 ```
 
-##### Rethinking: Two kinds of uncertainty.
+##### Rethinking: Two kinds of uncertainty
 
-##### Overthinking: Rolling your own `sim`.
+##### Overthinking: Rolling your own `sim`
 
 With a **brms**-based workflow, we can use functions like base-**R** `predict()` and **tidybayes** convenience functions like `add_predicted_draws()` in places where McElreath used `sim()` in the text. Sadly, those functions aren't available for models fit with **rstan**. Either we hand-compute the expected values with a workflow like above, or in later chapters we'll see how to build them into the Stan model via the `generated quantities` block.
 
 ## Curves from lines
 
-### Polynomial regression. {#sec-polynomial-regression}
+### Polynomial regression {#sec-polynomial-regression}
 
 Remember `d`?
 
@@ -1730,15 +1730,15 @@ p1 <- as_draws_df(m4.7) |>
   coord_cartesian(ylim = range(d$height))
 ```
 
-##### Rethinking: Linear, additive, funky.
+##### Rethinking: Linear, additive, funky
 
-##### Overthinking: Converting back to natural scale.
+##### Overthinking: Converting back to natural scale
 
-### Splines.
+### Splines
 
 I'll flesh this section out, later. For now, check out [Arel-Bundock's code](https://vincentarelbundock.github.io/rethinking2/04.html) for this part of the chapter.
 
-### Smooth functions for a rough world.
+### Smooth functions for a rough world
 
 ## Session info {-}
 

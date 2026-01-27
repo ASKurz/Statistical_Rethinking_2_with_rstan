@@ -22,11 +22,11 @@ theme_set(
 )
 ```
 
-#### Overthinking: Simulated science distortion.
+#### Overthinking: Simulated science distortion
 
 ## Multicollinearity
 
-### Multicollinear legs.
+### Multicollinear legs
 
 Let's simulate some leg data.
 
@@ -309,7 +309,7 @@ as_draws_df(m6.2) |>
   labs(title = "Just one coefficient needed")
 ```
 
-### Multicollinear `milk`.
+### Multicollinear `milk`
 
 Load the `milk` data and standardize the focal variables with the `rethinking::standardize()` function.
 
@@ -492,9 +492,9 @@ dagify(L ~ D,
   theme_dag()
 ```
 
-#### Rethinking: Identification guaranteed; comprehension up to you.
+#### Rethinking: Identification guaranteed; comprehension up to you
 
-#### Overthinking: Simulating collinearity.
+#### Overthinking: Simulating collinearity
 
 First we'll get the data and define the functions. You'll note I've defined my `sim_coll()` a little differently from McElreath's `sim.coll()` in the text. I've omitted `rep.sim.coll()` as an independent function altogether, but computed similar summary information with the `summarise()` code at the bottom of the block.
 
@@ -590,7 +590,7 @@ d |>
   mutate_if(is.double, round, digits = 2)
 ```
 
-### A prior is born.
+### A prior is born
 
 Let's take a look at the $p \sim \operatorname{Log-Normal}(0, 0.25)$ prior distribution.
 
@@ -776,7 +776,7 @@ print(m6.7, pars = c("b0", "b1", "b2", "sigma"), probs = c(0.055, 0.945))
 
 The results match those displayed in the text.
 
-### Blocked by consequence.
+### Blocked by consequence
 
 To measure the treatment effect properly, we should omit `fungus` from the model. This leaves us with the equation
 
@@ -846,7 +846,7 @@ print(m6.8, pars = c("b0", "b1", "sigma"), probs = c(0.055, 0.945))
 
 Now we have a positive treatment effect, $\beta_1$.
 
-### Fungus and $d$-separation.
+### Fungus and $d$-separation
 
 Let's make a DAG.
 
@@ -1044,7 +1044,7 @@ print(m6.8b, probs = c(0.055, 0.945))
 
 "Including fungus again confounds inference about the treatment, this time by making it seem like it helped the plants, even though it had no effect" (p. 175).
 
-#### Rethinking: Model selection doesn't help.
+#### Rethinking: Model selection doesn't help
 
 ## Collider bias
 
@@ -1064,7 +1064,7 @@ dagify(S ~ T + N,
   gg_simple_dag()
 ```
 
-### Collider of false sorrow.
+### Collider of false sorrow
 
 All it takes is a  single `mutate()` line in the `dagify()` function to amend our previous DAG.
 
@@ -1289,7 +1289,7 @@ print(m6.10, probs = c(0.055, 0.945))
 
 Wow. So when we take out `mid`, the coefficient for `a` ($\beta_1$) drops to zero.
 
-### The haunted DAG.
+### The haunted DAG
 
 It gets worse. "Unmeasured causes can still induce collider bias. So I'm sorry to say that we also have to consider the possibility that our DAG may be haunted" (p. 180).
 
@@ -1467,7 +1467,7 @@ d |>
   scale_color_manual(values = c("black", "blue"), breaks = NULL)
 ```
 
-#### Bonus: A second method. {#sec-A-second-method}
+#### Bonus: A second method {#sec-A-second-method}
 
 The last two models were largely the same in they were both multivariable models with several predictors; the second just had one more predictor than the other. This is a good opportunity to show another way to fit them both, but using a more general kind of `model_code` syntax.
 
@@ -1691,15 +1691,15 @@ m6.11 |>
 
 ## Confronting confounding
 
-### Shutting the backdoor.
+### Shutting the backdoor
 
-### Two roads.
+### Two roads
 
-### Backdoor waffles.
+### Backdoor waffles
 
-#### Rethinking: DAGs are not enough.
+#### Rethinking: DAGs are not enough
 
-#### Overthinking: A smooth operator.
+#### Overthinking: A smooth operator
 
 ## Summary
 

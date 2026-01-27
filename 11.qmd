@@ -23,7 +23,7 @@ theme_set(
 
 ## Binomial regression
 
-### Logistic regression: Prosocial chimpanzees. {#sec-Logistic-regression-Prosocial-chimpanzees}
+### Logistic regression: Prosocial chimpanzees {#sec-Logistic-regression-Prosocial-chimpanzees}
 
 Load the @silkChimpanzeesAreIndifferent2005 `chimpanzees` data.
 
@@ -577,11 +577,11 @@ loo_compare(
   print(simplify = FALSE)
 ```
 
-#### Overthinking: Adding log-probability calculations to a Stan model.
+#### Overthinking: Adding log-probability calculations to a Stan model
 
 We did this with `m11.5`, above.
 
-### Relative shark and absolute deer.
+### Relative shark and absolute deer
 
 Based on the full model, `m11.4`, here's how you might compute the posterior mean and 89% intervals for the proportional odds of switching from `treatment == 2` to `treatment == 4`.
 
@@ -595,9 +595,9 @@ as_draws_df(m11.4) |>
 
 A limitation of relative measures measures like proportional odds is they ignore what you might think of as the reference or the baseline.
 
-#### Overthinking: Proportional odds and relative risk.
+#### Overthinking: Proportional odds and relative risk
 
-### Aggregated binomial: Chimpanzees again, condensed. {#sec-Aggregated-binomial-Chimpanzees-again-condensed}
+### Aggregated binomial: Chimpanzees again, condensed {#sec-Aggregated-binomial-Chimpanzees-again-condensed}
 
 With the **tidyverse**, we can use `group_by()` and `summarise()` to achieve what McElreath did with `aggregate()`.
 
@@ -745,7 +745,7 @@ loo_m11.6 |>
   loo::pareto_k_table()
 ```
 
-### Aggregated binomial: Graduate school admissions.
+### Aggregated binomial: Graduate school admissions
 
 Load the infamous `UCBadmit` data.
 
@@ -1002,11 +1002,11 @@ McElreath recommended we look at the `pairs()` plot to get a sense of how highly
 pairs(m11.8, pars = c("a", "d"), gap = 0.25)
 ```
 
-#### Rethinking: Simpson's paradox is not a paradox.
+#### Rethinking: Simpson's paradox is not a paradox
 
 ## Poisson regression {#sec-Poisson-regression}
 
-### Example: Oceanic tool complexity.
+### Example: Oceanic tool complexity
 
 Load the `Kline` data [see @klinePopulationSizePredicts2010].
 
@@ -1364,7 +1364,7 @@ p2 <- spread_draws(m11.10, a[cid], b[cid]) |>
 
 Hawaii is influential in that it has a very large population relative to the other islands.
 
-#### Overthinking: Modeling tool innovation. {#sec-Overthinking-Modeling-tool-innovation}
+#### Overthinking: Modeling tool innovation {#sec-Overthinking-Modeling-tool-innovation}
 
 McElreath's theoretical, or scientific, model for `total_tools` is
 
@@ -1560,9 +1560,9 @@ loo_compare(l11.10, l11.11) |>
   print(simplify = FALSE)
 ```
 
-### Negative binomial (gamma-Poisson) models.
+### Negative binomial (gamma-Poisson) models
 
-### Example: Exposure and the offset. {#sec-Example-Exposure-and-the-offset}
+### Example: Exposure and the offset {#sec-Example-Exposure-and-the-offset}
 
 Here we simulate our industrious monk data.
 
@@ -1691,15 +1691,15 @@ Because we don't know what seed McElreath used to simulate his data, our simulat
 
 ## Multinomial and categorical models
 
-### Predictors matched to outcomes.
+### Predictors matched to outcomes
 
 I will flesh this section out later.
 
-### Predictors matched to observations.
+### Predictors matched to observations
 
 I will flesh this section out later.
 
-#### Multinomial in disguise as Poisson.
+#### Multinomial in disguise as Poisson
 
 Here we fit a multinomial likelihood by refactoring it to a series of Poisson models. Let's retrieve the Berkeley data.
 
@@ -1817,7 +1817,7 @@ bind_rows(
   xlab(expression(italic(p)[admit]))
 ```
 
-#### Overthinking: Multinomial-Poisson transformation.
+#### Overthinking: Multinomial-Poisson transformation
 
 ## Summary
 

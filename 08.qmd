@@ -57,7 +57,7 @@ dagify(R ~ U,
   theme_dag()
 ```
 
-#### Overthinking: Not so simple causation.
+#### Overthinking: Not so simple causation
 
 Here's the DAG for a fuller model for the data.
 
@@ -86,7 +86,7 @@ dagify(G ~ R + U + H,
   theme_dag()
 ```
 
-### Making a rugged model.
+### Making a rugged model
 
 We'll continue to use **tidyverse**-style syntax to wrangle the data.
 
@@ -320,9 +320,9 @@ Check the summary for `m8.1`.
 print(m8.1, pars = c("a", "b", "sigma"), probs = c(0.055, 0.945))
 ```
 
-#### Rethinking: Practicing for when it matters.
+#### Rethinking: Practicing for when it matters
 
-### Adding an indicator variable isn't enough.
+### Adding an indicator variable isn't enough
 
 Make the `cid` index variable.
 
@@ -472,7 +472,7 @@ Note our use of the `case_when()` function when defining the linear models for t
 
 #### Rethinking: Why 97%?
 
-### Adding an interaction does work. {#sec-Adding-an-interaction-does-work}
+### Adding an interaction does work {#sec-Adding-an-interaction-does-work}
 
 In `model_code_8.3` we add an interaction to the model via the index-variable approach by setting `vector[n_cid] b` within the `parameters` block, and then by setting `b[cid]` in the `mu` formula within the `transformed parameters` block.
 
@@ -606,7 +606,7 @@ loo_model_weights(
 
 They don't match up exactly with the LOO weights McElreath reported in the text (p. 249), but the basic pattern is the same.
 
-### Plotting the interaction.
+### Plotting the interaction
 
 The code for Figure 8.5 is a minor extension of the code we used for Figure 8.4. The main changes are the `mu` formulas have changed within `case_when()`, and we have added a call to `facet_wrap()`.
 
@@ -638,7 +638,7 @@ as_draws_df(m8.3) |>
   facet_wrap(~ nations)
 ```
 
-#### Rethinking: All Greek to me.
+#### Rethinking: All Greek to me
 
 ## Symmetry of interactions
 
@@ -694,7 +694,7 @@ as_draws_df(m8.3) |>
 
 ## Continuous interactions
 
-### A winter flower.
+### A winter flower
 
 Look at the `tulips` data, which were adapted from @grafenModernStatisticsLife2002.
 
@@ -706,7 +706,7 @@ rm(tulips)
 glimpse(d)
 ```
 
-### The models.
+### The models
 
 Wrangle a little.
 
@@ -925,7 +925,7 @@ as_draws_df(m8.5) |>
 
 #### Overthinking: How is interaction formed?
 
-### Plotting posterior predictions.
+### Plotting posterior predictions
 
 Here's how we might use `spread_draws()` to make Figure 8.7.
 
@@ -954,7 +954,7 @@ bind_rows(
   facet_grid(fit ~ s, labeller = label_parsed)
 ```
 
-### Plotting prior predictions.
+### Plotting prior predictions
 
 To plot the prior-predictive expectations, we'll need to first sample from the priors. Toward that end, we define what I'll call `model_code_8.4p` and `model_code_8.5p`.
 

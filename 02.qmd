@@ -20,17 +20,17 @@ theme_set(
 
 ## The garden of forking data
 
-### Counting possibilities.
+### Counting possibilities
 
-#### Rethinking: Justification.
+#### Rethinking: Justification
 
-### Combining other information.
+### Combining other information
 
-#### Rethinking: Original ignorance.
+#### Rethinking: Original ignorance
 
-### From counts to probability.
+### From counts to probability
 
-#### Rethinking: Randomization.
+#### Rethinking: Randomization
 
 ## Building a model
 
@@ -42,11 +42,11 @@ toss_vector <- c("w", "l", "w", "w", "w", "l", "w", "l", "w")
 (d <- tibble(toss = toss_vector))
 ```
 
-### A data story.
+### A data story
 
-#### Rethinking: The value of storytelling.
+#### Rethinking: The value of storytelling
 
-### Bayesian updating.
+### Bayesian updating
 
 Here we'll add the cumulative number of trials, `n_trials`, and the cumulative number of successes, `n_successes` (i.e., `toss == "w"`), to the data.
 
@@ -106,33 +106,33 @@ d |>
 
 If it wasn't clear in the code, the dashed curves are normalized prior densities. The solid ones are normalized likelihoods. If you don't normalize (i.e., divide the density by the sum of the density), their respective heights don't match up with those in the text. Furthermore, it's the normalization that makes them directly comparable.
 
-#### Rethinking: Sample size and reliable inference.
+#### Rethinking: Sample size and reliable inference
 
-### Evaluate.
+### Evaluate
 
-#### Rethinking: Deflationary statistics.
+#### Rethinking: Deflationary statistics
 
 ## Components of the model
 
-### Variables.
+### Variables
 
-### Definitions.
+### Definitions
 
-#### Observed variables.
+#### Observed variables
 
-##### Overthinking: Names and probability distributions.
+##### Overthinking: Names and probability distributions
 
-##### Rethinking: A central role for likelihood.
+##### Rethinking: A central role for likelihood
 
-#### Unobserved variables.
+#### Unobserved variables
 
 ##### Overthinking: Prior as a probability distribution
 
 ##### Rethinking: Datum or parameter?
 
-##### Rethinking: Prior, prior pants on fire.
+##### Rethinking: Prior, prior pants on fire
 
-### A model is born.
+### A model is born
 
 We can now describe our observed variables, $w$ and $l$, with parameters within the binomial likelihood, our shorthand notation for which is
 
@@ -146,7 +146,7 @@ which expresses the model assumption that the entire range of possible values fo
 
 ## Making the model go
 
-### Bayes' theorem.
+### Bayes' theorem
 
 We already know about our values for $w$, $l$, and, by logical necessity, $n$. Bayes' theorem will allow us to determine the plausibility of various values of $p$, given $w$ and $l$, which we can express formally as $\Pr(p | w, l)$. Building on some of the earlier equations on page 37, Bayes' theorem tells us that
 
@@ -215,11 +215,11 @@ p3 <- d |>
 
 I'm not sure if it's the same McElreath used in the text, but the formula I used for the triangle-shaped prior is the [Laplace distribution](https://rdrr.io/cran/rmutil/man/Laplace.html) with a location of 0.5 and a dispersion of 0.25.
 
-#### Rethinking: Bayesian data analysis isn't about Bayes' theorem.
+#### Rethinking: Bayesian data analysis isn't about Bayes' theorem
 
-### Motors.
+### Motors
 
-### Grid approximation.
+### Grid approximation
 
 Continuing on with our globe-tossing example,
 
@@ -277,9 +277,9 @@ p2 + p1 +
   plot_annotation(title = "More grid points make for smoother approximations")
 ```
 
-#### Overthinking: Vectorization.
+#### Overthinking: Vectorization
 
-### Quadratic approximation.
+### Quadratic approximation
 
 Though McElreath used the quadratic approximation for the first half of the text, we won't use it much past this chapter. Here, though, we'll apply the quadratic approximation to the globe tossing data with the `rethinking::quap()` function.
 
@@ -353,11 +353,11 @@ tibble(w = c(6, 12, 24),
 
 The grid solutions are in black, and the quadratic approximations are in blue.
 
-#### Rethinking: Maximum likelihood estimation.
+#### Rethinking: Maximum likelihood estimation
 
-#### Overthinking: The Hessians are coming.
+#### Overthinking: The Hessians are coming
 
-### Markov chain Monte Carlo.
+### Markov chain Monte Carlo
 
 > The most popular [alternative to grid approximation and the quadratic approximation] is **Markov chain Monte Carlo** (MCMC), which is a family of conditioning engines capable of handling highly complex models. It is fair to say that MCMC is largely responsible for the insurgence of Bayesian data analysis that began in the 1990s. While MCMC is older than the 1990s, affordable computer power is not, so we must also thank the engineers. ~~Much later in the book (Chapter 9)~~, you'll meet simple and precise examples of MCMC model fitting, aimed at helping you understand the technique. (p. 45, **emphasis** in the original)
 
@@ -428,7 +428,7 @@ as_draws_df(m2.1) |>
 
 If you're still confused, cool. This is just a preview. We'll start walking through fitting models with **brms** in @sec-Geocentric-Models and we'll learn a lot about regression with the binomial likelihood in @sec-god-spiked-the-integers.
 
-#### Overthinking: Monte Carlo globe tossing.
+#### Overthinking: Monte Carlo globe tossing
 
 Here's McElreath's hand-made Metropolis algorithm for the globe-tossing example.
 

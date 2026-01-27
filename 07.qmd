@@ -21,13 +21,13 @@ theme_set(
 )
 ```
 
-#### Rethinking stargazing.
+#### Rethinking stargazing
 
 #### Rethinking: Is AIC Bayesian? 
 
 ## The problem with parameters
 
-### More parameters (almost) always improve fit.
+### More parameters (almost) always improve fit
 
 We'll start off by making the data with brain size and body size for seven `species`.
 
@@ -850,9 +850,9 @@ m7.6b |>
 
 Now the results are very close to those McElreath displayed in the text.
 
-#### Rethinking: Model fitting as compression.
+#### Rethinking: Model fitting as compression
 
-### Too few parameters hurts, too.
+### Too few parameters hurts, too
 
 To explore the distinctions between overfitting and underfitting, we'll need to refit `m7.1` and `m7.4` several times after serially dropping one of the rows in the data. You can `filter()` by `row_number()` to drop rows. For example, we can drop the second row of `d` like this.
 
@@ -969,19 +969,19 @@ d_fits_subset |>
   facet_wrap(~ model)
 ```
 
-#### Rethinking: Bias and variance.
+#### Rethinking: Bias and variance
 
 ## Entropy and accuracy
 
-### Firing the weatherperson.
+### Firing the weatherperson
 
-#### Costs and benefits.
+#### Costs and benefits
 
-#### Measuring accuracy.
+#### Measuring accuracy
 
-#### Rethinking: Calibration is overrated.
+#### Rethinking: Calibration is overrated
 
-### Information and uncertainty.
+### Information and uncertainty
 
 The formula for information entropy is:
 
@@ -989,19 +989,19 @@ $$H(p) = - \text E \log (p_i) = - \sum_{i = 1}^n p_i \log (p_i).$$
 
 McElreath put it in words as: "The uncertainty contained in a probability distribution is the average log-probability of an event." (p. 206).
 
-#### Overthinking: More on entropy.
+#### Overthinking: More on entropy
 
-#### Rethinking: The benefits of maximizing uncertainty.
+#### Rethinking: The benefits of maximizing uncertainty
 
-### From entropy to accuracy.
+### From entropy to accuracy
 
-#### Overthinking: Cross entropy and divergence.
+#### Overthinking: Cross entropy and divergence
 
-#### Rethinking: Divergence depends upon direction.
+#### Rethinking: Divergence depends upon direction
 
 Here we see $H(p, q) \neq H(q, p)$. That is, direction matters.
 
-### Estimating divergence. {#sec-Estimating-divergence}
+### Estimating divergence {#sec-Estimating-divergence}
 
 We define deviance as
 
@@ -1109,15 +1109,15 @@ m7.1ll |>
   summarise(total_log_probability_score = sum(log_probability_score))
 ```
 
-#### Overthinking: Computing the lppd.
+#### Overthinking: Computing the lppd
 
 The Bayesian version of the log-probability score, what we've been calling the lppd, has to account for the data and the posterior distribution. It follows the form
 
-$$\text{lppd}(y, \Theta) = \sum_i \log \frac{1}{S} \sum_s p (y_i | \Theta_s),$$
+$$\text{lppd}(y, \Theta) = \sum_i \log \frac{1}{S} \sum_s p (y_i \mid \Theta_s),$$
 
 > where $S$ is the number of samples and $\Theta_s$ is the $s$-th set of sampled parameter values in the posterior distribution. While in principle this is easy--you just need to compute the probability (density) of each observation $i$ for each sample $s$, take the average, and then the logarithm--in practice it is not so easy. The reason is that doing arithmetic in a computer often requires some tricks to retain precision. (p. 210)
 
-Though we computed these values above with the `log_lik[i]` values defined in the `generated quantities` block of the `model_code`, we can also do it by hand with the posterior distribution and the sample data. When we pull the posterior draws with `as_draws_df()`, the HMC draws, what McElreath called $s$, are indexed in the `.draw` column. To play along, we'll rename that `.draw` column `s`. The term $p (y_i | \Theta_s)$ is the probability of the `brain_std` values for each of the rows of the data, which we've indexed by the `i` column, given the samples from the posterior distribution $\Theta_s$. Those $\Theta_s$ values are our `b[1]`, `b[2]` and `log_sigma` columns, seen through the lens of the Gaussian likelihood. Thus we compute $p (y_i | \Theta_s)$ within the `dnorm()` function, which we save as `density[i][s]`.
+Though we computed these values above with the `log_lik[i]` values defined in the `generated quantities` block of the `model_code`, we can also do it by hand with the posterior distribution and the sample data. When we pull the posterior draws with `as_draws_df()`, the HMC draws, what McElreath called $s$, are indexed in the `.draw` column. To play along, we'll rename that `.draw` column `s`. The term $p (y_i \mid \Theta_s)$ is the probability of the `brain_std` values for each of the rows of the data, which we've indexed by the `i` column, given the samples from the posterior distribution $\Theta_s$. Those $\Theta_s$ values are our `b[1]`, `b[2]` and `log_sigma` columns, seen through the lens of the Gaussian likelihood. Thus we compute $p (y_i \mid \Theta_s)$ within the `dnorm()` function, which we save as `density[i][s]`.
 
 ```{r}
 log_prob_df <- as_draws_df(m7.1ll) |> 
@@ -1138,7 +1138,7 @@ log_prob_df <- as_draws_df(m7.1ll) |>
 glimpse(log_prob_df)
 ```
 
-By $\frac{1}{S} \sum_s p (y_i | \Theta_s)$, we are computing the average density value separately for each row in the sample data, `i`.
+By $\frac{1}{S} \sum_s p (y_i \mid \Theta_s)$, we are computing the average density value separately for each row in the sample data, `i`.
 
 ```{r}
 log_prob_df |> 
@@ -1157,7 +1157,7 @@ log_prob_df |>
 
 That is the log-pointwise-predictive-density, $\text{lppd}(y, \Theta)$, computed by hand.
 
-### Scoring the right data. {#sec-Scoring-the-right-data}
+### Scoring the right data {#sec-Scoring-the-right-data}
 
 Since our `stan()` models from above do not have log-likelihood values saved from each, we have two options to make an alternative to McElreath's R code 7.15:
 
@@ -1241,23 +1241,23 @@ d_fits_ll |>
   summarise(total_log_probability_score = log(`mean_density[i]`) |> sum())
 ```
 
-#### Overthinking: Simulated training and testing.
+#### Overthinking: Simulated training and testing
 
-I'm leaving this out, for now. If you want a sense of how to do this, check out this section in my **brms** translation ([here](https://bookdown.org/content/4857/ulysses-compass.html#overthinking-simulated-training-and-testing.)).
+I'm leaving this out, for now. If you want a sense of how to do this, check out this section in my **brms** translation ([here](https://solomon.quarto.pub/sr2/07.html#overthinking-simulated-training-and-testing)).
 
 ## Golem taming: regularization
 
-I'll leave the simulation for Figure 7.8 for another day. If you want a sense of how to do this, check out this section in my **brms** translation ([here](https://bookdown.org/content/4857/ulysses-compass.html#golem-taming-regularization)).
+I'll leave the simulation for Figure 7.8 for another day. If you want a sense of how to do this, check out this section in my **brms** translation ([here](https://solomon.quarto.pub/sr2/07.html#golem-taming-regularization)).
 
-#### Rethinking: Ridge regression.
+#### Rethinking: Ridge regression
 
 ## Predicting predictive accuracy
 
-### Cross-validation.
+### Cross-validation
 
-#### Overthinking: Pareto-smoothed cross-validation.
+#### Overthinking: Pareto-smoothed cross-validation
 
-### Information criteria.
+### Information criteria
 
 We define the widely applicable information criterion (WAIC) as
 
@@ -1265,13 +1265,13 @@ $$\text{WAIC}(y, \Theta) = -2 \big ( \text{lppd} - {\color{blue}{\sum_i \operato
 
 where $y$ is the criterion, $\Theta$ is the posterior distribution, and the terms in the blue font make up the complexity penalty.
 
-#### Overthinking: The Akaike inspiration criterion.
+#### Overthinking: The Akaike inspiration criterion
 
-#### Rethinking: Information criteria and consistency.
+#### Rethinking: Information criteria and consistency
 
 #### Rethinking: What about BIC and Bayes factors?
 
-#### Overthinking: WAIC calculations.
+#### Overthinking: WAIC calculations
 
 Here is how to fit the pre-WAIC model with **brms**.
 
@@ -1376,9 +1376,9 @@ glimpse(d_log_lik)
 
 Recall the formula for the $\text{lppd}$ was
 
-$$\text{lppd}(y, \Theta) = \sum_i \log \frac{1}{S} \sum_s p (y_i | \Theta_s),$$
+$$\text{lppd}(y, \Theta) = \sum_i \log \frac{1}{S} \sum_s p (y_i \mid \Theta_s),$$
 
-where $p (y_i | \Theta_s)$ is the likelihood of case $i$ on posterior draw $s$. For each case $i$ (i.e., $\sum_i$), we then take the average likelihood value [i.e., $\frac{1}{S} \sum_s p (y_i | \Theta_s)$] and transform the result by taking its log [i.e., $\log \left (\frac{1}{S} \sum_s p (y_i | \Theta_s) \right )$]. When we sum those values up, we have the $\text{lppd}$, which we'll save as a scalar named `lppd`.
+where $p (y_i \mid \Theta_s)$ is the likelihood of case $i$ on posterior draw $s$. For each case $i$ (i.e., $\sum_i$), we then take the average likelihood value [i.e., $\frac{1}{S} \sum_s p (y_i \mid \Theta_s)$] and transform the result by taking its log [i.e., $\log \left (\frac{1}{S} \sum_s p (y_i \mid \Theta_s) \right )$]. When we sum those values up, we have the $\text{lppd}$, which we'll save as a scalar named `lppd`.
 
 ```{r}
 lppd <- d_log_lik |> 
@@ -1469,7 +1469,7 @@ w7.7$pointwise |>
   head()
 ```
 
-### Comparing CV, PSIS, and WAIC.
+### Comparing CV, PSIS, and WAIC
 
 I'll leave the simulation for Figure 7.9 for another day.
 
@@ -1502,11 +1502,11 @@ m7.7 |>
 
 Hopefully you'll never have to do that, though.
 
-#### Rethinking: Diverse prediction frameworks.
+#### Rethinking: Diverse prediction frameworks
 
 ## Model comparison
 
-### Model mis-selection. {#sec-Model-mis-selection}
+### Model mis-selection {#sec-Model-mis-selection}
 
 Once again we return to the plant-growth models from back in @sec-Post-treatment-bias. These were named `m6.6`, `m6.7`, and `m6.8`. If you were following along closely in that part of the ebook, you may have noticed we defined the `log_lik` values in the `generated quantities` block for each, but put off their discussion until now. It's time for the payoff. Here we'll use our `extract_log_lik |> waic()` workflow to compute the WAIC summaries for each, and save them as objects named `w6.6` through `w6.8`.
 
@@ -1641,9 +1641,9 @@ loo_model_weights(
 
 For more on these types of weighting methods, see @yaoUsingStackingAverage2018.
 
-#### Rethinking: WAIC metaphors.
+#### Rethinking: WAIC metaphors
 
-### Outliers and other illusions. {#sec-Outliers-and-other-illusions}
+### Outliers and other illusions {#sec-Outliers-and-other-illusions}
 
 Time to bring back the `WaffleDivorce` data, and reconsider the models from back in @sec-Spurious-associations.
 
@@ -1901,7 +1901,7 @@ loo_compare(l5.3, l5.3t) |> print(simplify = F)
 
 The standard error for the LOO difference was about the same size as the difference itself. This suggests the models were close and hard to distinguish with respect to their fit to the data. This will not always be the case.
 
-#### Rethinking: The Curse of Tippecanoe.
+#### Rethinking: The Curse of Tippecanoe
 
 ## Summary
 

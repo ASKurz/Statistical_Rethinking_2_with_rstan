@@ -21,29 +21,29 @@ theme_set(
 )
 ```
 
-#### Rethinking: Stan was a man.
+#### Rethinking: Stan was a man
 
 ## Good King Markov and his island kingdom
 
 ## Metropolis algorithms
 
-### Gibbs sampling.
+### Gibbs sampling
 
-### High-dimensional problems.
+### High-dimensional problems
 
 ## Hamiltonian Monte Carlo
 
-### Another parable.
+### Another parable
 
-#### Rethinking: Hamiltonians.
+#### Rethinking: Hamiltonians
 
-### Particles in space.
+### Particles in space
 
-#### Overthinking: Hamiltonian Monte Carlo in the raw.
+#### Overthinking: Hamiltonian Monte Carlo in the raw
 
-### Limitations.
+### Limitations
 
-#### Rethinking: The MCMC horizon.
+#### Rethinking: The MCMC horizon
 
 ## Easy HMC: ~~ulam~~ `stan()`
 
@@ -71,7 +71,7 @@ dd <- d |>
 
 In the context of this chapter, it doesn't make sense to translate McElreath's `m8.3` `quap()` code to `stan()` code. Below, we'll just go directly to the `stan()` variant of his `m9.1`.
 
-### Preparation.
+### Preparation
 
 Wrangle the data into a list with the `compose_data()` function. McElreath called his data list `dat_slim`. Here we'll follow the conventions from earlier chapters and call the object `stan_data`.
 
@@ -84,7 +84,7 @@ stan_data <- dd |>
 str(stan_data)
 ```
 
-### Sampling from the posterior.
+### Sampling from the posterior
 
 Here our `model_code_9.1` is just a different version of `model_code_8.3` from @sec-Adding-an-interaction-does-work. Since we don't need the log-likelihood for this chapter, we've streamlined this version of the program a bit by removing the `transformed parameters` and `generated quantities`. We've also taken a cue from McElreath's code by hardcoding the value `0.215` into the `model` block, rather than importing the `xbar` scalar from the data list.
 
@@ -138,7 +138,7 @@ Here is a summary of the posterior.
 print(m9.1, probs = c(0.055, 0.945))
 ```
 
-### Sampling again, in parallel.
+### Sampling again, in parallel
 
 Here we sample from four HMC chains in parallel by adding `cores = 4`. Though `chains = 4` is the default setting in `stan()`, here we make it explicit. This time we'll call the object `m9.1b`.
 
@@ -194,7 +194,7 @@ As to the diagnostic statistics, you can compute the $\widehat R$ and effective-
 summarise_draws(m9.1b, default_convergence_measures())
 ```
 
-### Visualization.
+### Visualization
 
 As with McElreath's **rethinking**, **rstan** allows users to put the fit object directly into the `pairs()` function.
 
@@ -228,7 +228,7 @@ as_draws_df(m9.1b) %>%
 
 If you need to customize a `pairs()`-type plot much further than this, you're probably best off moving to a `GGally::ggpairs()`-based workflow, such as we demonstrate later in @sec-Ordered-categorical-predictors.
 
-### Checking the chain.
+### Checking the chain
 
 Here we apply the `traceplot()` to `m9.1b`. The default settings are `inc_warmup = FALSE`, which means we need to change that to `TRUE` if we want to see the warmup draws, like in the plots McElreath tends to show in the text.
 
@@ -268,19 +268,19 @@ as_draws_df(m9.1b) |>
   coord_cartesian(ylim = c(20, NA))
 ```
 
-#### Overthinking: Raw Stan model code.
+#### Overthinking: Raw Stan model code
 
 ## Care and feeding of your Markov chain
 
 ### How many samples do you need?
 
-#### Rethinking: Warmup is not burn-in.
+#### Rethinking: Warmup is not burn-in
 
 ### How many chains do you need?
 
-#### Rethinking: Convergence diagnostics.
+#### Rethinking: Convergence diagnostics
 
-### Taming a wild chain.
+### Taming a wild chain
 
 Define the new very-small `stan_data`.
 
@@ -493,11 +493,11 @@ p2 <- tibble(sigma = seq(from = 0, to = 12, length.out = 501)) |>
   scale_y_continuous(NULL, breaks = NULL)
 ```
 
-#### Rethinking: The folk theorem of statistical computing.
+#### Rethinking: The folk theorem of statistical computing
 
-#### Overthinking: Divergent transitions are your friend.
+#### Overthinking: Divergent transitions are your friend
 
-### Non-identifiable parameters. {#sec-Non-identifiable-parameters}
+### Non-identifiable parameters {#sec-Non-identifiable-parameters}
 
 Update the `stan_data`.
 
@@ -654,7 +654,7 @@ p4 <- as_draws_df(m9.5) |>
   scale_color_viridis_d(option = "D", end = 0.8)
 ```
 
-#### Rethinking: Hamiltonian warnings and Gibbs overconfidence.
+#### Rethinking: Hamiltonian warnings and Gibbs overconfidence
 
 ## Summary
 

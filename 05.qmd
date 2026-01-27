@@ -23,7 +23,7 @@ theme_set(
 )
 ```
 
-#### Rethinking: Causal inference.
+#### Rethinking: Causal inference
 
 ## Spurious associations {#sec-Spurious-associations}
 
@@ -377,7 +377,7 @@ p1 <- as_draws_df(m5.2) |>
 p1 | (p2 + scale_y_continuous(NULL, breaks = NULL))
 ```
 
-### Think before you regress.
+### Think before you regress
 
 If all you want is a quick and dirty DAG for our three variables, you might execute something like this.
 
@@ -443,11 +443,11 @@ p1 | p2
 
 #### Rethinking: What's a cause?
 
-#### Overthinking: Drawing a DAG.
+#### Overthinking: Drawing a DAG
 
-### Testable implications.
+### Testable implications
 
-### Multiple regression notation.
+### Multiple regression notation
 
 We can write the statistical formula for our first multivariable model as
 
@@ -474,7 +474,7 @@ $$
 \end{align*}
 $$
 
-#### Overthinking: Compact notation and the design matrix. {#sec-Compact-notation-and-the-design-matrix}
+#### Overthinking: Compact notation and the design matrix {#sec-Compact-notation-and-the-design-matrix}
 
 > Often, linear models are written using a compact form like:
 >
@@ -492,7 +492,7 @@ $$
 
 I generally do not like this style of notation, and I rarely use it. It's not common to see it in papers in my field, and I suspect it many of my colleagues would find it actively discouraging. However, this style of notation will come in handy for some of the `stan()` code to come, starting with the models in @sec-A-second-method.
 
-### Approximating the posterior. {#sec-approximating-the-posterior}
+### Approximating the posterior {#sec-approximating-the-posterior}
 
 Define `model_code_5.3`.
 
@@ -586,7 +586,7 @@ bind_rows(
   facet_wrap(~ name, labeller = label_parsed, ncol = 1)
 ```
 
-#### Overthinking: Simulating the divorce example.{#sec-Overthinking-Simulating-the-divorce-example}
+#### Overthinking: Simulating the divorce example {#sec-Overthinking-Simulating-the-divorce-example}
 
 Okay, let's simulate our divorce data in a **tidyverse** sort of way.
 
@@ -706,9 +706,9 @@ bind_rows(
   facet_wrap(~ name, labeller = label_parsed, ncol = 1)
 ```
 
-### Plotting multivariate posteriors.
+### Plotting multivariate posteriors
 
-#### Predictor residual plots. {#sec-Predictor-residual-plots}
+#### Predictor residual plots {#sec-Predictor-residual-plots}
 
 As we start this section, it's important to clarify some wording. When McElreath described residuals, he used the following wording:
 
@@ -1016,7 +1016,7 @@ Here's the full Figure 5.4.
 (p1 / p2) | (p3 / p4)
 ```
 
-##### Rethinking: Residuals are parameters, not data.
+##### Rethinking: Residuals are parameters, not data
 
 To give a sense of the residual distributions for each case, here's the lower right panel of Figure 5.4, again, but including the 89% interval ranges.
 
@@ -1044,7 +1044,7 @@ mu_mean_qi |>
             hjust = 1.2, size = 3, vjust = -0.2)
 ```
 
-#### Posterior prediction plots.
+#### Posterior prediction plots
 
 You can refresh your memory of the model for `m5.3` by indexing the `stanmodel` part of the stanfit object.
 
@@ -1119,7 +1119,7 @@ draws |>
 
 ##### Rethinking: Stats, huh, yeah what is it good for?
 
-##### Overthinking: Simulating spurious association.
+##### Overthinking: Simulating spurious association
 
 Here's the simulated data.
 
@@ -1210,7 +1210,7 @@ dagify(s ~ r,
   theme_dag()
 ```
 
-#### Counterfactual plots.
+#### Counterfactual plots
 
 Take another look at one of the DAGs from back in Section 5.1.2.
 
@@ -1386,7 +1386,7 @@ as_draws_df(m5.3_a) |>
   facet_wrap(~ "Total counterfactual effect of M on D")
 ```
 
-##### Overthinking: Simulating counterfactuals.
+##### Overthinking: Simulating counterfactuals
 
 ## Masked relationship
 
@@ -1971,7 +1971,7 @@ Now combine all 4 panels to make the full Figure 5.9.
 ```
 
 
-#### Overthinking: Simulating a masking relationship.
+#### Overthinking: Simulating a masking relationship
 
 As a refresher, here's our focal DAG.
 
@@ -2086,9 +2086,9 @@ bind_rows(
 
 ## Categorical variables
 
-#### Rethinking: Continuous countries.
+#### Rethinking: Continuous countries
 
-### Binary categories. {#sec-Binary-categories}
+### Binary categories {#sec-Binary-categories}
 
 Reload the `Howell1` data.
 
@@ -2305,7 +2305,7 @@ bind_rows(
   facet_wrap( ~ name, scales = "free_x")
 ```
 
-### Many categories. {#sec-Many-categories}
+### Many categories {#sec-Many-categories}
 
 Load the `milk` data.
 
@@ -2731,7 +2731,7 @@ m5.10 |>
   theme(axis.text.y = element_text(hjust = 0))
 ```
 
-#### Rethinking: Differences and statistical significance.
+#### Rethinking: Differences and statistical significance
 
 ## Summary
 

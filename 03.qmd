@@ -21,9 +21,9 @@ theme_set(
 )
 ```
 
-#### Rethinking: The natural frequency phenomenon is not unique.
+#### Rethinking: The natural frequency phenomenon is not unique
 
-#### Rethinking: Why statistics can’t save bad science.
+#### Rethinking: Why statistics can’t save bad science
 
 ## Sampling from a grid-approximate posterior
 
@@ -74,7 +74,7 @@ Check the model summary. Note how we can use the `probs` argument to compute 89%
 print(m3.1, probs = c(0.055, 0.945))
 ```
 
-### Intervals of defined boundaries.
+### Intervals of defined boundaries
 
 One of the ways to extract the posterior draws from a `stan()` model is with the `as_draws_df()` function from the **posterior** package. Here we save the results as a data frame called `draws`.
 
@@ -101,9 +101,9 @@ draws |>
 
 About 60%.
 
-#### Overthinking: Counting with `sum`.
+#### Overthinking: Counting with `sum`
 
-### Intervals of defined mass.
+### Intervals of defined mass
 
 We can make the full version of Figure 3.2 with our `draws` object by including the proportion summaries from above, along with similar ones for the lower and middle 80 percentiles as new columns within `draws`. Then we just wrangle and make a faceted histogram with a conditional `fill`.
 
@@ -261,7 +261,7 @@ draws |>
 
 #### Rethinking: What do compatibility intervals mean?
 
-### Point estimates.
+### Point estimates
 
 We can compute the mean or medians for a `stan()`-based posterior with the typical `mean()` and `median()` functions. Though there is a base-**R** function called `mode()`, it returns the 'storage mode' of an object, which is not the kind of mode we often think of in statistics. We do, however, have the `tidybayes::Mode()` function for that purpose. Here are those three values for `p` from `m3.2`.
 
@@ -295,11 +295,11 @@ draws |>
 
 ## Sampling to simulate prediction
 
-### Dummy data.
+### Dummy data
 
-#### Rethinking: Sampling distributions.
+#### Rethinking: Sampling distributions
 
-### Model checking.
+### Model checking
 
 #### Did the software work?
 
