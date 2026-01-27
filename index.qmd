@@ -4,7 +4,7 @@
 
 This book is based on the second edition of Richard McElreath's [-@mcelreathStatisticalRethinkingBayesian2020] text, [*Statistical rethinking: A Bayesian course with examples in R and Stan*](https://xcelab.net/rm/statistical-rethinking/). My contributions show how to fit the models he covered with [**rstan**](https://mc-stan.org/rstan/) [@R-rstan], which allows one to fit Bayesian models in **R** [@R-base] using the Hamiltonian Monte Carlo algorithms provided by Stan [@standevelopmentteamStanUserGuide2024]. I also prefer plotting and data wrangling with the packages from the [**tidyverse**](https://www.tidyverse.org/) [@R-tidyverse; @wickhamWelcomeTidyverse2019], so we'll be using those methods, too.
 
-This is a sibling book of my translation of McElreath's second edition into **brms** code [@kurzStatisticalRethinkingSecondEd2023], which you can find by clicking [here](https://bookdown.org/content/4857/).
+This is a sibling book of my translation of McElreath's second edition into **brms** code [@kurzStatisticalRethinkingSecondEd2026], which you can find by clicking [here](https://solomon.quarto.pub/sr2/).
 
 ## How this compares with the **brms** translation, and what this means for readers {-}
 
@@ -91,12 +91,12 @@ This book is licensed under the Creative Commons Zero v1.0 Universal license, th
 ```{r}
 #| eval: false
 
-@book{kurzStatisticalRethinking2rstan2024,
+@book{kurzStatisticalRethinking2rstan2026,
   title = {Statistical rethinking 2 with rstan and the tidyverse},
   author = {Kurz, A. Solomon},
-  year = {2024},
-  month = {september},
-  edition = {version 0.0.3},
+  year = {2026},
+  month = {1},
+  edition = {version 0.0.3.1},
   url = {https://solomon.quarto.pub/sr2rstan/},
   doi = {https://doi.org/10.5281/zenodo.13755933}
 }
